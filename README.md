@@ -33,6 +33,15 @@ npm start       # Start development server
 npm run build   # Create production build
 ```
 
+## Deploy to Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/SanMine/StandUP)
+
+Or manually:
+1. Connect your GitHub repo to Vercel
+2. Vercel will auto-detect settings from `vercel.json`
+3. Click Deploy
+
 ## Troubleshooting
 
 **Can't find package.json?**  
