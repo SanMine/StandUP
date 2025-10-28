@@ -11,7 +11,12 @@
     "lint": "eslint src/**/*.js",
     "test": "jest --coverage"
   },
-  "keywords": ["career", "jobs", "api", "express"],
+  "keywords": [
+    "career",
+    "jobs",
+    "api",
+    "express"
+  ],
   "author": "Stand Up Team",
   "license": "MIT",
   "dependencies": {
@@ -20,6 +25,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-mysql-session": "^3.0.3",
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
     "express-validator": "^7.2.1",
