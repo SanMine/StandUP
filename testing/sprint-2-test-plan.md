@@ -23,7 +23,7 @@ Date: 2025-10-25
 
 | Test ID | Title | Testing type | Expected result | Actual result |
 |---------|-------|--------------|-----------------|---------------|
-| AUTH-001 | Login (Sign in) | Functional / Smoke | User signs in with email and password. Server returns 200 and session cookie. | |
+| AUTH-001 | Login (Sign in) | Functional | User signs in with email and password. Server returns 200 and session cookie. | |
 | AUTH-002 | Sign up (Create account) | Functional | User account is created, server returns success and session cookie. | |
 | AUTH-003 | Onboarding save (skills & roles) | Functional | User's selected skills and roles are saved to DB tables (user_skills, career_roadmap). | |
 | AUTH-004 | Sign out | Functional | Session is destroyed on server. /api/auth/me returns 401 after sign out. | |
@@ -60,4 +60,4 @@ Date: 2025-10-25
 | SEC-001 | Role-based access | Security | Employers can’t view student personal data; admin only via role. | |
 | SEC-002 | Encryption in transit | Security | All API calls use HTTPS; HTTP redirects to HTTPS. | |
 | SEC-003 | AI data ethics logging | Security / Audit | Each AI suggestion stores timestamp and audit ID for review. | |
-### HJ-002 — Sad Path (already finalized / permission denied)
+
