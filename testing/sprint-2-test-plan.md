@@ -38,4 +38,3 @@ Date: 2025-10-25
 | AUTH-005 | Protected routes check | Security | Pages requiring auth return 401 for anonymous users and 200 for authenticated users. | |
 | JOBS-003 | Jobs filtering / search | Functional | Filtering and search return correct subset of jobs and UI updates accordingly. | |
 | APPS-002 | Application timeline & notes | Functional | Application entries show timeline and notes. Edits persist. | |
-### HJ-002 — Sad Path (already finalized / permission denied)
