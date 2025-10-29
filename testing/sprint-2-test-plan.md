@@ -45,129 +45,35 @@ Description: The Head Judge (HJ) reviews judging sheets/round scores and finaliz
 
 - Steps (case A: already finalized)
   1. As a Head Judge, open the Round Results for an already-finalized round
-  2. Click the `Finalize` button (if shown) or attempt finalize via API
+## Sprint 2 Test Plan — Simple Table (All functions)
 
-- Expected Result (case A)
-  - Frontend should show `Finalize` disabled or a confirmation that round is already finalized
-  - If API is called, it should return HTTP 409 or 400 with { success: false, message: 'Round already finalized', finalizedBy: <id>, finalizedAt: <ts> }
-  - No changes to stored scores or metadata
+Below is a simple test plan table in basic English. "Actual result" is left blank because tests have not been run yet.
 
-- Steps (case B: unauthorized user)
-  1. Log in as a regular judge (non-HJ)
-  2. Attempt to access the finalize action in UI or call API endpoint
+| Test ID | Title | Testing type | Expected result | Actual result |
+|---------|-------|--------------|-----------------|---------------|
+| AUTH-001 | Login (Sign in) | Functional / Smoke | User signs in with email and password. Server returns 200 and session cookie. | |
+| AUTH-002 | Sign up (Create account) | Functional | User account is created, server returns success and session cookie. | |
+| AUTH-003 | Onboarding save (skills & roles) | Functional | User's selected skills and roles are saved to DB tables (user_skills, career_roadmap). | |
+| AUTH-004 | Sign out | Functional | Session is destroyed on server. /api/auth/me returns 401 after sign out. | |
+| DASH-001 | Dashboard loads live data | Functional | Dashboard requests /api/users/dashboard and shows real KPIs and lists (no mock data). | |
+| JOBS-001 | Jobs list (live) | Functional | /api/jobs returns a list of jobs. Jobs page shows titles, company, skills, and match score. | |
+| JOBS-002 | Apply to job (create application) | Functional | User can apply. Server returns 201 and application appears in Applications list. | |
+| APPS-001 | Applications list (Kanban) | Functional | /api/applications returns user's applications including job relation. UI shows applications in correct columns. | |
+| LEARN-001 | Learning — Coursera proxy | Functional / Integration | GET /api/learning/courses/coursera returns course list and UI shows courses. | |
+| HJ-001 | Head Judge finalization | Functional / Security | Finalize action locks scores, sets finalized metadata, and returns success (200). Unauthorized users get 403. | |
+| QG-001 | Q Grader — save scores | Functional | Grader saves sub-scores and comments. Server returns success and totals match calculation. | |
+| QG-002 | Q Grader — validation & a11y | UX / Accessibility | Form validates required fields and shows clear messages. Keyboard and screen-reader access works. | |
+| AUTH-005 | Protected routes check | Security | Pages requiring auth return 401 for anonymous users and 200 for authenticated users. | |
+| JOBS-003 | Jobs filtering / search | Functional | Filtering and search return correct subset of jobs and UI updates accordingly. | |
+| APPS-002 | Application timeline & notes | Functional | Application entries show timeline and notes. Edits persist. | |
 
-- Expected Result (case B)
-  - UI should not show finalize controls to non-HJ users
-  - API returns HTTP 403 with { success: false, message: 'Forbidden' }
-  - No finalization created
+> Notes: Keep the "Actual result" column blank until tests are run. Use simple curl or Postman for API checks, and Cypress or Playwright for end-to-end UI checks.
 
-### HJ-003 — Edge Case (partial failures / network interruption)
-- Preconditions
-  - Head Judge is authenticated
-  - Backend transient error or DB write partially completes (simulate by forcing an error in the DB layer or by killing DB connection mid-request)
-
-- Steps
-  1. Start finalization action from UI
-  2. Simulate network loss or backend error during the operation
-  3. Retry or inspect the round state after recovery
-
-- Expected Result
-  - The API should respond with a clear error (HTTP 500/502) indicating a transient failure
-  - The system must remain in a consistent state: either finalization did not occur (no partial locks) or finalized state was fully applied
-  - If partial application is detected, a manual reconciliation flag appears for admins OR an automatic rollback occurs
-  - The UI shows a friendly error and suggests retrying; the retry should succeed when the backend is healthy
-
-### Feature 1 — Test Summary Table
-| Test ID | Title | Priority | Type | Preconditions | Expected Outcome |
-|---------|-------|----------|------|---------------|------------------|
-| HJ-001 | Head Judge Finalization — Happy Path | High | Functional | HJ auth, completed scores, not finalized | Round becomes finalized, scores locked, notifications queued |
-| HJ-002 | Head Judge Finalization — Sad Path | High | Security/Permission | Already finalized OR unauthorized user | Proper 403/409; no state change; UI hides/blocks action |
-| HJ-003 | Head Judge Finalization — Edge Case | Medium | Reliability | Transient backend or network failure | Consistent result (all-or-nothing), clear error, retry possible |
-
-### Feature 1 — Function / Coverage Mapping
-| Function | Description | Tests covering it |
-|----------|-------------|-------------------|
-| POST /api/rounds/:id/finalize | Server endpoint to finalize a round | HJ-001, HJ-002, HJ-003 |
-| authorizeRole('HEAD_JUDGE') | Middleware to guard finalize action | HJ-002 |
-| finalizeRoundTransaction | DB transaction that sets finalized flag, writes metadata, sends notifications | HJ-001, HJ-003 |
-| notifyParticipants | Enqueues notifications (email/push) upon finalization | HJ-001 |
-
----
-
-## Feature 2 — Q Grader Interactive Scoresheet
-Description: Q Grader is an interactive judging sheet UI where graders enter scores, optional comments, and sub-scores. The component validates input, computes aggregate scores, and persists them to the DB. The UI must be responsive and accessible.
-
-### QG-001 — Happy Path
-- Preconditions
-  - User is authenticated and has `Grader` role
-  - The scoring rubric for the question is available (weights and allowed range)
-  - Target submission exists and is open for grading
-
-- Steps
-  1. Open the Q Grader scoresheet for the target submission
-  2. Enter numeric sub-scores within allowed ranges (e.g., 0–10) for each criterion
-  3. Add an optional comment in the comment textbox
-  4. Click `Save` (or `Submit`) to persist scores
-  5. Verify the UI shows a success toast and the saved values remain
-
-- Expected Result
-  - API returns HTTP 200 with saved score object { success: true, scoreId, totalScore, subScores: [...] }
-  - UI shows computed total score that matches weighted calculation
-  - Saved scores are persisted and visible to the grader on reload
-  - Audit metadata (grader id, timestamp) recorded
-
-### QG-002 — UI/UX (validation and accessibility)
-- Preconditions
-  - Grader UI is accessible (keyboard navigation, labels present)
-
-- Steps
-  1. Try to submit with an empty required sub-score field
-  2. Try to input non-numeric characters into numeric fields
-  3. Navigate the form with keyboard (Tab/Enter), ensure focus order is logical
-  4. Use a screen reader or inspect ARIA attributes for labels and errors
-
-- Expected Result
-  - Form validation prevents submission and shows inline errors for required/invalid fields
-  - Non-numeric input is either prevented or triggers a clear validation message
-  - Keyboard navigation works; buttons and inputs are reachable and operable
-  - ARIA attributes present, labels are associated with inputs, error messages announced to screen readers
-
-### QG-003 — Edge Case (invalid input & extreme values)
-- Preconditions
-  - Grader UI loaded
-
-- Steps
-  1. Enter extreme numeric values (e.g., very large numbers, negative numbers) in sub-score fields
-  2. Attempt to exceed sum/weighted caps if those rules exist
-  3. Attempt rapid repeated submissions (double-clicking Save) to test idempotency
-
-- Expected Result
-  - Server rejects invalid values with HTTP 400 and descriptive error messages
-  - Client-side validation prevents out-of-range values where applicable
-  - Double submissions are handled idempotently (either deduplicated server-side or client disabled during submission)
-  - No data corruption; totals are calculated correctly only for valid ranges
-
-### Feature 2 — Test Summary Table
-| Test ID | Title | Priority | Type | Preconditions | Expected Outcome |
-|---------|-------|----------|------|---------------|------------------|
-| QG-001 | Q Grader Happy Path | High | Functional | Grader auth, rubric loaded | Scores saved, totals correct, persisted |
-| QG-002 | UI/UX validation & accessibility | High | UX / A11y | UI accessible | Validation messages, keyboard & screen reader support |
-| QG-003 | Edge Case invalid input | Medium | Validation / Reliability | UI loaded | Rejection of invalid inputs, idempotent saves |
-
-### Feature 2 — Function / Coverage Mapping
-| Function | Description | Tests covering it |
-|----------|-------------|-------------------|
-| POST /api/scores | Persists grader's sub-scores and comments | QG-001, QG-003 |
-| validateScores | Server-side validation for ranges and required fields | QG-002, QG-003 |
-| computeWeightedTotal | Client or server function to produce aggregate score | QG-001 |
-| disableDuringSubmit | UI helper to prevent duplicate submissions | QG-003 |
-
----
-
-## Additional test matrices (per sprint features)
-Below are concise tables for related Sprint 2 features (auth, onboarding persistence, dashboard data, jobs/applications live data) that may be part of the sprint quality gate.
-
-### Auth & Onboarding (high-level)
+If you want, I can now:
+- fill this table with actual results by running the tests locally (I can run backend and/or frontend tests), or
+- convert each row into a GitHub Issue for tracking, or
+- export the table to CSV for import into your project tool.
+ 
 | Test ID | Feature | Preconditions | Test Focus | Expected Result |
 |---------|---------|---------------|------------|-----------------|
 | AUTH-001 | Sign up + onboarding persist | Clean DB / new user | Full flow: signup -> onboarding page -> persist skills/roles | User created, onboarding choices saved in `user_skills`/`career_roadmap` tables |
@@ -207,3 +113,140 @@ Prepared by: SanMine (QA/Dev)
 Date: 2025-10-29
 
 Notes: If you want, I can also convert these tables into a CSV or a checklist in your project management tool (GitHub Issues or Jira) and add example Postman requests for the API tests. Let me know which you'd prefer.
+
+---
+
+## Plain / Easy Test Checklist (function-by-function)
+Below is a simplified, step-by-step checklist for the core functions in Sprint 2. Each function includes: Preconditions, Steps (what to do), Quick curl examples when applicable, and Expected result.
+
+Function 1 — Login (quick smoke)
+- Preconditions: Backend running (http://localhost:3000), test user exists (email/password).
+- Steps:
+  1. From browser UI: open Sign In page, enter email/password, click Sign In.
+  2. Or use curl to test API:
+
+```bash
+curl -i -X POST http://localhost:3000/api/auth/signin \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@example.com","password":"password"}' \
+  -c cookies.txt
+```
+
+- Expected:
+  - HTTP 200, response JSON { success: true, user: { ... } }
+  - Browser sets session cookie (standup.sid) and subsequent requests to /api/auth/me return the user.
+
+Function 2 — Sign up + Onboarding (save skills/roles)
+- Preconditions: Backend running, use a unique email for signup.
+- Steps:
+  1. From UI: Sign up form -> complete fields -> submit -> you should be redirected to onboarding page.
+  2. Choose goals/skills/roles and submit onboarding.
+  3. Or use API:
+
+```bash
+# 1) signup
+curl -i -X POST http://localhost:3000/api/auth/signup \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"new@example.com","password":"P@ssw0rd","name":"New User"}' \
+  -c cookies.txt
+
+# 2) onboarding (after cookie preserved)
+curl -i -X POST http://localhost:3000/api/users/onboarding \
+  -H 'Content-Type: application/json' \
+  -b cookies.txt \
+  -d '{"skills":["javascript","react"],"role":"student","company_name":"Acme"}'
+```
+
+- Expected:
+  - Signup returns success and a session cookie.
+  - Onboarding API returns success and DB tables `user_skills`/`career_roadmap` have entries for the new user.
+
+Function 3 — Sign out
+- Preconditions: Authenticated session (have cookies.txt)
+- Steps:
+  1. From UI: click Sign Out.
+  2. Or via API:
+```bash
+curl -i -X POST http://localhost:3000/api/auth/signout -b cookies.txt
+```
+- Expected: session destroyed server-side; /api/auth/me returns 401 afterwards.
+
+Function 4 — Dashboard (live data)
+- Preconditions: Authenticated user with data (dashboard stats present).
+- Steps:
+  1. Open Dashboard in UI.
+  2. Confirm API calls: /api/users/dashboard, /api/jobs, /api/mentors, /api/learning/events.
+- Expected: KPI cards and lists render with real data; no mock placeholders.
+
+Function 5 — Jobs list (live)
+- Preconditions: Server seeded with jobs.
+- Steps:
+  1. Open Jobs page in UI.
+  2. Verify network request to /api/jobs and that job cards show titles, companies, skills.
+  3. Quick curl:
+```bash
+curl -i http://localhost:3000/api/jobs
+```
+- Expected: 200 with array of jobs; UI maps skills and matchScore correctly.
+
+Function 6 — Apply to a job (applications)
+- Preconditions: Authenticated student user, job exists.
+- Steps:
+  1. Click Apply on a job in UI and submit notes.
+  2. Or API:
+```bash
+curl -i -X POST http://localhost:3000/api/applications \
+  -H 'Content-Type: application/json' -b cookies.txt \
+  -d '{"jobId":"<job-id>","notes":"Interested"}'
+```
+- Expected: 201/200 success and application record created; appears on Applications page.
+
+Function 7 — Applications page (Kanban)
+- Preconditions: User has at least one application.
+- Steps:
+  1. Open Applications page; check columns (Applied, Interview, Offer, Rejected).
+  2. Confirm network request to /api/applications returns objects with included `job`.
+- Expected: Applications appear in correct columns; timeline and notes visible.
+
+Function 8 — Learning page (Coursera proxied)
+- Preconditions: Backend running with new proxied route (GET /api/learning/courses/coursera).
+- Steps:
+  1. Open Learning page in UI.
+  2. Check Network: /api/learning/courses/coursera should be called and return success with data.
+  3. Quick curl:
+```bash
+curl -i http://localhost:3000/api/learning/courses/coursera
+```
+- Expected: 200 with { success: true, data: [...] } and UI shows live Coursera courses.
+
+Function 9 — Head Judge Finalization (simple)
+- Preconditions: Head Judge account, completed judge scores, round not finalized.
+- Steps:
+  1. As HJ, open Round Results UI -> click Finalize -> confirm.
+  2. Or API:
+```bash
+curl -i -X POST http://localhost:3000/api/rounds/<round-id>/finalize -b cookies.txt
+```
+- Expected: 200 success, round flagged finalized, scores locked, participants notified.
+
+Function 10 — Q Grader (enter scores)
+- Preconditions: Grader account, rubric available.
+- Steps:
+  1. Open Q Grader UI for a submission.
+  2. Enter valid numeric sub-scores, optional comments, click Save.
+  3. Quick API check:
+```bash
+curl -i -X POST http://localhost:3000/api/scores \
+  -H 'Content-Type: application/json' -b cookies.txt \
+  -d '{"submissionId":"<id>","subScores":[{"criterion":"clarity","score":8}],"comment":"Good"}'
+```
+- Expected: 200 success, total matches weighted calculation, values persisted.
+
+---
+
+If you'd like, I can now:
+- convert each of these functions into GitHub Issues automatically (one per function), or
+- create a CSV checklist for import, or
+- add two small Cypress tests for Login and Sign-up happy paths to `frontend/cypress` as a starter.
+
+Tell me which of those you'd like next and I'll proceed.
