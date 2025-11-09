@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const { mongoose } = require('./models');
@@ -44,6 +45,7 @@ if (process.env.NODE_ENV === 'development') {
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
 
 // MongoDB Session Store
 const MONGO_URL = process.env.MONGO_URL || 'mongodb+srv://sanmine:sanmine1234@cluster0.czqfdmt.mongodb.net/?appName=Cluster0';
@@ -82,37 +84,37 @@ app.use(session({
 app.use(attachUser);
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  message: {
-    success: false,
-    error: {
-      code: 'RATE_LIMIT_EXCEEDED',
-      message: 'Too many requests, please try again later'
-    }
-  },
-  standardHeaders: true,
-  legacyHeaders: false
-});
+// const limiter = rateLimit({
+//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 minutes
+//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+//   message: {
+//     success: false,
+//     error: {
+//       code: 'RATE_LIMIT_EXCEEDED',
+//       message: 'Too many requests, please try again later'
+//     }
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false
+// });
 
-// Auth rate limiting
-const authLimiter = rateLimit({
-  windowMs: 900000, // 15 minutes
-  max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 5,
-  message: {
-    success: false,
-    error: {
-      code: 'AUTH_RATE_LIMIT_EXCEEDED',
-      message: 'Too many authentication attempts, please try again later'
-    }
-  },
-  skipSuccessfulRequests: true
-});
+// // Auth rate limiting
+// const authLimiter = rateLimit({
+//   windowMs: 900000, // 15 minutes
+//   max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 5,
+//   message: {
+//     success: false,
+//     error: {
+//       code: 'AUTH_RATE_LIMIT_EXCEEDED',
+//       message: 'Too many authentication attempts, please try again later'
+//     }
+//   },
+//   skipSuccessfulRequests: true
+// });
 
 // Apply rate limiters
-app.use('/api/', limiter);
-app.use('/api/auth/', authLimiter);
+// app.use('/api/', limiter);
+// app.use('/api/auth/', authLimiter);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

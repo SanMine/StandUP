@@ -1,22 +1,40 @@
-// Authentication middleware to check if user is logged in
-const isAuthenticated = (req, res, next) => {
-  if (req.session && req.session.userId) {
-    return next();
-  }
-  return res.status(401).json({
-    success: false,
-    error: {
-      code: 'UNAUTHORIZED',
-      message: 'You must be logged in to access this resource'
+const jwt = require('jsonwebtoken');
+const { User } = require('../models');
+
+// ✅ Verify and decode JWT from cookies
+const isAuthenticated = async (req, res, next) => {
+  try {
+    const token = req.cookies.accessToken;
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        error: {
+          code: 'UNAUTHORIZED',
+          message: 'You must be logged in to access this resource'
+        }
+      });
     }
-  });
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+
+    // Attach user info to request
+    req.user = decoded;
+    next();
+  } catch (err) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: 'UNAUTHORIZED',
+        message: 'Invalid or expired access token'
+      }
+    });
+  }
 };
 
-// Check if user is a student
+// ✅ Role-based middlewares
 const isStudent = (req, res, next) => {
-  if (req.session && req.session.userRole === 'student') {
-    return next();
-  }
+  if (req.user && req.user.role === 'student') return next();
   return res.status(403).json({
     success: false,
     error: {
@@ -26,11 +44,8 @@ const isStudent = (req, res, next) => {
   });
 };
 
-// Check if user is an employer
 const isEmployer = (req, res, next) => {
-  if (req.session && req.session.userRole === 'employer') {
-    return next();
-  }
+  if (req.user && req.user.role === 'employer') return next();
   return res.status(403).json({
     success: false,
     error: {
@@ -40,11 +55,8 @@ const isEmployer = (req, res, next) => {
   });
 };
 
-// Check if user is an admin
 const isAdmin = (req, res, next) => {
-  if (req.session && req.session.userRole === 'admin') {
-    return next();
-  }
+  if (req.user && req.user.role === 'admin') return next();
   return res.status(403).json({
     success: false,
     error: {
@@ -54,18 +66,18 @@ const isAdmin = (req, res, next) => {
   });
 };
 
-// Attach user to request object
+// ✅ Attach full user data (optional, for routes that need user details)
 const attachUser = async (req, res, next) => {
-  if (req.session && req.session.userId) {
-    try {
-      const { User } = require('../models');
-      const user = await User.findByPk(req.session.userId);
-      if (user) {
-        req.user = user.toSafeObject();
-      }
-    } catch (error) {
-      console.error('Error attaching user:', error);
-    }
+  try {
+    const token = req.cookies.accessToken;
+    if (!token) return next();
+
+    const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (user) req.user = user.toSafeObject();
+  } catch (error) {
+    console.error('Error attaching user:', error);
   }
   next();
 };

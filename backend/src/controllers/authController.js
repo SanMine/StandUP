@@ -1,19 +1,53 @@
+const jwt = require('jsonwebtoken');
 const { User, UserSkill } = require('../models');
 
-// Sign up
+// Helper: generate tokens
+const generateTokens = (user) => {
+  const accessToken = jwt.sign(
+    { userId: user._id, role: user.role },
+    process.env.JWT_ACCESS_SECRET,
+    { expiresIn: '15m' } // short-lived
+  );
+
+  const refreshToken = jwt.sign(
+    { userId: user._id },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: '7d' } // longer
+  );
+
+  return { accessToken, refreshToken };
+};
+
+// Helper: set cookies
+const setAuthCookies = (res, accessToken, refreshToken) => {
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax', // can adjust if using different domains
+  };
+
+  res.cookie('accessToken', accessToken, {
+    ...cookieOptions,
+    maxAge: 15 * 60 * 1000 // 15 mins
+  });
+
+  res.cookie('refreshToken', refreshToken, {
+    ...cookieOptions,
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
+};
+
+// 🧩 SIGN UP
 const signup = async (req, res, next) => {
   try {
     const { email, password, name, role } = req.body;
 
-    // Check if user already exists
+    // Check existing
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        error: {
-          code: 'USER_EXISTS',
-          message: 'User with this email already exists'
-        }
+        error: { code: 'USER_EXISTS', message: 'User with this email already exists' }
       });
     }
 
@@ -25,9 +59,11 @@ const signup = async (req, res, next) => {
       role: role || 'student'
     });
 
-    // Create session
-    req.session.userId = user._id;
-    req.session.userRole = user.role;
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    // Set cookies
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(201).json({
       success: true,
@@ -39,38 +75,29 @@ const signup = async (req, res, next) => {
   }
 };
 
-// Sign in
+// 🧩 SIGN IN
 const signin = async (req, res, next) => {
   try {
     const { email, password } = req.body;
 
-    // Find user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
         success: false,
-        error: {
-          code: 'INVALID_CREDENTIALS',
-          message: 'Invalid email or password'
-        }
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' }
       });
     }
 
-    // Validate password
     const isValid = await user.validatePassword(password);
     if (!isValid) {
       return res.status(401).json({
         success: false,
-        error: {
-          code: 'INVALID_CREDENTIALS',
-          message: 'Invalid email or password'
-        }
+        error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' }
       });
     }
 
-    // Create session
-    req.session.userId = user._id;
-    req.session.userRole = user.role;
+    const { accessToken, refreshToken } = generateTokens(user);
+    setAuthCookies(res, accessToken, refreshToken);
 
     res.status(200).json({
       success: true,
@@ -82,57 +109,41 @@ const signin = async (req, res, next) => {
   }
 };
 
-// Sign out
+// 🧩 SIGN OUT
 const signout = async (req, res, next) => {
   try {
-    req.session.destroy((err) => {
-      if (err) {
-        return next(err);
-      }
-      res.clearCookie(process.env.SESSION_NAME || 'standup.sid');
-      res.status(200).json({
-        success: true,
-        message: 'Signed out successfully'
-      });
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    res.status(200).json({
+      success: true,
+      message: 'Signed out successfully'
     });
   } catch (error) {
     next(error);
   }
 };
 
-// Get current user
+// 🧩 GET CURRENT USER
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findById(req.session.userId);
-    
+    // Expect req.user to be set by auth middleware
+    const user = await User.findById(req.user?.userId || req.session?.userId);
     if (!user) {
       return res.status(404).json({
         success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User not found'
-        }
+        error: { code: 'USER_NOT_FOUND', message: 'User not found' }
       });
     }
 
-    // Get user skills
     const skills = await UserSkill.find({ user_id: user._id });
 
     res.status(200).json({
       success: true,
-      user: {
-        ...user.toSafeObject(),
-        skills
-      }
+      user: { ...user.toSafeObject(), skills }
     });
   } catch (error) {
     next(error);
   }
 };
 
-module.exports = {
-  signup,
-  signin,
-  signout,
-  getMe
-};
+module.exports = { signup, signin, signout, getMe };

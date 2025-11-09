@@ -4,6 +4,9 @@ const { generateText } = require('ai');
 const { groq } = require('@ai-sdk/groq');
 const { dummyJobs } = require('../config/constants');
 
+
+// user skills fetchd, format -> ai input, all jobs fetched -> prompt modified-> get data
+
 /**
  * Controller to find matching jobs for a user using AI
  * @param {Object} req - Express request object

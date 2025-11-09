@@ -21,18 +21,6 @@ router.put(
   userController.updateProfile
 );
 
-// Add/update skills
-router.post(
-  '/skills',
-  isAuthenticated,
-  [
-    body('skills').isArray().withMessage('Skills must be an array'),
-    body('skills.*').notEmpty().withMessage('Skill name cannot be empty')
-  ],
-  validate,
-  userController.addSkills
-);
-
 // Onboarding endpoint: profile + skills + desired roles
 router.post(
   '/onboarding',

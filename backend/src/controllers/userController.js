@@ -3,7 +3,7 @@ const { User, UserSkill, Project, Application, SavedJob, CareerRoadmap } = requi
 // Get user profile
 const getProfile = async (req, res, next) => {
   try {
-    const user = await User.findById(req.session.userId);
+    const user = await User.findById(req.user.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -48,18 +48,19 @@ const getProfile = async (req, res, next) => {
   }
 };
 
-// Update user profile
 const updateProfile = async (req, res, next) => {
+  const session = await require('../models').mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const user = await User.findById(req.session.userId);
-    
+    const user = await User.findById(req.user.userId).session(session);
+
     if (!user) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({
         success: false,
-        error: {
-          code: 'USER_NOT_FOUND',
-          message: 'User not found'
-        }
+        error: { code: 'USER_NOT_FOUND', message: 'User not found' }
       });
     }
 
@@ -71,10 +72,11 @@ const updateProfile = async (req, res, next) => {
       company_name,
       company_size,
       industry,
-      website
+      website,
+      skills // <- merged skills here
     } = req.body;
 
-    // Update fields
+    // Update basic fields
     if (name !== undefined) user.name = name;
     if (bio !== undefined) user.bio = bio;
     if (avatar !== undefined) user.avatar = avatar;
@@ -84,50 +86,34 @@ const updateProfile = async (req, res, next) => {
     if (industry !== undefined) user.industry = industry;
     if (website !== undefined) user.website = website;
 
-    await user.save();
+    await user.save({ session });
+
+    // Replace skills if provided
+    if (Array.isArray(skills)) {
+      await UserSkill.deleteMany({ user_id: user._id }, { session });
+      if (skills.length > 0) {
+        await UserSkill.insertMany(
+          skills.map(skill => ({ user_id: user._id, skill_name: skill })),
+          { session }
+        );
+      }
+    }
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // Reload skills to include in response
+    const updatedSkills = await UserSkill.find({ user_id: user._id });
 
     res.status(200).json({
       success: true,
       message: 'Profile updated successfully',
-      user: user.toSafeObject()
+      user: user.toSafeObject(),
+      skills: updatedSkills
     });
   } catch (error) {
-    next(error);
-  }
-};
-
-// Add skills
-const addSkills = async (req, res, next) => {
-  try {
-    const { skills } = req.body;
-
-    if (!Array.isArray(skills) || skills.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: {
-          code: 'INVALID_INPUT',
-          message: 'Skills must be a non-empty array'
-        }
-      });
-    }
-
-    // Remove existing skills
-    await UserSkill.deleteMany({ user_id: req.session.userId });
-
-    // Add new skills
-    const userSkills = await UserSkill.insertMany(
-      skills.map(skill => ({
-        user_id: req.session.userId,
-        skill_name: skill
-      }))
-    );
-
-    res.status(200).json({
-      success: true,
-      message: 'Skills updated successfully',
-      skills: userSkills
-    });
-  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     next(error);
   }
 };
@@ -264,7 +250,6 @@ const onboarding = async (req, res, next) => {
 module.exports = {
   getProfile,
   updateProfile,
-  addSkills,
   getDashboardStats,
   onboarding
 };

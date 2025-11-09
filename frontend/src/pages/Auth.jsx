@@ -40,57 +40,55 @@ const Auth = () => {
   const [error, setError] = useState('');
 
   const handleAuth = async (e) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+  setError('');
 
-    // If signup and role not selected, go to role selection
-    if (authMode === 'signup' && !selectedRole) {
-      setStep('role');
-      return;
-    }
+  if (!formData.email || !formData.password) {
+    setError('Email and password are required');
+    return;
+  }
 
-    if (!formData.email || !formData.password) {
-      setError('Email and password are required');
-      return;
-    }
-
-    // For signup, validate name
-    if (authMode === 'signup' && !formData.name) {
-      setError('Name is required');
-      return;
-    }
-
-    try {
-      if (authMode === 'signin') {
-        const res = await signin(formData.email, formData.password);
-        if (!res?.success) {
-          setError(res?.error?.message || 'Invalid email or password');
-          return;
-        }
-        // redirect based on role
-        if (res.user?.role === 'employer') navigate('/employer-dashboard');
-        else navigate('/dashboard');
-      } else {
-        const payload = {
-          email: formData.email,
-          password: formData.password,
-          name: formData.name || formData.email.split('@')[0],
-          role: selectedRole || 'student'
-        };
-
-        const res = await signup(payload);
-        if (!res?.success) {
-          setError(res?.error?.message || 'Unable to create account');
-          return;
-        }
-        // go to onboarding
-        setStep('onboarding');
+  try {
+    if (authMode === 'signin') {
+      console.log('SIGNIN');
+      const res = await signin(formData.email, formData.password);
+      if (!res?.success) {
+        setError(res?.error?.message || 'Invalid email or password');
+        return;
       }
-    } catch (err) {
-      console.error(err);
-      setError(err?.response?.data?.error?.message || err.message || 'An error occurred');
+      // redirect based on role
+      if (res.user?.role === 'employer') navigate('/employer-dashboard');
+      else navigate('/dashboard');
+    } 
+  
+    if (authMode === 'signup') {
+      console.log('SIGNUP');
+      // 👇 if no role selected, default to 'student'
+      const role = selectedRole || 'student';
+      
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        name: formData.name || formData.email.split('@')[0],
+        role,
+      };
+
+      const res = await signup(payload);
+      if (!res?.success) {
+        setError(res?.error?.message || 'Unable to create account');
+        return;
+      }
+
+      // ✅ Now that signup succeeded, go to onboarding or dashboard
+      setSelectedRole(role);
+      setStep('onboarding');
     }
-  };
+  } catch (err) {
+    console.error(err);
+    setError(err?.response?.data?.error?.message || err.message || 'An error occurred');
+  }
+};
+
 
   const toggleAuthMode = () => {
     setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
