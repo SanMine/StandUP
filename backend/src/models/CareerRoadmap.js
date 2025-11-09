@@ -1,42 +1,43 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const CareerRoadmap = sequelize.define('career_roadmap', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const careerRoadmapSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   user_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'User'
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   status: {
-    type: DataTypes.ENUM('pending', 'in-progress', 'completed'),
-    allowNull: false,
-    defaultValue: 'pending'
+    type: String,
+    enum: ['pending', 'in-progress', 'completed'],
+    default: 'pending'
   },
   completed_date: {
-    type: DataTypes.DATEONLY,
-    allowNull: true
+    type: Date,
+    default: null
   },
   order: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+careerRoadmapSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const CareerRoadmap = mongoose.model('CareerRoadmap', careerRoadmapSchema);
 
 module.exports = CareerRoadmap;

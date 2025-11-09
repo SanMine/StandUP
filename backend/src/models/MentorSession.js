@@ -1,54 +1,52 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const MentorSession = sequelize.define('mentor_sessions', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const mentorSessionSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   user_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'User'
   },
   mentor_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'mentors',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'Mentor'
   },
   topic: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   preferred_date: {
-    type: DataTypes.DATEONLY,
-    allowNull: false
+    type: Date,
+    required: true
   },
   preferred_time: {
-    type: DataTypes.TIME,
-    allowNull: false
+    type: String,
+    required: true
   },
   message: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   status: {
-    type: DataTypes.ENUM('pending', 'confirmed', 'completed', 'cancelled'),
-    allowNull: false,
-    defaultValue: 'pending'
+    type: String,
+    enum: ['pending', 'confirmed', 'completed', 'cancelled'],
+    default: 'pending'
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+mentorSessionSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const MentorSession = mongoose.model('MentorSession', mentorSessionSchema);
 
 module.exports = MentorSession;

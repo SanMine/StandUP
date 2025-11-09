@@ -1,39 +1,38 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const SavedJob = sequelize.define('saved_jobs', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const savedJobSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   user_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'User'
   },
   job_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'jobs',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'Job'
   },
   saved_date: {
-    type: DataTypes.DATEONLY,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
+    type: Date,
+    required: true,
+    default: Date.now
   }
 }, {
   timestamps: true,
-  underscored: true,
-  updatedAt: false
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+savedJobSchema.index({ user_id: 1, job_id: 1 }, { unique: true });
+
+savedJobSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const SavedJob = mongoose.model('SavedJob', savedJobSchema);
 
 module.exports = SavedJob;

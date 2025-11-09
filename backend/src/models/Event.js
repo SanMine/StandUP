@@ -1,40 +1,46 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Event = sequelize.define('events', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const eventSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   date: {
-    type: DataTypes.DATEONLY,
-    allowNull: false
+    type: Date,
+    required: true
   },
   time: {
-    type: DataTypes.TIME,
-    allowNull: false
+    type: String,
+    required: true
   },
   type: {
-    type: DataTypes.ENUM('Career Fair', 'Workshop', 'Interview', 'Webinar', 'Networking'),
-    allowNull: false,
-    defaultValue: 'Webinar'
+    type: String,
+    enum: ['Career Fair', 'Workshop', 'Interview', 'Webinar', 'Networking'],
+    default: 'Webinar'
   },
   location: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   description: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+eventSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const Event = mongoose.model('Event', eventSchema);
 
 module.exports = Event;

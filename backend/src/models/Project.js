@@ -1,54 +1,54 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Project = sequelize.define('projects', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const projectSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   user_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'User'
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   description: {
-    type: DataTypes.TEXT,
-    allowNull: false
+    type: String,
+    required: true
   },
   image: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   tags: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
+    type: [String],
+    default: []
   },
   github_url: {
-    type: DataTypes.STRING(500),
-    allowNull: true
+    type: String,
+    default: null
   },
   live_url: {
-    type: DataTypes.STRING(500),
-    allowNull: true
+    type: String,
+    default: null
   },
   featured: {
-    type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+projectSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const Project = mongoose.model('Project', projectSchema);
 
 module.exports = Project;

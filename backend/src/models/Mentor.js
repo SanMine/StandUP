@@ -1,68 +1,69 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Mentor = sequelize.define('mentors', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const mentorSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   name: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   company: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   avatar: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   expertise: {
-    type: DataTypes.JSON,
-    allowNull: false,
-    defaultValue: []
+    type: [String],
+    required: true,
+    default: []
   },
   languages: {
-    type: DataTypes.JSON,
-    allowNull: false,
-    defaultValue: ['English']
+    type: [String],
+    required: true,
+    default: []
   },
   rating: {
-    type: DataTypes.DECIMAL(3, 2),
-    allowNull: false,
-    defaultValue: 5.0,
-    validate: {
-      min: 0,
-      max: 5
-    }
+    type: Number,
+    default: 5.00,
+    min: 0,
+    max: 5
   },
   sessions_count: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0
+    type: Number,
+    default: 0
   },
   bio: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   topics: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
+    type: [String],
+    default: []
   },
   availability: {
-    type: DataTypes.STRING(100),
-    allowNull: true
+    type: String,
+    default: null
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+mentorSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const Mentor = mongoose.model('Mentor', mentorSchema);
 
 module.exports = Mentor;

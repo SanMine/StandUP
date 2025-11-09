@@ -1,63 +1,64 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Course = sequelize.define('courses', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const courseSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   provider: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   instructor: {
-    type: DataTypes.STRING(255),
-    allowNull: true
+    type: String,
+    default: null
   },
   duration: {
-    type: DataTypes.STRING(100),
-    allowNull: true
+    type: String,
+    default: null
   },
   level: {
-    type: DataTypes.ENUM('Beginner', 'Intermediate', 'Advanced'),
-    allowNull: false,
-    defaultValue: 'Beginner'
+    type: String,
+    enum: ['Beginner', 'Intermediate', 'Advanced'],
+    default: 'Beginner'
   },
   price: {
-    type: DataTypes.STRING(100),
-    allowNull: true
+    type: String,
+    default: null
   },
   thumbnail: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   rating: {
-    type: DataTypes.DECIMAL(3, 2),
-    allowNull: false,
-    defaultValue: 0,
-    validate: {
-      min: 0,
-      max: 5
-    }
+    type: Number,
+    default: 0.00,
+    min: 0,
+    max: 5
   },
   students_count: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0
+    type: Number,
+    default: 0
   },
   topics: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
+    type: [String],
+    default: []
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+courseSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const Course = mongoose.model('Course', courseSchema);
 
 module.exports = Course;
