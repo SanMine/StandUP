@@ -1,5 +1,4 @@
 const { Job, JobSkill, Application, SavedJob, User, UserSkill } = require('../models');
-const { Op } = require('sequelize');
 const { calculateJobMatch } = require('../config/gemini');
 
 // Get all jobs with filters
@@ -15,70 +14,75 @@ const getAllJobs = async (req, res, next) => {
       limit = 10
     } = req.query;
 
-    const offset = (page - 1) * limit;
-    const where = { status: 'active' };
+    const skip = (page - 1) * limit;
+    const query = { status: 'active' };
 
     // Search filter
     if (search) {
-      where[Op.or] = [
-        { title: { [Op.like]: `%${search}%` } },
-        { company: { [Op.like]: `%${search}%` } },
-        { location: { [Op.like]: `%${search}%` } }
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { company: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } }
       ];
     }
 
     // Role filter
     if (roles) {
       const roleArray = roles.split(',');
-      where.title = {
-        [Op.or]: roleArray.map(role => ({ [Op.like]: `%${role}%` }))
-      };
+      query.title = { $in: roleArray.map(role => new RegExp(role, 'i')) };
     }
 
     // Location filter
     if (locations) {
       const locationArray = locations.split(',');
-      where.location = {
-        [Op.or]: locationArray.map(loc => ({ [Op.like]: `%${loc}%` }))
-      };
+      query.location = { $in: locationArray.map(loc => new RegExp(loc, 'i')) };
     }
 
     // Mode filter
     if (modes) {
-      where.mode = { [Op.in]: modes.split(',') };
+      query.mode = { $in: modes.split(',') };
     }
 
     // Type filter
     if (types) {
-      where.type = { [Op.in]: types.split(',') };
+      query.type = { $in: types.split(',') };
     }
 
-    const { count, rows: jobs } = await Job.findAndCountAll({
-      where,
-      include: [
-        { model: JobSkill, as: 'skills' },
-        { model: User, as: 'employer', attributes: ['id', 'company_name', 'industry'] }
-      ],
-      limit: parseInt(limit),
-      offset: parseInt(offset),
-      order: [['posted_date', 'DESC']]
-    });
+    const count = await Job.countDocuments(query);
+    const jobs = await Job.find(query)
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .sort({ posted_date: -1 })
+      .lean();
+
+    // Get skills and employer for each job
+    const jobsWithDetails = await Promise.all(
+      jobs.map(async (job) => {
+        const skills = await JobSkill.find({ job_id: job._id }).lean();
+        const employer = await User.findById(job.employer_id).select('_id company_name industry').lean();
+        return {
+          ...job,
+          id: job._id,
+          skills,
+          employer: employer ? { ...employer, id: employer._id } : null
+        };
+      })
+    );
 
     // If user is authenticated, calculate match scores using AI
-    let jobsWithScores = jobs;
+    let jobsWithScores = jobsWithDetails;
     if (req.session && req.session.userId && req.session.userRole === 'student') {
-      const user = await User.findByPk(req.session.userId, {
-        include: [{ model: UserSkill, as: 'skills' }]
-      });
+      const user = await User.findById(req.session.userId).lean();
+      const userSkills = await UserSkill.find({ user_id: req.session.userId }).lean();
 
-      if (user && user.skills && user.skills.length > 0) {
+      if (user && userSkills && userSkills.length > 0) {
         jobsWithScores = await Promise.all(
-          jobs.map(async (job) => {
+          jobsWithDetails.map(async (job) => {
             try {
               const matchData = await calculateJobMatch(
                 {
-                  skills: user.skills.map(s => s.skill_name),
-                  desiredRoles: [], // Can be added to user profile
+                  skills: userSkills.map(s => s.skill_name),
+                  desiredRoles: [],
                   experienceLevel: 'entry-level'
                 },
                 {
@@ -91,16 +95,16 @@ const getAllJobs = async (req, res, next) => {
               );
 
               return {
-                ...job.toJSON(),
+                ...job,
                 matchScore: matchData.matchScore,
                 whyMatch: matchData.whyMatch,
                 whyNotMatch: matchData.whyNotMatch,
                 recommendation: matchData.recommendation
               };
             } catch (error) {
-              console.error('Error calculating match for job:', job.id, error);
+              console.error('Error calculating match for job:', job._id, error);
               return {
-                ...job.toJSON(),
+                ...job,
                 matchScore: 70,
                 whyMatch: ['Skills alignment'],
                 whyNotMatch: [],
@@ -135,12 +139,7 @@ const getJobById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const job = await Job.findByPk(id, {
-      include: [
-        { model: JobSkill, as: 'skills' },
-        { model: User, as: 'employer', attributes: ['id', 'company_name', 'industry', 'company_size'] }
-      ]
-    });
+    const job = await Job.findById(id).lean();
 
     if (!job) {
       return res.status(404).json({
@@ -152,24 +151,33 @@ const getJobById = async (req, res, next) => {
       });
     }
 
-    // Calculate match score if user is authenticated
-    let jobData = job.toJSON();
-    if (req.session && req.session.userId && req.session.userRole === 'student') {
-      const user = await User.findByPk(req.session.userId, {
-        include: [{ model: UserSkill, as: 'skills' }]
-      });
+    // Get skills and employer
+    const skills = await JobSkill.find({ job_id: job._id }).lean();
+    const employer = await User.findById(job.employer_id).select('_id company_name industry company_size').lean();
 
-      if (user && user.skills && user.skills.length > 0) {
+    let jobData = {
+      ...job,
+      id: job._id,
+      skills,
+      employer: employer ? { ...employer, id: employer._id } : null
+    };
+
+    // Calculate match score if user is authenticated
+    if (req.session && req.session.userId && req.session.userRole === 'student') {
+      const user = await User.findById(req.session.userId).lean();
+      const userSkills = await UserSkill.find({ user_id: req.session.userId }).lean();
+
+      if (user && userSkills && userSkills.length > 0) {
         try {
           const matchData = await calculateJobMatch(
             {
-              skills: user.skills.map(s => s.skill_name),
+              skills: userSkills.map(s => s.skill_name),
               desiredRoles: [],
               experienceLevel: 'entry-level'
             },
             {
               title: job.title,
-              skills: job.skills.map(s => s.skill_name),
+              skills: skills.map(s => s.skill_name),
               type: job.type,
               mode: job.mode,
               requirements: job.requirements || []
@@ -233,24 +241,24 @@ const createJob = async (req, res, next) => {
 
     // Add skills
     if (skills && Array.isArray(skills) && skills.length > 0) {
-      await Promise.all(
-        skills.map(skill =>
-          JobSkill.create({
-            job_id: job.id,
-            skill_name: skill
-          })
-        )
+      await JobSkill.insertMany(
+        skills.map(skill => ({
+          job_id: job._id,
+          skill_name: skill
+        }))
       );
     }
 
-    const jobWithSkills = await Job.findByPk(job.id, {
-      include: [{ model: JobSkill, as: 'skills' }]
-    });
+    const jobSkills = await JobSkill.find({ job_id: job._id });
 
     res.status(201).json({
       success: true,
       message: 'Job created successfully',
-      data: jobWithSkills
+      data: {
+        ...job.toObject(),
+        id: job._id,
+        skills: jobSkills
+      }
     });
   } catch (error) {
     next(error);
@@ -261,7 +269,7 @@ const createJob = async (req, res, next) => {
 const updateJob = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const job = await Job.findByPk(id);
+    const job = await Job.findById(id);
 
     if (!job) {
       return res.status(404).json({
@@ -299,41 +307,42 @@ const updateJob = async (req, res, next) => {
       status
     } = req.body;
 
-    await job.update({
-      title: title || job.title,
-      company: company || job.company,
-      logo: logo !== undefined ? logo : job.logo,
-      location: location || job.location,
-      type: type || job.type,
-      mode: mode || job.mode,
-      salary: salary !== undefined ? salary : job.salary,
-      description: description || job.description,
-      requirements: requirements !== undefined ? requirements : job.requirements,
-      culture: culture !== undefined ? culture : job.culture,
-      status: status || job.status
-    });
+    // Update job fields
+    if (title !== undefined) job.title = title;
+    if (company !== undefined) job.company = company;
+    if (logo !== undefined) job.logo = logo;
+    if (location !== undefined) job.location = location;
+    if (type !== undefined) job.type = type;
+    if (mode !== undefined) job.mode = mode;
+    if (salary !== undefined) job.salary = salary;
+    if (description !== undefined) job.description = description;
+    if (requirements !== undefined) job.requirements = requirements;
+    if (culture !== undefined) job.culture = culture;
+    if (status !== undefined) job.status = status;
+
+    await job.save();
 
     // Update skills if provided
     if (skills && Array.isArray(skills)) {
-      await JobSkill.destroy({ where: { job_id: job.id } });
-      await Promise.all(
-        skills.map(skill =>
-          JobSkill.create({
-            job_id: job.id,
-            skill_name: skill
-          })
-        )
+      await JobSkill.deleteMany({ job_id: job._id });
+      await JobSkill.insertMany(
+        skills.map(skill => ({
+          job_id: job._id,
+          skill_name: skill
+        }))
       );
     }
 
-    const updatedJob = await Job.findByPk(job.id, {
-      include: [{ model: JobSkill, as: 'skills' }]
-    });
+    const jobSkills = await JobSkill.find({ job_id: job._id });
 
     res.status(200).json({
       success: true,
       message: 'Job updated successfully',
-      data: updatedJob
+      data: {
+        ...job.toObject(),
+        id: job._id,
+        skills: jobSkills
+      }
     });
   } catch (error) {
     next(error);
@@ -344,7 +353,7 @@ const updateJob = async (req, res, next) => {
 const deleteJob = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const job = await Job.findByPk(id);
+    const job = await Job.findById(id);
 
     if (!job) {
       return res.status(404).json({
@@ -367,7 +376,12 @@ const deleteJob = async (req, res, next) => {
       });
     }
 
-    await job.destroy();
+    // Delete associated data
+    await JobSkill.deleteMany({ job_id: job._id });
+    await Application.deleteMany({ job_id: job._id });
+    await SavedJob.deleteMany({ job_id: job._id });
+    
+    await job.deleteOne();
 
     res.status(200).json({
       success: true,
