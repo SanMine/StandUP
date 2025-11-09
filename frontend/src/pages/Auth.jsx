@@ -437,7 +437,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
-      <Card className="max-w-md w-full shadow-xl">
+      <Card className="max-w-md w-full shadow-xl" key={authMode}>
         <CardHeader className="text-center">
           <img 
             src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png" 
