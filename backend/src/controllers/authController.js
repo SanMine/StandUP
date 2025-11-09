@@ -6,7 +6,7 @@ const signup = async (req, res, next) => {
     const { email, password, name, role } = req.body;
 
     // Check if user already exists
-    const existingUser = await User.findOne({ where: { email } });
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -26,7 +26,7 @@ const signup = async (req, res, next) => {
     });
 
     // Create session
-    req.session.userId = user.id;
+    req.session.userId = user._id;
     req.session.userRole = user.role;
 
     res.status(201).json({
@@ -45,7 +45,7 @@ const signin = async (req, res, next) => {
     const { email, password } = req.body;
 
     // Find user
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -69,7 +69,7 @@ const signin = async (req, res, next) => {
     }
 
     // Create session
-    req.session.userId = user.id;
+    req.session.userId = user._id;
     req.session.userRole = user.role;
 
     res.status(200).json({
@@ -103,12 +103,8 @@ const signout = async (req, res, next) => {
 // Get current user
 const getMe = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.session.userId, {
-      include: [
-        { model: UserSkill, as: 'skills' }
-      ]
-    });
-
+    const user = await User.findById(req.session.userId);
+    
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -119,9 +115,15 @@ const getMe = async (req, res, next) => {
       });
     }
 
+    // Get user skills
+    const skills = await UserSkill.find({ user_id: user._id });
+
     res.status(200).json({
       success: true,
-      user: user.toSafeObject()
+      user: {
+        ...user.toSafeObject(),
+        skills
+      }
     });
   } catch (error) {
     next(error);
