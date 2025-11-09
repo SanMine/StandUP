@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import api from '../services/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
@@ -34,12 +36,53 @@ const Auth = () => {
     'UI/UX Designer', 'Data Analyst', 'Product Manager'
   ];
 
-  const handleAuth = (e) => {
+  const { signin, signup, fetchMe } = useAuth();
+  const [error, setError] = useState('');
+
+  const handleAuth = async (e) => {
     e.preventDefault();
-    if (selectedRole) {
-      setStep('onboarding');
-    } else {
+    setError('');
+
+    // If signup and role not selected, go to role selection
+    if (authMode === 'signup' && !selectedRole) {
       setStep('role');
+      return;
+    }
+
+    if (!formData.email || !formData.password) {
+      setError('Email and password are required');
+      return;
+    }
+
+    try {
+      if (authMode === 'signin') {
+        const res = await signin(formData.email, formData.password);
+        if (!res?.success) {
+          setError(res?.error?.message || 'Invalid email or password');
+          return;
+        }
+        // redirect based on role
+        if (res.user?.role === 'employer') navigate('/employer-dashboard');
+        else navigate('/dashboard');
+      } else {
+        const payload = {
+          email: formData.email,
+          password: formData.password,
+          name: formData.name || formData.email.split('@')[0],
+          role: selectedRole || 'student'
+        };
+
+        const res = await signup(payload);
+        if (!res?.success) {
+          setError(res?.error?.message || 'Unable to create account');
+          return;
+        }
+        // go to onboarding
+        setStep('onboarding');
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err?.response?.data?.error?.message || err.message || 'An error occurred');
     }
   };
 
@@ -67,12 +110,40 @@ const Auth = () => {
   };
 
   const handleComplete = () => {
-    // Navigate based on role
-    if (selectedRole === 'employer') {
-      navigate('/employer-dashboard');
-    } else {
-      navigate('/dashboard');
-    }
+    // Submit onboarding data to backend then navigate
+    const submitOnboarding = async () => {
+      try {
+        const payload = {
+          name: formData.name,
+          graduation: formData.graduation,
+          skills: formData.skills,
+          roles: formData.roles,
+          company_name: formData.companyName
+        };
+        const res = await api.post('/users/onboarding', payload);
+        if (res?.data?.success) {
+          // refresh auth context so App has updated user
+          try {
+            if (fetchMe) await fetchMe();
+          } catch (e) {
+            // ignore fetchMe errors
+          }
+          if (selectedRole === 'employer') navigate('/employer-dashboard');
+          else navigate('/dashboard');
+        } else {
+          // fallback navigation
+          if (selectedRole === 'employer') navigate('/employer-dashboard');
+          else navigate('/dashboard');
+        }
+      } catch (err) {
+        console.error('Onboarding submit error', err);
+        // still navigate but you may want to surface error to user
+        if (selectedRole === 'employer') navigate('/employer-dashboard');
+        else navigate('/dashboard');
+      }
+    };
+
+    submitOnboarding();
   };
 
   if (step === 'role') {
@@ -367,6 +438,11 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-2">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
           <form onSubmit={handleAuth} className="space-y-4">
             {authMode === 'signup' && (
               <div>

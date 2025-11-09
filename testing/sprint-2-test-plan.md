@@ -38,3 +38,26 @@ Date: 2025-10-25
 | AUTH-005 | Protected routes check | Security | Pages requiring auth return 401 for anonymous users and 200 for authenticated users. | |
 | JOBS-003 | Jobs filtering / search | Functional | Filtering and search return correct subset of jobs and UI updates accordingly. | |
 | APPS-002 | Application timeline & notes | Functional | Application entries show timeline and notes. Edits persist. | |
+| CAREER-001 | Profile evaluation AI | Functional / AI logic | System analyzes profile and returns career recommendations within 3 s. | |
+| CAREER-002 | Skill deficiency assessment | Functional | When user adds skills, AI shows missing skills vs job market needs. | |
+| CAREER-003 | Resume optimization | Integration | AI suggests resume improvements; fields update on Save. | |
+| CAREER-004 | Mentorship request workflow | Functional | User requests mentor; mentor notification sent; status = "Pending Acceptance". | |
+| CAREER-005 | Incomplete profile handling | Validation | System alerts user if profile missing key fields (name, email, skills). | |
+| AI-001 | Job recommendations accuracy | AI / Functional | AI matches skills & preferences; returns ≥ 70% relevant jobs. | |
+| AI-002 | Duplicate / conflicting recommendations | Functional | No repeated job IDs in response. | |
+| AI-003 | Performance (5 000 comparisons) | Performance | Matching < 10 s per 5,000 comparisons. | |
+| AI-004 | Bias and fairness check | Ethical / Security | AI suggestions do not include sensitive attributes (gender, race). | |
+| EMP-001 | Create job posting | Functional | Employer creates job; record saved to `jobs` table and visible in list. | |
+| EMP-002 | Search / filter candidates | Functional / Integration | Filter returns accurate candidate list by skill and AI score. | |
+| EMP-003 | Employer–candidate chat security | Security | Messages encrypted and visible only to participants. | |
+| EMP-004 | Analytics dashboard | Functional | Employer sees application counts and conversion rates. | |
+| ANA-001 | User progress feedback | Functional | System shows career progress chart based on applications and skills. | |
+| ANA-002 | Admin usage analytics | Functional | Admin can view platform-wide metrics from dashboard. | |
+| ANA-003 | Data privacy masking | Security | Analytics pages hide personal identifiers per SRS. | |
+| PERF-001 | Job matching response time | Performance | Standard user request responds in < 3 s. | |
+| PERF-002 | Resume analysis upload limit | Performance | Files ≤ 50 MB processed ≤ 5 s. | |
+| PERF-003 | Dashboard real-time update | Performance / Integration | Application status update shown ≤ 2 s. | |
+| SEC-001 | Role-based access | Security | Employers can’t view student personal data; admin only via role. | |
+| SEC-002 | Encryption in transit | Security | All API calls use HTTPS; HTTP redirects to HTTPS. | |
+| SEC-003 | AI data ethics logging | Security / Audit | Each AI suggestion stores timestamp and audit ID for review. | |
+### HJ-002 — Sad Path (already finalized / permission denied)

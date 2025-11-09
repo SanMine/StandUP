@@ -1,12 +1,24 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, MessageSquare, HelpCircle, User } from 'lucide-react';
+import { Search, Bell, MessageSquare, HelpCircle, User, LogOut } from 'lucide-react';
 import { Input } from '../ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
+import { useAuth } from '../../contexts/AuthContext';
 
 const AppBar = ({ user }) => {
   const navigate = useNavigate();
+  const { signout } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signout();
+      navigate('/auth');
+    } catch (err) {
+      // ignore - user will be redirected
+      navigate('/auth');
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-50">
@@ -50,16 +62,27 @@ const AppBar = ({ user }) => {
           <div className="w-px h-6 bg-gray-200 mx-2"></div>
 
           {user ? (
-            <button
-              onClick={() => navigate('/settings')}
-              className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm font-medium text-gray-700">{user.name}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/settings')}
+                className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-2 py-1 transition-colors"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback>{user.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm font-medium text-gray-700">{user.name}</span>
+              </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleSignOut}
+                className="hover:bg-gray-100 transition-colors"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4 text-gray-600" />
+              </Button>
+            </div>
           ) : (
             <Button 
               onClick={() => navigate('/auth')}

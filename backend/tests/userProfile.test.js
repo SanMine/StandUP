@@ -44,6 +44,7 @@ describe('GET /api/users/profile (supertest with fake session)', () => {
       name: 'Test User',
       email: 'test@example.com',
       toSafeObject: function() { return { id: this.id, name: this.name, email: this.email }; },
+      update: jest.fn().mockResolvedValue(true),
       skills: [],
       projects: [],
       roadmap: []

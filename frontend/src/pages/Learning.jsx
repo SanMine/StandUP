@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -15,13 +15,16 @@ import {
   Play,
   CheckCircle2
 } from 'lucide-react';
-import { courses, users } from '../utils/mockData';
+import { courses as mockCourses, users } from '../utils/mockData';
+import { learningAPI } from '../services/api';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 
 const Learning = () => {
   const currentUser = users.student;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedLevel, setSelectedLevel] = useState('all');
+  const [coursesList, setCoursesList] = useState(mockCourses);
+  const [isLoading, setIsLoading] = useState(true);
 
   const myLearning = [
     {
@@ -35,7 +38,7 @@ const Learning = () => {
 
   const levels = ['all', 'Beginner', 'Intermediate', 'Advanced'];
 
-  const filteredCourses = courses.filter(course => {
+  const filteredCourses = coursesList.filter(course => {
     const matchesSearch = searchQuery === '' || 
       course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       course.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -45,6 +48,51 @@ const Learning = () => {
 
     return matchesSearch && matchesLevel;
   });
+
+  // Prefer server-side proxied Coursera results so the browser always gets live Coursera data.
+  // Fallback order: proxied Coursera -> internal DB courses -> mock
+  useEffect(() => {
+    let mounted = true;
+    const fetchCourses = async () => {
+      setIsLoading(true);
+      // 1) Try proxied Coursera endpoint on our backend
+      try {
+        const res = await learningAPI.getCoursera();
+        if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+          if (mounted) {
+            setCoursesList(res.data);
+            setIsLoading(false);
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn('Proxied Coursera endpoint failed or returned empty, will try internal courses', err?.message || err);
+      }
+
+      // 2) Fallback: internal learning API (DB)
+      try {
+        const res2 = await learningAPI.getCourses();
+        if (res2 && res2.success && Array.isArray(res2.data) && res2.data.length > 0) {
+          if (mounted) {
+            setCoursesList(res2.data);
+            setIsLoading(false);
+          }
+          return;
+        }
+      } catch (err) {
+        console.warn('Internal learning API failed or returned empty, falling back to mock', err?.message || err);
+      }
+
+      // 3) Last resort: use local mock data
+      if (mounted) {
+        setCoursesList(mockCourses);
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourses();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <DashboardLayout user={currentUser}>
@@ -94,7 +142,7 @@ const Learning = () => {
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {myLearning.map((learning) => {
-                const course = courses.find(c => c.id === learning.courseId);
+                const course = coursesList.find(c => c.id === learning.courseId);
                 if (!course) return null;
                 return (
                   <Card key={learning.id} className="border-none shadow-md hover:shadow-lg transition-all">
@@ -135,7 +183,7 @@ const Learning = () => {
           <h2 className="text-2xl font-semibold text-[#0F151D] mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Explore Courses
           </h2>
-          
+
           {/* Search & Filters */}
           <Card className="border-none shadow-md mb-6">
             <CardContent className="p-6">
@@ -177,53 +225,69 @@ const Learning = () => {
 
           {/* Course Grid */}
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredCourses.map((course) => (
-              <Card key={course.id} className="border-none shadow-md hover:shadow-xl transition-all">
-                <CardContent className="p-0">
-                  <img 
-                    src={course.thumbnail} 
-                    alt={course.title} 
-                    className="w-full h-40 object-cover rounded-t-lg"
-                  />
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF]">
-                        {course.level}
-                      </Badge>
-                      <div className="flex items-center gap-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span className="text-sm font-medium">{course.rating}</span>
+            {isLoading ? (
+              // show mock skeletons while loading
+              mockCourses.slice(0, 6).map((course) => (
+                <Card key={course.id} className="border-none shadow-md animate-pulse">
+                  <CardContent className="p-0">
+                    <div className="w-full h-40 bg-gray-200 rounded-t-lg" />
+                    <div className="p-6">
+                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
+                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
+                      <div className="h-3 bg-gray-200 rounded w-1/4 mb-2" />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              filteredCourses.map((course) => (
+                <Card key={course.id} className="border-none shadow-md hover:shadow-xl transition-all">
+                  <CardContent className="p-0">
+                    <img 
+                      src={course.thumbnail} 
+                      alt={course.title} 
+                      className="w-full h-40 object-cover rounded-t-lg"
+                    />
+                    <div className="p-6">
+                      <div className="flex items-start justify-between mb-2">
+                        <Badge className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF]">
+                          {course.level}
+                        </Badge>
+                        <div className="flex items-center gap-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-medium">{course.rating || '—'}</span>
+                        </div>
+                      </div>
+                      <h3 className="font-semibold text-[#0F151D] mb-2">{course.title}</h3>
+                      <p className="text-sm text-[#4B5563] mb-4">{course.provider} • {course.instructor || ''}</p>
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {(course.topics || []).map((topic) => (
+                          <Badge key={topic} variant="outline" className="text-xs">
+                            {topic}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-[#4B5563] mb-4">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          {course.duration || '—'}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-4 w-4" />
+                          {(course.students || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-[#FF7000]">{course.price || 'Free'}</span>
+                        <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
+                          Enroll
+                        </Button>
                       </div>
                     </div>
-                    <h3 className="font-semibold text-[#0F151D] mb-2">{course.title}</h3>
-                    <p className="text-sm text-[#4B5563] mb-4">{course.provider} • {course.instructor}</p>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {course.topics.map((topic) => (
-                        <Badge key={topic} variant="outline" className="text-xs">
-                          {topic}
-                        </Badge>
-                      ))}
-                    </div>
-                    <div className="flex items-center justify-between text-sm text-[#4B5563] mb-4">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {course.duration}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Users className="h-4 w-4" />
-                        {course.students.toLocaleString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#FF7000]">{course.price}</span>
-                      <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
-                        Enroll
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
         </div>
 

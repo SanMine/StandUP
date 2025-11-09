@@ -5,7 +5,12 @@ const aiController = require('../controllers/aiController');
 const validate = require('../middlewares/validate');
 const { isAuthenticated, isStudent } = require('../middlewares/auth');
 
-// AI-powered job matching
+
+router.get("/find-match-jobs", 
+  aiController.findMatchingJobs
+)
+
+// AI-po.ered job matching
 router.post(
   '/match-jobs',
   isAuthenticated,
@@ -17,8 +22,7 @@ router.post(
   validate,
   aiController.matchJobs
 );
-
-// Analyze resume
+// Analyze resumed
 router.post(
   '/analyze-resume',
   isAuthenticated,

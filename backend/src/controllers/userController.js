@@ -196,9 +196,61 @@ const getDashboardStats = async (req, res, next) => {
   }
 };
 
+// Onboarding: update profile, skills, and desired roles (career roadmap)
+const onboarding = async (req, res, next) => {
+  const t = await require('../models').sequelize.transaction();
+  try {
+    const user = await User.findByPk(req.session.userId, { transaction: t });
+    if (!user) {
+      await t.rollback();
+      return res.status(404).json({ success: false, error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+    }
+
+    const { name, graduation, skills, roles, company_name } = req.body;
+
+    // Update basic profile fields
+    await user.update({
+      name: name !== undefined ? name : user.name,
+      graduation: graduation !== undefined ? graduation : user.graduation,
+      company_name: company_name !== undefined ? company_name : user.company_name
+    }, { transaction: t });
+
+    // Replace skills
+    if (Array.isArray(skills)) {
+      await UserSkill.destroy({ where: { user_id: user.id }, transaction: t });
+      await Promise.all(skills.map(skill => UserSkill.create({ user_id: user.id, skill_name: skill }, { transaction: t })));
+    }
+
+    // Replace career roadmap entries for desired roles (only for students)
+    if (Array.isArray(roles)) {
+      // remove existing roadmap entries
+      await CareerRoadmap.destroy({ where: { user_id: user.id }, transaction: t });
+      // create new roadmap entries from roles
+      await Promise.all(roles.map((roleTitle, idx) => CareerRoadmap.create({
+        user_id: user.id,
+        title: roleTitle,
+        order: idx
+      }, { transaction: t })));
+    }
+
+    await t.commit();
+
+    // reload user with skills and roadmap
+    const updated = await User.findByPk(user.id, {
+      include: [ { model: UserSkill, as: 'skills' }, { model: CareerRoadmap, as: 'roadmap' } ]
+    });
+
+    res.status(200).json({ success: true, message: 'Onboarding saved', user: updated.toSafeObject(), skills: updated.skills, roadmap: updated.roadmap });
+  } catch (error) {
+    await t.rollback();
+    next(error);
+  }
+};
+
 module.exports = {
   getProfile,
   updateProfile,
   addSkills,
-  getDashboardStats
+  getDashboardStats,
+  onboarding
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -18,7 +18,8 @@ import {
   TrendingUp,
   CheckCircle2
 } from 'lucide-react';
-import { jobs, users } from '../utils/mockData';
+import { useAuth } from '../contexts/AuthContext';
+import { jobsAPI } from '../services/api';
 import { getMatchColor, getMatchBgColor, formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import {
@@ -32,8 +33,8 @@ import {
 const Jobs = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const currentUser = users.student;
-  
+  const { user: authUser } = useAuth();
+  const currentUser = authUser || { name: 'Student', role: 'student' };
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
     roles: [],
@@ -43,6 +44,9 @@ const Jobs = () => {
   });
   const [selectedJobId, setSelectedJobId] = useState(searchParams.get('id'));
   const [savedJobIds, setSavedJobIds] = useState(['job-3', 'job-4']);
+  const [jobsList, setJobsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const filterOptions = {
     roles: ['Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'UI/UX Designer', 'Data Analyst'],
@@ -69,30 +73,35 @@ const Jobs = () => {
     });
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesSearch = searchQuery === '' || 
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesRole = selectedFilters.roles.length === 0 || 
-      selectedFilters.roles.some(role => job.title.includes(role));
-    
+  // Filter jobs based on search and selected filters
+  const filteredJobs = jobsList.filter(job => {
+    const title = (job.title || '').toString();
+    const company = (job.company || '').toString();
+    const skillsArr = Array.isArray(job.skills) ? job.skills.map(s => s.skill_name || s) : [];
+
+    const matchesSearch = searchQuery === '' ||
+      title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      skillsArr.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    const matchesRole = selectedFilters.roles.length === 0 ||
+      selectedFilters.roles.some(role => title.includes(role));
+
     const matchesLocation = selectedFilters.locations.length === 0 ||
-      selectedFilters.locations.some(loc => job.location.includes(loc));
-    
+      selectedFilters.locations.some(loc => (job.location || '').includes(loc));
+
     const matchesMode = selectedFilters.modes.length === 0 ||
       selectedFilters.modes.includes(job.mode);
-    
+
     const matchesType = selectedFilters.types.length === 0 ||
       selectedFilters.types.includes(job.type);
 
     return matchesSearch && matchesRole && matchesLocation && matchesMode && matchesType;
   });
 
-  const sortedJobs = [...filteredJobs].sort((a, b) => b.matchScore - a.matchScore);
+  const sortedJobs = [...filteredJobs].sort((a, b) => ( (b.matchScore ?? b.match_score ?? 0) - (a.matchScore ?? a.match_score ?? 0) ));
 
-  const selectedJob = selectedJobId ? jobs.find(j => j.id === selectedJobId) : null;
+  const selectedJob = selectedJobId ? jobsList.find(j => j.id === selectedJobId) : null;
 
   const toggleSave = (jobId) => {
     setSavedJobIds(prev => 
@@ -107,6 +116,32 @@ const Jobs = () => {
   };
 
   const activeFilterCount = Object.values(selectedFilters).flat().length;
+
+  // Fetch jobs from backend
+  useEffect(() => {
+    let mounted = true;
+    const loadJobs = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await jobsAPI.getJobs();
+        // jobsAPI returns response.data from axios; backend sends { success: true, data: [...] }
+        if (res && res.success) {
+          if (mounted) setJobsList(Array.isArray(res.data) ? res.data : []);
+        } else {
+          if (mounted) setJobsList([]);
+        }
+      } catch (err) {
+        console.error('Failed to load jobs', err);
+        if (mounted) setError(err.message || 'Failed to load jobs');
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    loadJobs();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <DashboardLayout user={currentUser}>
@@ -238,9 +273,14 @@ const Jobs = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <div className={`${getMatchBgColor(job.matchScore)} ${getMatchColor(job.matchScore)} px-4 py-2 rounded-full text-base font-semibold whitespace-nowrap`}>
-                            {job.matchScore}% Match
-                          </div>
+                          {(() => {
+                            const score = job.matchScore ?? job.match_score ?? 0;
+                            return (
+                              <div className={`${getMatchBgColor(score)} ${getMatchColor(score)} px-4 py-2 rounded-full text-base font-semibold whitespace-nowrap`}>
+                                {score}% Match
+                              </div>
+                            );
+                          })()}
                           <Button
                             variant="ghost"
                             size="icon"
@@ -255,14 +295,17 @@ const Jobs = () => {
                         </div>
                       </div>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {job.skills.map((skill) => (
-                          <Badge key={skill} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
+                        {(job.skills || []).slice(0, 8).map((skill) => {
+                          const name = skill && (skill.skill_name || skill.name || skill);
+                          return (
+                            <Badge key={name} variant="outline" className="text-xs">
+                              {name}
+                            </Badge>
+                          );
+                        })}
                       </div>
                       <p className="text-sm text-[#4B5563]">
-                        Posted {formatDate(job.postedDate)}
+                        Posted {formatDate(job.postedDate || job.posted_date || job.posted_at || job.postedAt)}
                       </p>
                     </div>
                   </div>
@@ -279,7 +322,7 @@ const Jobs = () => {
           {selectedJob && (
             <>
               <SheetHeader>
-                <div className="flex items-start gap-4 mb-4">
+                  <div className="flex items-start gap-4 mb-4">
                   <img 
                     src={selectedJob.logo} 
                     alt={selectedJob.company} 
@@ -293,9 +336,14 @@ const Jobs = () => {
                       {selectedJob.company}
                     </SheetDescription>
                   </div>
-                  <div className={`${getMatchBgColor(selectedJob.matchScore)} ${getMatchColor(selectedJob.matchScore)} px-4 py-2 rounded-full text-base font-semibold`}>
-                    {selectedJob.matchScore}% Match
-                  </div>
+                  {(() => {
+                    const score = selectedJob.matchScore ?? selectedJob.match_score ?? 0;
+                    return (
+                      <div className={`${getMatchBgColor(score)} ${getMatchColor(score)} px-4 py-2 rounded-full text-base font-semibold`}>
+                        {score}% Match
+                      </div>
+                    );
+                  })()}
                 </div>
               </SheetHeader>
 
@@ -324,11 +372,14 @@ const Jobs = () => {
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-3">Required Skills</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedJob.skills.map((skill) => (
-                      <Badge key={skill} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF]">
-                        {skill}
-                      </Badge>
-                    ))}
+                    {(selectedJob.skills || []).map((skill) => {
+                      const name = skill && (skill.skill_name || skill.name || skill);
+                      return (
+                        <Badge key={name} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF]">
+                          {name}
+                        </Badge>
+                      );
+                    })}
                   </div>
                 </div>
 
@@ -339,7 +390,7 @@ const Jobs = () => {
                     <div>
                       <p className="text-sm font-medium text-green-700 mb-2">Strong Match:</p>
                       <ul className="space-y-1">
-                        {selectedJob.whyMatch.map((reason, idx) => (
+                        {(selectedJob.whyMatch || []).map((reason, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
                             <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
                             <span>{reason}</span>
@@ -347,11 +398,11 @@ const Jobs = () => {
                         ))}
                       </ul>
                     </div>
-                    {selectedJob.whyNotMatch.length > 0 && (
+                    {(selectedJob.whyNotMatch || []).length > 0 && (
                       <div>
                         <p className="text-sm font-medium text-yellow-700 mb-2">Areas to Improve:</p>
                         <ul className="space-y-1">
-                          {selectedJob.whyNotMatch.map((reason, idx) => (
+                          {(selectedJob.whyNotMatch || []).map((reason, idx) => (
                             <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
                               <span className="h-4 w-4 rounded-full border-2 border-yellow-600 mt-0.5 flex-shrink-0" />
                               <span>{reason}</span>
@@ -373,7 +424,7 @@ const Jobs = () => {
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-3">Requirements</h3>
                   <ul className="space-y-2">
-                    {selectedJob.requirements.map((req, idx) => (
+                    {(selectedJob.requirements || []).map((req, idx) => (
                       <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
                         <span className="h-1.5 w-1.5 rounded-full bg-[#FF7000] mt-2 flex-shrink-0" />
                         <span>{req}</span>
@@ -386,7 +437,7 @@ const Jobs = () => {
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-3">Company Culture</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedJob.culture.map((tag) => (
+                    {(selectedJob.culture || []).map((tag) => (
                       <Badge key={tag} variant="outline">
                         {tag}
                       </Badge>

@@ -113,6 +113,12 @@ export const learningAPI = {
     const response = await api.get('/learning/courses');
     return response.data;
   },
+
+  // Server-side proxied Coursera endpoint
+  getCoursera: async () => {
+    const response = await api.get('/learning/courses/coursera');
+    return response.data;
+  },
   
   getEvents: async () => {
     const response = await api.get('/learning/events');

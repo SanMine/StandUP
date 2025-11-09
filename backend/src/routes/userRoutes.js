@@ -33,6 +33,19 @@ router.post(
   userController.addSkills
 );
 
+// Onboarding endpoint: profile + skills + desired roles
+router.post(
+  '/onboarding',
+  isAuthenticated,
+  [
+    body('skills').optional().isArray().withMessage('Skills must be an array'),
+    body('roles').optional().isArray().withMessage('Roles must be an array'),
+    body('graduation').optional().isISO8601().withMessage('Valid date is required')
+  ],
+  validate,
+  userController.onboarding
+);
+
 // Get dashboard stats
 router.get('/dashboard', isAuthenticated, userController.getDashboardStats);
 

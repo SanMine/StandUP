@@ -22,14 +22,14 @@ const learningRoutes = require('./routes/learningRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 // Security middleware
 app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
   credentials: true
 }));
 
@@ -68,6 +68,11 @@ const sessionStore = new MySQLStore({
 });
 
 // Session configuration
+// NOTE: For local development the frontend may run on a different origin (different port).
+// Browsers restrict cookies for cross-site POST/XHR when SameSite is 'lax'. To allow
+// credentialed requests from the dev frontend we set SameSite to 'none' in non-production
+// and keep secure=true only in production. Adjust as appropriate for your deployment.
+const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
   key: process.env.SESSION_NAME || 'standup.sid',
   secret: process.env.SESSION_SECRET || 'standup-secret-key-change-in-production',
@@ -77,8 +82,10 @@ app.use(session({
   cookie: {
     maxAge: parseInt(process.env.SESSION_MAX_AGE) || 86400000, // 24 hours
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    sameSite: 'lax'
+    secure: isProduction, // Only require HTTPS in production
+    // In development allow cross-site requests from the frontend dev server
+    // by using 'none'. In production prefer 'lax' for safety (or keep 'none' with secure=true).
+    sameSite: isProduction ? 'lax' : 'none'
   }
 }));
 

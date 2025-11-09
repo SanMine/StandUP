@@ -9,10 +9,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Badge } from '../components/ui/badge';
 import { Camera, Save } from 'lucide-react';
 import { users } from '../utils/mockData';
+import { useAuth } from '../contexts/AuthContext';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 
 const Settings = () => {
-  const currentUser = users.student;
+  const { user: authUser } = useAuth();
+
+  const currentUser = authUser
+    ? {
+        id: authUser.id,
+        name: authUser.name,
+        email: authUser.email,
+        avatar: authUser.avatar || users.student.avatar,
+        role: authUser.role,
+        profileStrength: authUser.profile_strength ?? authUser.profileStrength ?? 0,
+        skills: Array.isArray(authUser.skills)
+          ? authUser.skills.map(s => s.skill_name || s.name || s)
+          : users.student.skills,
+        graduation: authUser.graduation || users.student.graduation,
+        bio: authUser.bio || users.student.bio
+      }
+    : users.student;
   const [activeTab, setActiveTab] = useState('profile');
 
   return (

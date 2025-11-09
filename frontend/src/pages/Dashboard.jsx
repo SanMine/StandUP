@@ -16,27 +16,98 @@ import {
   ArrowRight,
   Star
 } from 'lucide-react';
-import { jobs, mentors, upcomingEvents, careerRoadmap, users } from '../utils/mockData';
+import { useEffect, useState } from 'react';
+import { jobsAPI, mentorsAPI, learningAPI } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { getMatchColor, getMatchBgColor, formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const currentUser = users.student;
-  const matchedJobs = jobs.slice(0, 3);
-  const suggestedMentor = mentors[0];
+  const { user: authUser, loading } = useAuth();
+
+  const [matchedJobs, setMatchedJobs] = useState([]);
+  const [suggestedMentor, setSuggestedMentor] = useState(null);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [careerRoadmapState, setCareerRoadmapState] = useState([]);
+  const [kpisState, setKpisState] = useState({ profileStrength: 0, applications: 0, interviews: 0, nextTask: '—' });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Normalize current user shape used by the UI.
+  const currentUser = authUser
+    ? {
+        id: authUser.id,
+        name: authUser.name,
+        email: authUser.email,
+        avatar: authUser.avatar,
+        role: authUser.role,
+        // backend uses profile_strength (snake_case)
+        profileStrength: authUser.profile_strength ?? authUser.profileStrength ?? 0,
+        // backend returns skills as objects [{ skill_name }]
+        skills: Array.isArray(authUser.skills) ? authUser.skills.map(s => s.skill_name || s.name || s) : [],
+        desiredRoles: Array.isArray(authUser.roadmap) ? authUser.roadmap.map(r => r.title) : [],
+        graduation: authUser.graduation,
+        bio: authUser.bio
+      }
+    : { id: null, name: 'Student', email: '', avatar: null, role: 'student', profileStrength: 0, skills: [], desiredRoles: [], graduation: null, bio: '' };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      try {
+        // Dashboard stats (profile strength, counts, roadmap)
+        const statsRes = await fetch('/api/users/dashboard', { credentials: 'include' });
+        if (statsRes.ok) {
+          const data = await statsRes.json();
+          if (data.success && data.stats) {
+            const s = data.stats;
+            setKpisState({ profileStrength: s.profileStrength ?? 0, applications: s.applications ?? 0, interviews: s.interviews ?? 0, nextTask: s.nextTask ?? '—' });
+            if (s.roadmap) setCareerRoadmapState(s.roadmap);
+          }
+        }
+
+        // Fetch jobs, mentors and events in parallel
+        const [jobsRes, mentorsRes, eventsRes] = await Promise.allSettled([
+          jobsAPI.getJobs(),
+          mentorsAPI.getMentors(),
+          learningAPI.getEvents()
+        ]);
+
+        if (jobsRes.status === 'fulfilled' && jobsRes.value && jobsRes.value.success) {
+          const jobsArray = Array.isArray(jobsRes.value.data) ? jobsRes.value.data : [];
+          setMatchedJobs(jobsArray.slice(0, 3));
+        }
+
+        if (mentorsRes.status === 'fulfilled' && mentorsRes.value && mentorsRes.value.success) {
+          const mentorsArray = Array.isArray(mentorsRes.value.data) ? mentorsRes.value.data : [];
+          setSuggestedMentor(mentorsArray[0] || null);
+        }
+
+        if (eventsRes.status === 'fulfilled' && eventsRes.value && eventsRes.value.success) {
+          const eventsArray = Array.isArray(eventsRes.value.data) ? eventsRes.value.data : [];
+          setUpcomingEvents(eventsArray.slice(0, 3));
+        }
+      } catch (e) {
+        console.error('Error loading dashboard data', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (authUser) fetchData();
+  }, [authUser]);
 
   const kpis = [
     {
       label: 'Profile Strength',
-      value: `${currentUser.profileStrength}%`,
+      value: `${kpisState.profileStrength}%`,
       icon: Target,
       color: 'text-blue-600',
       bgColor: 'bg-blue-100'
     },
     {
       label: 'Applications',
-      value: '3',
+      value: `${kpisState.applications}`,
       subtitle: 'In Progress',
       icon: Briefcase,
       color: 'text-[#FF7000]',
@@ -44,7 +115,7 @@ const Dashboard = () => {
     },
     {
       label: 'Interview Invites',
-      value: '1',
+      value: `${kpisState.interviews}`,
       subtitle: 'This week',
       icon: Video,
       color: 'text-green-600',
@@ -52,8 +123,8 @@ const Dashboard = () => {
     },
     {
       label: 'Next Task',
-      value: 'Mock Interview',
-      subtitle: 'Due in 2 days',
+      value: kpisState.nextTask || '—',
+      subtitle: '',
       icon: Clock,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
@@ -155,9 +226,9 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="flex flex-wrap gap-2 mb-3">
-                          {job.skills.slice(0, 4).map((skill) => (
-                            <Badge key={skill} variant="outline" className="text-xs">
-                              {skill}
+                          {(job.skills || []).slice(0, 4).map((skill) => (
+                            <Badge key={skill.skill_name || skill} variant="outline" className="text-xs">
+                              {skill.skill_name || skill}
                             </Badge>
                           ))}
                         </div>
@@ -172,7 +243,7 @@ const Dashboard = () => {
                             <div>
                               <p className="text-xs font-medium text-green-700 mb-1">Strong Match:</p>
                               <ul className="text-xs text-[#4B5563] space-y-1">
-                                {job.whyMatch.map((reason, idx) => (
+                                {(job.whyMatch || []).map((reason, idx) => (
                                   <li key={idx} className="flex items-start gap-2">
                                     <CheckCircle2 className="h-3 w-3 text-green-600 mt-0.5 flex-shrink-0" />
                                     <span>{reason}</span>
@@ -180,11 +251,11 @@ const Dashboard = () => {
                                 ))}
                               </ul>
                             </div>
-                            {job.whyNotMatch.length > 0 && (
+                            {(job.whyNotMatch || []).length > 0 && (
                               <div>
                                 <p className="text-xs font-medium text-yellow-700 mb-1">Areas to Improve:</p>
                                 <ul className="text-xs text-[#4B5563] space-y-1">
-                                  {job.whyNotMatch.map((reason, idx) => (
+                                  {(job.whyNotMatch || []).map((reason, idx) => (
                                     <li key={idx} className="flex items-start gap-2">
                                       <span className="h-3 w-3 rounded-full border-2 border-yellow-600 mt-0.5 flex-shrink-0" />
                                       <span>{reason}</span>
@@ -212,8 +283,8 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
-                  {careerRoadmap.map((step, index) => {
-                    const isLast = index === careerRoadmap.length - 1;
+                  {careerRoadmapState.map((step, index) => {
+                    const isLast = index === careerRoadmapState.length - 1;
                     return (
                       <div key={step.id} className="flex gap-4">
                         <div className="flex flex-col items-center">
@@ -304,16 +375,16 @@ const Dashboard = () => {
               <CardContent>
                 <div className="text-center">
                   <Avatar className="h-20 w-20 mx-auto mb-3 border-4 border-[#FFE4CC]">
-                    <AvatarImage src={suggestedMentor.avatar} alt={suggestedMentor.name} />
-                    <AvatarFallback>{suggestedMentor.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={suggestedMentor?.avatar} alt={suggestedMentor?.name} />
+                    <AvatarFallback>{suggestedMentor?.name ? suggestedMentor.name.charAt(0) : 'M'}</AvatarFallback>
                   </Avatar>
-                  <h4 className="font-semibold text-[#0F151D] mb-1">{suggestedMentor.name}</h4>
-                  <p className="text-sm text-[#4B5563] mb-2">{suggestedMentor.title}</p>
+                  <h4 className="font-semibold text-[#0F151D] mb-1">{suggestedMentor?.name || 'No mentor found'}</h4>
+                  <p className="text-sm text-[#4B5563] mb-2">{suggestedMentor?.title || ''}</p>
                   <div className="flex items-center justify-center gap-1 mb-3">
                     <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{suggestedMentor.rating}</span>
+                    <span className="text-sm font-medium">{suggestedMentor?.rating || '—'}</span>
                   </div>
-                  <p className="text-xs text-[#4B5563] mb-4">{suggestedMentor.bio}</p>
+                  <p className="text-xs text-[#4B5563] mb-4">{suggestedMentor?.bio || ''}</p>
                   <Button 
                     className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                     onClick={() => navigate('/mentors')}

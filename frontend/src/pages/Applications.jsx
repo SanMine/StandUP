@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
@@ -10,7 +10,8 @@ import {
   Plus,
   X
 } from 'lucide-react';
-import { applications, jobs, users } from '../utils/mockData';
+import { useAuth } from '../contexts/AuthContext';
+import { applicationsAPI } from '../services/api';
 import { formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import {
@@ -22,9 +23,13 @@ import {
 } from '../components/ui/sheet';
 
 const Applications = () => {
-  const currentUser = users.student;
+  const { user: authUser } = useAuth();
+  const currentUser = authUser || { name: 'Student', role: 'student' };
+  const [applicationsList, setApplicationsList] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
   const [notes, setNotes] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const statuses = [
     { id: 'saved', label: 'Saved', color: 'bg-gray-100' },
@@ -35,23 +40,49 @@ const Applications = () => {
   ];
 
   const groupedApps = statuses.reduce((acc, status) => {
-    acc[status.id] = applications.filter(app => app.status === status.id);
+    acc[status.id] = applicationsList.filter(app => (app.status === status.id));
     return acc;
   }, {});
 
-  const getJobDetails = (jobId) => jobs.find(j => j.id === jobId);
+  // job details are included on the application as `job` via backend include
+  const getJobDetails = (app) => app?.job || null;
 
   const getStatusColor = (status) => {
     const statusObj = statuses.find(s => s.id === status);
     return statusObj?.color || 'bg-gray-100';
   };
 
-  const timeline = selectedApp ? [
-    { date: selectedApp.appliedDate, event: 'Application Submitted', status: 'completed' },
-    { date: selectedApp.status === 'screening' || selectedApp.status === 'interview' ? selectedApp.lastUpdate : null, event: 'Initial Screening', status: selectedApp.status === 'applied' ? 'pending' : 'completed' },
-    { date: selectedApp.status === 'interview' ? selectedApp.lastUpdate : null, event: 'Technical Interview', status: selectedApp.status === 'interview' ? 'in-progress' : selectedApp.status === 'screening' || selectedApp.status === 'applied' ? 'pending' : 'completed' },
+  const timeline = selectedApp ? (selectedApp.timeline || [
+    { date: selectedApp.applied_date || selectedApp.appliedDate, event: 'Application Submitted', status: 'completed' },
+    { date: (selectedApp.status === 'screening' || selectedApp.status === 'interview') ? (selectedApp.last_update || selectedApp.lastUpdate) : null, event: 'Initial Screening', status: selectedApp.status === 'applied' ? 'pending' : 'completed' },
+    { date: selectedApp.status === 'interview' ? (selectedApp.last_update || selectedApp.lastUpdate) : null, event: 'Technical Interview', status: selectedApp.status === 'interview' ? 'in-progress' : (selectedApp.status === 'screening' || selectedApp.status === 'applied') ? 'pending' : 'completed' },
     { date: null, event: 'Offer Decision', status: 'pending' }
-  ] : [];
+  ]) : [];
+
+  // Load applications from backend
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const res = await applicationsAPI.getApplications();
+        if (res && res.success) {
+          if (mounted) setApplicationsList(Array.isArray(res.data) ? res.data : []);
+        } else {
+          if (mounted) setApplicationsList([]);
+        }
+      } catch (err) {
+        console.error('Error fetching applications', err);
+        if (mounted) setError(err.message || 'Failed to load applications');
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
+    };
+
+    load();
+    return () => { mounted = false; };
+  }, []);
 
   return (
     <DashboardLayout user={currentUser}>
@@ -92,7 +123,7 @@ const Applications = () => {
               </div>
               <div className="space-y-3 bg-gray-50 rounded-b-lg p-4 min-h-[600px]">
                 {groupedApps[status.id]?.map((app) => {
-                  const job = getJobDetails(app.jobId);
+                  const job = getJobDetails(app);
                   return (
                     <Card 
                       key={app.id}
@@ -103,9 +134,9 @@ const Applications = () => {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <h4 className="font-semibold text-[#0F151D] text-sm mb-1">
-                              {app.jobTitle}
+                              {job?.title || app.jobTitle}
                             </h4>
-                            <p className="text-xs text-[#4B5563]">{app.company}</p>
+                            <p className="text-xs text-[#4B5563]">{job?.company || app.company}</p>
                           </div>
                           <Button variant="ghost" size="icon" className="h-6 w-6">
                             <MoreVertical className="h-4 w-4" />
@@ -113,17 +144,20 @@ const Applications = () => {
                         </div>
                         {job && (
                           <div className="flex flex-wrap gap-1 mb-3">
-                            {job.skills.slice(0, 2).map((skill) => (
-                              <Badge key={skill} variant="outline" className="text-xs">
-                                {skill}
-                              </Badge>
-                            ))}
+                            {(job.skills || []).slice(0, 2).map((skillObj) => {
+                              const name = skillObj && (skillObj.skill_name || skillObj.name || skillObj);
+                              return (
+                                <Badge key={name} variant="outline" className="text-xs">
+                                  {name}
+                                </Badge>
+                              );
+                            })}
                           </div>
                         )}
                         <div className="flex items-center justify-between text-xs text-[#4B5563]">
                           <span className="flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
-                            {formatDate(app.appliedDate)}
+                            {formatDate(app.applied_date || app.appliedDate)}
                           </span>
                           <Badge className={`${getStatusColor(app.status)} text-[#0F151D] hover:${getStatusColor(app.status)} text-xs`}>
                             {status.label}
@@ -156,10 +190,10 @@ const Applications = () => {
             <>
               <SheetHeader>
                 <SheetTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {selectedApp.jobTitle}
+                  {selectedApp.jobTitle || selectedApp.job?.title}
                 </SheetTitle>
                 <SheetDescription className="text-base">
-                  {selectedApp.company}
+                  {selectedApp.company || selectedApp.job?.company}
                 </SheetDescription>
               </SheetHeader>
 
