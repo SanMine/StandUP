@@ -45,27 +45,15 @@ if (process.env.NODE_ENV === 'development') {
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// MySQL Session Store
-const MySQLStore = require('express-mysql-session')(session);
+// MongoDB Session Store
+const MONGO_URL = process.env.MONGO_URL || 'mongodb+srv://sanmine:sanmine1234@cluster0.czqfdmt.mongodb.net/?appName=Cluster0';
 
-const sessionStore = new MySQLStore({
-  host: process.env.DB_HOST,
-  port: parseInt(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  clearExpired: true,
-  checkExpirationInterval: 900000, // 15 minutes
-  expiration: 86400000, // 24 hours
-  createDatabaseTable: true,
-  schema: {
-    tableName: 'sessions',
-    columnNames: {
-      session_id: 'session_id',
-      expires: 'expires',
-      data: 'data'
-    }
-  }
+const sessionStore = MongoStore.create({
+  mongoUrl: MONGO_URL,
+  dbName: 'standup_db',
+  collectionName: 'sessions',
+  ttl: 86400, // 24 hours in seconds
+  autoRemove: 'native'
 });
 
 // Session configuration
@@ -75,7 +63,6 @@ const sessionStore = new MySQLStore({
 // and keep secure=true only in production. Adjust as appropriate for your deployment.
 const isProduction = process.env.NODE_ENV === 'production';
 app.use(session({
-  key: process.env.SESSION_NAME || 'standup.sid',
   secret: process.env.SESSION_SECRET || 'standup-secret-key-change-in-production',
   store: sessionStore,
   resave: false,
@@ -87,7 +74,8 @@ app.use(session({
     // In development allow cross-site requests from the frontend dev server
     // by using 'none'. In production prefer 'lax' for safety (or keep 'none' with secure=true).
     sameSite: isProduction ? 'lax' : 'none'
-  }
+  },
+  name: process.env.SESSION_NAME || 'standup.sid'
 }));
 
 // Attach user to request
