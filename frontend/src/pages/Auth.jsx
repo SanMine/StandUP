@@ -456,7 +456,7 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-2">
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
@@ -470,6 +470,7 @@ const Auth = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Enter your name"
                   className="mt-1"
+                  required
                 />
               </div>
             )}
@@ -482,6 +483,7 @@ const Auth = () => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="you@example.com"
                 className="mt-1"
+                required
               />
             </div>
             <div>
@@ -493,6 +495,8 @@ const Auth = () => {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
                 className="mt-1"
+                minLength={6}
+                required
               />
             </div>
             <Button type="submit" className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
