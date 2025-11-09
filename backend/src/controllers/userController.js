@@ -3,13 +3,7 @@ const { User, UserSkill, Project, Application, SavedJob, CareerRoadmap } = requi
 // Get user profile
 const getProfile = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.session.userId, {
-      include: [
-        { model: UserSkill, as: 'skills' },
-        { model: Project, as: 'projects' },
-        { model: CareerRoadmap, as: 'roadmap', order: [['order', 'ASC']] }
-      ]
-    });
+    const user = await User.findById(req.session.userId);
 
     if (!user) {
       return res.status(404).json({
@@ -21,6 +15,11 @@ const getProfile = async (req, res, next) => {
       });
     }
 
+    // Get related data
+    const skills = await UserSkill.find({ user_id: user._id });
+    const projects = await Project.find({ user_id: user._id });
+    const roadmap = await CareerRoadmap.find({ user_id: user._id }).sort({ order: 1 });
+
     // Calculate profile strength
     let profileStrength = 0;
     if (user.name) profileStrength += 10;
@@ -28,19 +27,20 @@ const getProfile = async (req, res, next) => {
     if (user.bio) profileStrength += 15;
     if (user.avatar) profileStrength += 10;
     if (user.graduation) profileStrength += 10;
-    if (user.skills && user.skills.length > 0) profileStrength += 20;
-    if (user.projects && user.projects.length > 0) profileStrength += 25;
+    if (skills && skills.length > 0) profileStrength += 20;
+    if (projects && projects.length > 0) profileStrength += 25;
 
     // Update profile strength
-    await user.update({ profile_strength: Math.min(profileStrength, 100) });
+    user.profile_strength = Math.min(profileStrength, 100);
+    await user.save();
 
     res.status(200).json({
       success: true,
       profile: {
         ...user.toSafeObject(),
-        skills: user.skills,
-        projects: user.projects,
-        roadmap: user.roadmap
+        skills,
+        projects,
+        roadmap
       }
     });
   } catch (error) {
@@ -51,7 +51,7 @@ const getProfile = async (req, res, next) => {
 // Update user profile
 const updateProfile = async (req, res, next) => {
   try {
-    const user = await User.findByPk(req.session.userId);
+    const user = await User.findById(req.session.userId);
     
     if (!user) {
       return res.status(404).json({
@@ -74,16 +74,17 @@ const updateProfile = async (req, res, next) => {
       website
     } = req.body;
 
-    await user.update({
-      name: name || user.name,
-      bio: bio !== undefined ? bio : user.bio,
-      avatar: avatar !== undefined ? avatar : user.avatar,
-      graduation: graduation !== undefined ? graduation : user.graduation,
-      company_name: company_name !== undefined ? company_name : user.company_name,
-      company_size: company_size !== undefined ? company_size : user.company_size,
-      industry: industry !== undefined ? industry : user.industry,
-      website: website !== undefined ? website : user.website
-    });
+    // Update fields
+    if (name !== undefined) user.name = name;
+    if (bio !== undefined) user.bio = bio;
+    if (avatar !== undefined) user.avatar = avatar;
+    if (graduation !== undefined) user.graduation = graduation;
+    if (company_name !== undefined) user.company_name = company_name;
+    if (company_size !== undefined) user.company_size = company_size;
+    if (industry !== undefined) user.industry = industry;
+    if (website !== undefined) user.website = website;
+
+    await user.save();
 
     res.status(200).json({
       success: true,
@@ -111,16 +112,14 @@ const addSkills = async (req, res, next) => {
     }
 
     // Remove existing skills
-    await UserSkill.destroy({ where: { user_id: req.session.userId } });
+    await UserSkill.deleteMany({ user_id: req.session.userId });
 
     // Add new skills
-    const userSkills = await Promise.all(
-      skills.map(skill => 
-        UserSkill.create({
-          user_id: req.session.userId,
-          skill_name: skill
-        })
-      )
+    const userSkills = await UserSkill.insertMany(
+      skills.map(skill => ({
+        user_id: req.session.userId,
+        skill_name: skill
+      }))
     );
 
     res.status(200).json({
@@ -141,18 +140,15 @@ const getDashboardStats = async (req, res, next) => {
 
     if (userRole === 'student') {
       // Student dashboard stats
-      const applicationsCount = await Application.count({ where: { user_id: userId } });
-      const interviewsCount = await Application.count({ 
-        where: { 
-          user_id: userId,
-          status: 'interview'
-        } 
+      const applicationsCount = await Application.countDocuments({ user_id: userId });
+      const interviewsCount = await Application.countDocuments({ 
+        user_id: userId,
+        status: 'interview'
       });
-      const savedJobsCount = await SavedJob.count({ where: { user_id: userId } });
+      const savedJobsCount = await SavedJob.countDocuments({ user_id: userId });
 
-      const user = await User.findByPk(userId, {
-        include: [{ model: CareerRoadmap, as: 'roadmap' }]
-      });
+      const user = await User.findById(userId);
+      const roadmap = await CareerRoadmap.find({ user_id: userId });
 
       res.status(200).json({
         success: true,
@@ -161,25 +157,23 @@ const getDashboardStats = async (req, res, next) => {
           applications: applicationsCount,
           interviews: interviewsCount,
           savedJobs: savedJobsCount,
-          roadmap: user.roadmap
+          roadmap
         }
       });
     } else if (userRole === 'employer') {
       // Employer dashboard stats
       const { Job } = require('../models');
-      const jobsCount = await Job.count({ where: { employer_id: userId } });
-      const activeJobsCount = await Job.count({ 
-        where: { 
-          employer_id: userId,
-          status: 'active'
-        } 
+      const jobsCount = await Job.countDocuments({ employer_id: userId });
+      const activeJobsCount = await Job.countDocuments({ 
+        employer_id: userId,
+        status: 'active'
       });
-      const applicationsCount = await Application.count({
-        include: [{
-          model: Job,
-          as: 'job',
-          where: { employer_id: userId }
-        }]
+      
+      // Count applications for employer's jobs
+      const jobs = await Job.find({ employer_id: userId }).select('_id');
+      const jobIds = jobs.map(job => job._id);
+      const applicationsCount = await Application.countDocuments({
+        job_id: { $in: jobIds }
       });
 
       res.status(200).json({
@@ -198,51 +192,71 @@ const getDashboardStats = async (req, res, next) => {
 
 // Onboarding: update profile, skills, and desired roles (career roadmap)
 const onboarding = async (req, res, next) => {
-  const t = await require('../models').sequelize.transaction();
+  const session = await require('../models').mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    const user = await User.findByPk(req.session.userId, { transaction: t });
+    const user = await User.findById(req.session.userId).session(session);
     if (!user) {
-      await t.rollback();
-      return res.status(404).json({ success: false, error: { code: 'USER_NOT_FOUND', message: 'User not found' } });
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ 
+        success: false, 
+        error: { 
+          code: 'USER_NOT_FOUND', 
+          message: 'User not found' 
+        } 
+      });
     }
 
     const { name, graduation, skills, roles, company_name } = req.body;
 
     // Update basic profile fields
-    await user.update({
-      name: name !== undefined ? name : user.name,
-      graduation: graduation !== undefined ? graduation : user.graduation,
-      company_name: company_name !== undefined ? company_name : user.company_name
-    }, { transaction: t });
+    if (name !== undefined) user.name = name;
+    if (graduation !== undefined) user.graduation = graduation;
+    if (company_name !== undefined) user.company_name = company_name;
+    
+    await user.save({ session });
 
     // Replace skills
     if (Array.isArray(skills)) {
-      await UserSkill.destroy({ where: { user_id: user.id }, transaction: t });
-      await Promise.all(skills.map(skill => UserSkill.create({ user_id: user.id, skill_name: skill }, { transaction: t })));
+      await UserSkill.deleteMany({ user_id: user._id }, { session });
+      await UserSkill.insertMany(
+        skills.map(skill => ({ user_id: user._id, skill_name: skill })),
+        { session }
+      );
     }
 
     // Replace career roadmap entries for desired roles (only for students)
     if (Array.isArray(roles)) {
-      // remove existing roadmap entries
-      await CareerRoadmap.destroy({ where: { user_id: user.id }, transaction: t });
-      // create new roadmap entries from roles
-      await Promise.all(roles.map((roleTitle, idx) => CareerRoadmap.create({
-        user_id: user.id,
-        title: roleTitle,
-        order: idx
-      }, { transaction: t })));
+      await CareerRoadmap.deleteMany({ user_id: user._id }, { session });
+      await CareerRoadmap.insertMany(
+        roles.map((roleTitle, idx) => ({
+          user_id: user._id,
+          title: roleTitle,
+          order: idx
+        })),
+        { session }
+      );
     }
 
-    await t.commit();
+    await session.commitTransaction();
+    session.endSession();
 
-    // reload user with skills and roadmap
-    const updated = await User.findByPk(user.id, {
-      include: [ { model: UserSkill, as: 'skills' }, { model: CareerRoadmap, as: 'roadmap' } ]
+    // Reload user with skills and roadmap
+    const userSkills = await UserSkill.find({ user_id: user._id });
+    const userRoadmap = await CareerRoadmap.find({ user_id: user._id });
+
+    res.status(200).json({ 
+      success: true, 
+      message: 'Onboarding saved', 
+      user: user.toSafeObject(), 
+      skills: userSkills, 
+      roadmap: userRoadmap 
     });
-
-    res.status(200).json({ success: true, message: 'Onboarding saved', user: updated.toSafeObject(), skills: updated.skills, roadmap: updated.roadmap });
   } catch (error) {
-    await t.rollback();
+    await session.abortTransaction();
+    session.endSession();
     next(error);
   }
 };
