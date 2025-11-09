@@ -1,78 +1,77 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Job = sequelize.define('jobs', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const jobSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   employer_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'User'
   },
   title: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   company: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   logo: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   location: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   type: {
-    type: DataTypes.ENUM('Internship', 'Full-time', 'Part-time', 'Contract'),
-    allowNull: false,
-    defaultValue: 'Full-time'
+    type: String,
+    enum: ['Internship', 'Full-time', 'Part-time', 'Contract'],
+    default: 'Full-time'
   },
   mode: {
-    type: DataTypes.ENUM('Onsite', 'Hybrid', 'Remote'),
-    allowNull: false,
-    defaultValue: 'Onsite'
+    type: String,
+    enum: ['Onsite', 'Hybrid', 'Remote'],
+    default: 'Onsite'
   },
   salary: {
-    type: DataTypes.STRING(100),
-    allowNull: true
+    type: String,
+    default: null
   },
   description: {
-    type: DataTypes.TEXT,
-    allowNull: false
+    type: String,
+    required: true
   },
   requirements: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
+    type: [String],
+    default: []
   },
   culture: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
+    type: [String],
+    default: []
   },
   posted_date: {
-    type: DataTypes.DATEONLY,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
+    type: Date,
+    default: Date.now
   },
   status: {
-    type: DataTypes.ENUM('active', 'closed', 'draft'),
-    allowNull: false,
-    defaultValue: 'active'
+    type: String,
+    enum: ['active', 'closed', 'draft'],
+    default: 'active'
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+jobSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const Job = mongoose.model('Job', jobSchema);
 
 module.exports = Job;

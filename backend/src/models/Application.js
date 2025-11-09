@@ -1,57 +1,56 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const Application = sequelize.define('applications', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const applicationSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   user_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'User'
   },
   job_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'jobs',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'Job'
   },
   status: {
-    type: DataTypes.ENUM('saved', 'applied', 'screening', 'interview', 'offer', 'rejected', 'withdrawn'),
-    allowNull: false,
-    defaultValue: 'applied'
+    type: String,
+    enum: ['saved', 'applied', 'screening', 'interview', 'offer', 'rejected', 'withdrawn'],
+    default: 'applied'
   },
   applied_date: {
-    type: DataTypes.DATEONLY,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
+    type: Date,
+    required: true,
+    default: Date.now
   },
   last_update: {
-    type: DataTypes.DATEONLY,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
+    type: Date,
+    required: true,
+    default: Date.now
   },
   notes: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   timeline: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    defaultValue: []
+    type: mongoose.Schema.Types.Mixed,
+    default: []
   }
 }, {
   timestamps: true,
-  underscored: true
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+applicationSchema.index({ user_id: 1, job_id: 1 }, { unique: true });
+
+applicationSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const Application = mongoose.model('Application', applicationSchema);
 
 module.exports = Application;

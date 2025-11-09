@@ -1,29 +1,30 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
+const { v4: uuidv4 } = require('uuid');
 
-const JobSkill = sequelize.define('job_skills', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const jobSkillSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   job_id: {
-    type: DataTypes.UUID,
-    allowNull: false,
-    references: {
-      model: 'jobs',
-      key: 'id'
-    },
-    onDelete: 'CASCADE'
+    type: String,
+    required: true,
+    ref: 'Job'
   },
   skill_name: {
-    type: DataTypes.STRING(100),
-    allowNull: false
+    type: String,
+    required: true
   }
 }, {
   timestamps: true,
-  underscored: true,
-  updatedAt: false
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
+
+jobSkillSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const JobSkill = mongoose.model('JobSkill', jobSkillSchema);
 
 module.exports = JobSkill;

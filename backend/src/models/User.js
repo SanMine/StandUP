@@ -1,99 +1,104 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
+const { v4: uuidv4 } = require('uuid');
 
-const User = sequelize.define('users', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
+const userSchema = new mongoose.Schema({
+  _id: {
+    type: String,
+    default: () => uuidv4()
   },
   email: {
-    type: DataTypes.STRING(255),
-    allowNull: false,
+    type: String,
+    required: true,
     unique: true,
-    validate: {
-      isEmail: true
-    }
+    lowercase: true,
+    trim: true
   },
   password: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   name: {
-    type: DataTypes.STRING(255),
-    allowNull: false
+    type: String,
+    required: true
   },
   role: {
-    type: DataTypes.ENUM('student', 'employer', 'admin'),
-    allowNull: false,
-    defaultValue: 'student'
+    type: String,
+    enum: ['student', 'employer', 'admin'],
+    default: 'student'
   },
   avatar: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
   profile_strength: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-    validate: {
-      min: 0,
-      max: 100
-    }
+    type: Number,
+    default: 0,
+    min: 0,
+    max: 100
   },
   graduation: {
-    type: DataTypes.DATEONLY,
-    allowNull: true
+    type: Date,
+    default: null
   },
   bio: {
-    type: DataTypes.TEXT,
-    allowNull: true
+    type: String,
+    default: null
   },
-  // Employer-specific fields
   company_name: {
-    type: DataTypes.STRING(255),
-    allowNull: true
+    type: String,
+    default: null
   },
   company_size: {
-    type: DataTypes.STRING(50),
-    allowNull: true
+    type: String,
+    default: null
   },
   industry: {
-    type: DataTypes.STRING(100),
-    allowNull: true
+    type: String,
+    default: null
   },
   website: {
-    type: DataTypes.STRING(255),
-    allowNull: true
+    type: String,
+    default: null
   }
 }, {
   timestamps: true,
-  underscored: true,
-  hooks: {
-    beforeCreate: async (user) => {
-      if (user.password) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
-    },
-    beforeUpdate: async (user) => {
-      if (user.changed('password')) {
-        const salt = await bcrypt.genSalt(10);
-        user.password = await bcrypt.hash(user.password, salt);
-      }
-    }
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
+});
+
+// Hash password before saving
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  
+  try {
+    const salt = await bcrypt.genSalt(10);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
 // Instance method to validate password
-User.prototype.validatePassword = async function(password) {
+userSchema.methods.validatePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
 };
 
 // Instance method to get safe user data (without password)
-User.prototype.toSafeObject = function() {
-  const { password, ...safeUser } = this.toJSON();
-  return safeUser;
+userSchema.methods.toSafeObject = function() {
+  const obj = this.toObject();
+  delete obj.password;
+  obj.id = obj._id;
+  delete obj.__v;
+  return obj;
 };
+
+// Virtual for id
+userSchema.virtual('id').get(function() {
+  return this._id;
+});
+
+const User = mongoose.model('User', userSchema);
 
 module.exports = User;
