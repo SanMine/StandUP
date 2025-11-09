@@ -3,14 +3,16 @@ const { Project } = require('../models');
 // Get user's projects
 const getUserProjects = async (req, res, next) => {
   try {
-    const projects = await Project.findAll({
-      where: { user_id: req.session.userId },
-      order: [['featured', 'DESC'], ['created_at', 'DESC']]
-    });
+    const projects = await Project.find({ user_id: req.session.userId })
+      .sort({ featured: -1, createdAt: -1 })
+      .lean();
+
+    // Add id field
+    const projectsWithId = projects.map(p => ({ ...p, id: p._id }));
 
     res.status(200).json({
       success: true,
-      data: projects
+      data: projectsWithId
     });
   } catch (error) {
     next(error);
@@ -36,7 +38,7 @@ const addProject = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Project added successfully',
-      data: project
+      data: { ...project.toObject(), id: project._id }
     });
   } catch (error) {
     next(error);
@@ -47,7 +49,7 @@ const addProject = async (req, res, next) => {
 const updateProject = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const project = await Project.findByPk(id);
+    const project = await Project.findById(id);
 
     if (!project) {
       return res.status(404).json({
@@ -72,20 +74,20 @@ const updateProject = async (req, res, next) => {
 
     const { title, description, image, tags, githubUrl, liveUrl, featured } = req.body;
 
-    await project.update({
-      title: title || project.title,
-      description: description || project.description,
-      image: image !== undefined ? image : project.image,
-      tags: tags !== undefined ? tags : project.tags,
-      github_url: githubUrl !== undefined ? githubUrl : project.github_url,
-      live_url: liveUrl !== undefined ? liveUrl : project.live_url,
-      featured: featured !== undefined ? featured : project.featured
-    });
+    if (title !== undefined) project.title = title;
+    if (description !== undefined) project.description = description;
+    if (image !== undefined) project.image = image;
+    if (tags !== undefined) project.tags = tags;
+    if (githubUrl !== undefined) project.github_url = githubUrl;
+    if (liveUrl !== undefined) project.live_url = liveUrl;
+    if (featured !== undefined) project.featured = featured;
+
+    await project.save();
 
     res.status(200).json({
       success: true,
       message: 'Project updated successfully',
-      data: project
+      data: { ...project.toObject(), id: project._id }
     });
   } catch (error) {
     next(error);
@@ -96,7 +98,7 @@ const updateProject = async (req, res, next) => {
 const deleteProject = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const project = await Project.findByPk(id);
+    const project = await Project.findById(id);
 
     if (!project) {
       return res.status(404).json({
@@ -119,7 +121,7 @@ const deleteProject = async (req, res, next) => {
       });
     }
 
-    await project.destroy();
+    await project.deleteOne();
 
     res.status(200).json({
       success: true,

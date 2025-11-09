@@ -3,21 +3,33 @@ const { Application, Job, JobSkill, SavedJob } = require('../models');
 // Get user's applications
 const getUserApplications = async (req, res, next) => {
   try {
-    const applications = await Application.findAll({
-      where: { user_id: req.session.userId },
-      include: [
-        {
-          model: Job,
-          as: 'job',
-          include: [{ model: JobSkill, as: 'skills' }]
+    const applications = await Application.find({ user_id: req.session.userId })
+      .sort({ applied_date: -1 })
+      .lean();
+
+    // Populate job and skills for each application
+    const applicationsWithDetails = await Promise.all(
+      applications.map(async (app) => {
+        const job = await Job.findById(app.job_id).lean();
+        if (job) {
+          const skills = await JobSkill.find({ job_id: job._id }).lean();
+          return {
+            ...app,
+            id: app._id,
+            job: {
+              ...job,
+              id: job._id,
+              skills
+            }
+          };
         }
-      ],
-      order: [['applied_date', 'DESC']]
-    });
+        return { ...app, id: app._id, job: null };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      data: applications
+      data: applicationsWithDetails
     });
   } catch (error) {
     next(error);
@@ -30,7 +42,7 @@ const applyForJob = async (req, res, next) => {
     const { jobId, notes } = req.body;
 
     // Check if job exists
-    const job = await Job.findByPk(jobId);
+    const job = await Job.findById(jobId);
     if (!job) {
       return res.status(404).json({
         success: false,
@@ -43,10 +55,8 @@ const applyForJob = async (req, res, next) => {
 
     // Check if already applied
     const existingApplication = await Application.findOne({
-      where: {
-        user_id: req.session.userId,
-        job_id: jobId
-      }
+      user_id: req.session.userId,
+      job_id: jobId
     });
 
     if (existingApplication) {
@@ -74,18 +84,22 @@ const applyForJob = async (req, res, next) => {
       }]
     });
 
-    const applicationWithJob = await Application.findByPk(application.id, {
-      include: [{
-        model: Job,
-        as: 'job',
-        include: [{ model: JobSkill, as: 'skills' }]
-      }]
-    });
+    // Get job with skills
+    const jobWithSkills = await Job.findById(jobId).lean();
+    const skills = await JobSkill.find({ job_id: jobId }).lean();
 
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully',
-      data: applicationWithJob
+      data: {
+        ...application.toObject(),
+        id: application._id,
+        job: {
+          ...jobWithSkills,
+          id: jobWithSkills._id,
+          skills
+        }
+      }
     });
   } catch (error) {
     next(error);
@@ -98,7 +112,7 @@ const updateApplication = async (req, res, next) => {
     const { id } = req.params;
     const { status, notes } = req.body;
 
-    const application = await Application.findByPk(id);
+    const application = await Application.findById(id);
 
     if (!application) {
       return res.status(404).json({
@@ -139,25 +153,29 @@ const updateApplication = async (req, res, next) => {
       });
     }
 
-    await application.update({
-      status: status || application.status,
-      notes: notes !== undefined ? notes : application.notes,
-      last_update: new Date(),
-      timeline
-    });
+    if (status !== undefined) application.status = status;
+    if (notes !== undefined) application.notes = notes;
+    application.last_update = new Date();
+    application.timeline = timeline;
+    
+    await application.save();
 
-    const updatedApplication = await Application.findByPk(application.id, {
-      include: [{
-        model: Job,
-        as: 'job',
-        include: [{ model: JobSkill, as: 'skills' }]
-      }]
-    });
+    // Get job with skills
+    const job = await Job.findById(application.job_id).lean();
+    const skills = await JobSkill.find({ job_id: application.job_id }).lean();
 
     res.status(200).json({
       success: true,
       message: 'Application updated successfully',
-      data: updatedApplication
+      data: {
+        ...application.toObject(),
+        id: application._id,
+        job: job ? {
+          ...job,
+          id: job._id,
+          skills
+        } : null
+      }
     });
   } catch (error) {
     next(error);
@@ -169,7 +187,7 @@ const deleteApplication = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const application = await Application.findByPk(id);
+    const application = await Application.findById(id);
 
     if (!application) {
       return res.status(404).json({
@@ -192,7 +210,7 @@ const deleteApplication = async (req, res, next) => {
       });
     }
 
-    await application.destroy();
+    await application.deleteOne();
 
     res.status(200).json({
       success: true,
@@ -206,19 +224,33 @@ const deleteApplication = async (req, res, next) => {
 // Get saved jobs
 const getSavedJobs = async (req, res, next) => {
   try {
-    const savedJobs = await SavedJob.findAll({
-      where: { user_id: req.session.userId },
-      include: [{
-        model: Job,
-        as: 'job',
-        include: [{ model: JobSkill, as: 'skills' }]
-      }],
-      order: [['saved_date', 'DESC']]
-    });
+    const savedJobs = await SavedJob.find({ user_id: req.session.userId })
+      .sort({ saved_date: -1 })
+      .lean();
+
+    // Populate job and skills
+    const savedJobsWithDetails = await Promise.all(
+      savedJobs.map(async (savedJob) => {
+        const job = await Job.findById(savedJob.job_id).lean();
+        if (job) {
+          const skills = await JobSkill.find({ job_id: job._id }).lean();
+          return {
+            ...savedJob,
+            id: savedJob._id,
+            job: {
+              ...job,
+              id: job._id,
+              skills
+            }
+          };
+        }
+        return { ...savedJob, id: savedJob._id, job: null };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      data: savedJobs
+      data: savedJobsWithDetails
     });
   } catch (error) {
     next(error);
@@ -231,7 +263,7 @@ const saveJob = async (req, res, next) => {
     const { jobId } = req.body;
 
     // Check if job exists
-    const job = await Job.findByPk(jobId);
+    const job = await Job.findById(jobId);
     if (!job) {
       return res.status(404).json({
         success: false,
@@ -244,10 +276,8 @@ const saveJob = async (req, res, next) => {
 
     // Check if already saved
     const existing = await SavedJob.findOne({
-      where: {
-        user_id: req.session.userId,
-        job_id: jobId
-      }
+      user_id: req.session.userId,
+      job_id: jobId
     });
 
     if (existing) {
@@ -269,7 +299,7 @@ const saveJob = async (req, res, next) => {
     res.status(201).json({
       success: true,
       message: 'Job saved successfully',
-      data: savedJob
+      data: { ...savedJob.toObject(), id: savedJob._id }
     });
   } catch (error) {
     next(error);
@@ -282,10 +312,8 @@ const unsaveJob = async (req, res, next) => {
     const { jobId } = req.params;
 
     const savedJob = await SavedJob.findOne({
-      where: {
-        user_id: req.session.userId,
-        job_id: jobId
-      }
+      user_id: req.session.userId,
+      job_id: jobId
     });
 
     if (!savedJob) {
@@ -298,7 +326,7 @@ const unsaveJob = async (req, res, next) => {
       });
     }
 
-    await savedJob.destroy();
+    await savedJob.deleteOne();
 
     res.status(200).json({
       success: true,

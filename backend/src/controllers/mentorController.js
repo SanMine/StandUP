@@ -1,25 +1,23 @@
 const { Mentor, MentorSession, User } = require('../models');
-const { Op } = require('sequelize');
 
 // Get all mentors
 const getAllMentors = async (req, res, next) => {
   try {
     const { search, expertise } = req.query;
-    const where = {};
+    const query = {};
 
     // Search filter
     if (search) {
-      where[Op.or] = [
-        { name: { [Op.like]: `%${search}%` } },
-        { title: { [Op.like]: `%${search}%` } },
-        { company: { [Op.like]: `%${search}%` } }
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { title: { $regex: search, $options: 'i' } },
+        { company: { $regex: search, $options: 'i' } }
       ];
     }
 
-    let mentors = await Mentor.findAll({
-      where,
-      order: [['rating', 'DESC'], ['sessions_count', 'DESC']]
-    });
+    let mentors = await Mentor.find(query)
+      .sort({ rating: -1, sessions_count: -1 })
+      .lean();
 
     // Filter by expertise if provided
     if (expertise) {
@@ -31,6 +29,9 @@ const getAllMentors = async (req, res, next) => {
         )
       );
     }
+
+    // Add id field
+    mentors = mentors.map(m => ({ ...m, id: m._id }));
 
     res.status(200).json({
       success: true,
@@ -46,7 +47,7 @@ const getMentorById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    const mentor = await Mentor.findByPk(id);
+    const mentor = await Mentor.findById(id).lean();
 
     if (!mentor) {
       return res.status(404).json({
@@ -60,7 +61,7 @@ const getMentorById = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: mentor
+      data: { ...mentor, id: mentor._id }
     });
   } catch (error) {
     next(error);
@@ -73,7 +74,7 @@ const bookSession = async (req, res, next) => {
     const { mentorId, topic, preferredDate, preferredTime, message } = req.body;
 
     // Check if mentor exists
-    const mentor = await Mentor.findByPk(mentorId);
+    const mentor = await Mentor.findById(mentorId);
     if (!mentor) {
       return res.status(404).json({
         success: false,
@@ -95,17 +96,19 @@ const bookSession = async (req, res, next) => {
       status: 'pending'
     });
 
-    const sessionWithDetails = await MentorSession.findByPk(session.id, {
-      include: [
-        { model: Mentor, as: 'mentor' },
-        { model: User, as: 'user', attributes: ['id', 'name', 'email'] }
-      ]
-    });
+    // Get mentor and user details
+    const mentorData = await Mentor.findById(mentorId).lean();
+    const userData = await User.findById(req.session.userId).select('_id name email').lean();
 
     res.status(201).json({
       success: true,
       message: 'Session request sent successfully',
-      data: sessionWithDetails
+      data: {
+        ...session.toObject(),
+        id: session._id,
+        mentor: mentorData ? { ...mentorData, id: mentorData._id } : null,
+        user: userData ? { ...userData, id: userData._id } : null
+      }
     });
   } catch (error) {
     next(error);
@@ -115,15 +118,25 @@ const bookSession = async (req, res, next) => {
 // Get user's mentor sessions
 const getUserSessions = async (req, res, next) => {
   try {
-    const sessions = await MentorSession.findAll({
-      where: { user_id: req.session.userId },
-      include: [{ model: Mentor, as: 'mentor' }],
-      order: [['preferred_date', 'DESC']]
-    });
+    const sessions = await MentorSession.find({ user_id: req.session.userId })
+      .sort({ preferred_date: -1 })
+      .lean();
+
+    // Populate mentor for each session
+    const sessionsWithMentor = await Promise.all(
+      sessions.map(async (session) => {
+        const mentor = await Mentor.findById(session.mentor_id).lean();
+        return {
+          ...session,
+          id: session._id,
+          mentor: mentor ? { ...mentor, id: mentor._id } : null
+        };
+      })
+    );
 
     res.status(200).json({
       success: true,
-      data: sessions
+      data: sessionsWithMentor
     });
   } catch (error) {
     next(error);
