@@ -54,6 +54,12 @@ const Auth = () => {
       return;
     }
 
+    // For signup, validate name
+    if (authMode === 'signup' && !formData.name) {
+      setError('Name is required');
+      return;
+    }
+
     try {
       if (authMode === 'signin') {
         const res = await signin(formData.email, formData.password);
@@ -84,6 +90,17 @@ const Auth = () => {
       console.error(err);
       setError(err?.response?.data?.error?.message || err.message || 'An error occurred');
     }
+  };
+
+  const toggleAuthMode = () => {
+    setAuthMode(authMode === 'signin' ? 'signup' : 'signin');
+    setError('');
+    // Keep email but clear password and name for security
+    setFormData(prev => ({
+      ...prev,
+      password: '',
+      name: ''
+    }));
   };
 
   const handleRoleSelection = (role) => {
