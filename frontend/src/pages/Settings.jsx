@@ -1,36 +1,190 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
 import { Switch } from '../components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { Camera, Save } from 'lucide-react';
-import { users } from '../utils/mockData';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '../components/ui/form';
+import { Camera, Save, Loader2, X, Plus } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { userAPI } from '../services/api';
 import DashboardLayout from '../components/Layout/DashboardLayout';
+import { useToast } from '../hooks/use-toast';
+
+// Zod schema based on User model
+const profileSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  bio: z.string().optional(),
+  avatar: z.string().url().optional().or(z.literal('')),
+  graduation: z.string().optional(),
+  // Student fields
+  skills: z.array(z.string()).optional(),
+  // Employer fields
+  company_name: z.string().optional(),
+  company_size: z.string().optional(),
+  industry: z.string().optional(),
+  website: z.string().url().optional().or(z.literal(''))
+});
 
 const Settings = () => {
-  const { user: authUser } = useAuth();
-
-  const currentUser = authUser
-    ? {
-        id: authUser.id,
-        name: authUser.name,
-        email: authUser.email,
-        avatar: authUser.avatar || users.student.avatar,
-        role: authUser.role,
-        profileStrength: authUser.profile_strength ?? authUser.profileStrength ?? 0,
-        skills: Array.isArray(authUser.skills)
-          ? authUser.skills.map(s => s.skill_name || s.name || s)
-          : users.student.skills,
-        graduation: authUser.graduation || users.student.graduation,
-        bio: authUser.bio || users.student.bio
-      }
-    : users.student;
+  const { user: authUser, fetchMe } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('profile');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [newSkill, setNewSkill] = useState('');
+  const [tempSkills, setTempSkills] = useState([]);
+
+  const form = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      bio: '',
+      avatar: '',
+      graduation: '',
+      skills: [],
+      company_name: '',
+      company_size: '',
+      industry: '',
+      website: ''
+    }
+  });
+
+  // Fetch user profile data
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setIsLoading(true);
+        const response = await userAPI.getProfile();
+        
+        if (response.success && response.profile) {
+          const profile = response.profile;
+          
+          // Format graduation date for input[type="date"]
+          let graduationDate = '';
+          if (profile.graduation) {
+            const date = new Date(profile.graduation);
+            graduationDate = date.toISOString().split('T')[0];
+          }
+
+          // Extract skill names from skills array
+          const skillNames = profile.skills?.map(s => s.skill_name || s.name || s) || [];
+          setTempSkills(skillNames);
+
+          // Set form values
+          form.reset({
+            name: profile.name || '',
+            email: profile.email || '',
+            bio: profile.bio || '',
+            avatar: profile.avatar || '',
+            graduation: graduationDate,
+            skills: skillNames,
+            company_name: profile.company_name || '',
+            company_size: profile.company_size || '',
+            industry: profile.industry || '',
+            website: profile.website || ''
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load profile data'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  // Handle form submission
+  const onSubmit = async (data) => {
+    try {
+      setIsSaving(true);
+
+      // Prepare data for backend
+      const profileData = {
+        name: data.name,
+        email: data.email,
+        bio: data.bio,
+        avatar: data.avatar,
+        graduation: data.graduation,
+        company_name: data.company_name,
+        company_size: data.company_size,
+        industry: data.industry,
+        website: data.website
+      };
+
+      // Update profile
+      const response = await userAPI.updateProfile(profileData);
+
+      if (response.success) {
+        // Update skills separately if changed
+        if (tempSkills.length > 0) {
+          await userAPI.updateSkills(tempSkills);
+        }
+
+        // Refresh user context
+        if (fetchMe) {
+          await fetchMe();
+        }
+
+        toast({
+          title: 'Success',
+          description: 'Profile updated successfully'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.error?.message || 'Failed to update profile'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle skill management
+  const addSkill = () => {
+    if (newSkill.trim() && !tempSkills.includes(newSkill.trim())) {
+      const updatedSkills = [...tempSkills, newSkill.trim()];
+      setTempSkills(updatedSkills);
+      form.setValue('skills', updatedSkills);
+      setNewSkill('');
+    }
+  };
+
+  const removeSkill = (skillToRemove) => {
+    const updatedSkills = tempSkills.filter(s => s !== skillToRemove);
+    setTempSkills(updatedSkills);
+    form.setValue('skills', updatedSkills);
+  };
+
+  const currentUser = authUser || {};
+
+  if (isLoading) {
+    return (
+      <DashboardLayout user={currentUser}>
+        <div className="flex items-center justify-center h-96">
+          <Loader2 className="h-8 w-8 animate-spin text-[#FF7000]" />
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout user={currentUser}>
@@ -58,70 +212,233 @@ const Settings = () => {
                 <CardDescription>Update your personal details</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="flex items-center gap-6">
-                  <div className="relative">
-                    <Avatar className="h-24 w-24 border-4 border-[#FFE4CC]">
-                      <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-                      <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    {/* Avatar Section */}
+                    <div className="flex items-center gap-6">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 border-4 border-[#FFE4CC]">
+                          <AvatarImage src={form.watch('avatar')} alt={form.watch('name')} />
+                          <AvatarFallback>{form.watch('name')?.charAt(0) || 'U'}</AvatarFallback>
+                        </Avatar>
+                        <Button 
+                          type="button"
+                          size="icon" 
+                          className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-[#FF7000] hover:bg-[#FF7000]/90"
+                        >
+                          <Camera className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-[#0F151D] mb-1">{form.watch('name')}</h3>
+                        <p className="text-sm text-[#4B5563] mb-2">{form.watch('email')}</p>
+                        <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC]">
+                          {currentUser.role === 'employer' ? 'Employer' : 'Student'}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    {/* Basic Fields */}
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name *</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="Enter your name" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email *</FormLabel>
+                            <FormControl>
+                              <Input {...field} type="email" placeholder="you@example.com" disabled />
+                            </FormControl>
+                            <FormDescription>Email cannot be changed</FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      {currentUser.role === 'student' && (
+                        <FormField
+                          control={form.control}
+                          name="graduation"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Expected Graduation</FormLabel>
+                              <FormControl>
+                                <Input {...field} type="date" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      <FormField
+                        control={form.control}
+                        name="avatar"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Avatar URL</FormLabel>
+                            <FormControl>
+                              <Input {...field} placeholder="https://example.com/avatar.jpg" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Bio */}
+                    <FormField
+                      control={form.control}
+                      name="bio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bio</FormLabel>
+                          <FormControl>
+                            <Textarea 
+                              {...field} 
+                              placeholder="Tell us about yourself..."
+                              rows={3}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Student: Skills */}
+                    {currentUser.role === 'student' && (
+                      <div className="space-y-3">
+                        <Label>Skills</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={newSkill}
+                            onChange={(e) => setNewSkill(e.target.value)}
+                            placeholder="Add a skill"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                addSkill();
+                              }
+                            }}
+                          />
+                          <Button type="button" onClick={addSkill} size="icon">
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {tempSkills.map((skill) => (
+                            <Badge
+                              key={skill}
+                              className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF] pr-1"
+                            >
+                              {skill}
+                              <button
+                                type="button"
+                                onClick={() => removeSkill(skill)}
+                                className="ml-2 hover:text-red-600"
+                              >
+                                <X className="h-3 w-3" />
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Employer: Company Fields */}
+                    {currentUser.role === 'employer' && (
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <FormField
+                          control={form.control}
+                          name="company_name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Name</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="Your company" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="company_size"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Company Size</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="e.g., 50-100 employees" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="industry"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Industry</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="e.g., Technology" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={form.control}
+                          name="website"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Website</FormLabel>
+                              <FormControl>
+                                <Input {...field} placeholder="https://company.com" />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
                     <Button 
-                      size="icon" 
-                      className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-[#FF7000] hover:bg-[#FF7000]/90"
+                      type="submit" 
+                      className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                      disabled={isSaving}
                     >
-                      <Camera className="h-4 w-4" />
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save Changes
+                        </>
+                      )}
                     </Button>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[#0F151D] mb-1">{currentUser.name}</h3>
-                    <p className="text-sm text-[#4B5563] mb-2">{currentUser.email}</p>
-                    <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC]">
-                      Free Plan
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input id="name" defaultValue={currentUser.name} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue={currentUser.email} className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="phone">Phone Number</Label>
-                    <Input id="phone" placeholder="+66 XX XXX XXXX" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="location">Location</Label>
-                    <Input id="location" placeholder="Bangkok, Thailand" className="mt-1" />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="bio">Bio</Label>
-                  <Input id="bio" defaultValue={currentUser.bio} className="mt-1" />
-                </div>
-
-                <div>
-                  <Label className="mb-3 block">Skills</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {currentUser.skills.map((skill) => (
-                      <Badge key={skill} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF]">
-                        {skill}
-                      </Badge>
-                    ))}
-                    <Button size="sm" variant="outline" className="h-6">
-                      + Add Skill
-                    </Button>
-                  </div>
-                </div>
-
-                <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Changes
-                </Button>
+                  </form>
+                </Form>
               </CardContent>
             </Card>
           </TabsContent>
@@ -162,7 +479,7 @@ const Settings = () => {
               <CardContent className="space-y-6">
                 {[
                   { label: 'Profile Visibility', description: 'Allow employers to find your profile', defaultChecked: true },
-                  { label: 'Show Activity Status', description: 'Let others see when you\'re active', defaultChecked: true },
+                  { label: 'Show Activity Status', description: "Let others see when you're active", defaultChecked: true },
                   { label: 'Searchable by Email', description: 'Allow people to find you by email', defaultChecked: false },
                   { label: 'Anonymous Application', description: 'Hide your name until interview stage', defaultChecked: false }
                 ].map((item) => (
