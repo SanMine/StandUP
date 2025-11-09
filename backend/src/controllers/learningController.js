@@ -4,24 +4,26 @@ const { Course, Event } = require('../models');
 const getAllCourses = async (req, res, next) => {
   try {
     const { level, provider } = req.query;
-    const where = {};
+    const query = {};
 
     if (level) {
-      where.level = level;
+      query.level = level;
     }
 
     if (provider) {
-      where.provider = provider;
+      query.provider = provider;
     }
 
-    const courses = await Course.findAll({
-      where,
-      order: [['rating', 'DESC'], ['students_count', 'DESC']]
-    });
+    const courses = await Course.find(query)
+      .sort({ rating: -1, students_count: -1 })
+      .lean();
+
+    // Add id field
+    const coursesWithId = courses.map(c => ({ ...c, id: c._id }));
 
     res.status(200).json({
       success: true,
-      data: courses
+      data: coursesWithId
     });
   } catch (error) {
     next(error);
@@ -32,24 +34,24 @@ const getAllCourses = async (req, res, next) => {
 const getAllEvents = async (req, res, next) => {
   try {
     const { type } = req.query;
-    const where = {
-      date: {
-        [require('sequelize').Op.gte]: new Date()
-      }
+    const query = {
+      date: { $gte: new Date() }
     };
 
     if (type) {
-      where.type = type;
+      query.type = type;
     }
 
-    const events = await Event.findAll({
-      where,
-      order: [['date', 'ASC'], ['time', 'ASC']]
-    });
+    const events = await Event.find(query)
+      .sort({ date: 1, time: 1 })
+      .lean();
+
+    // Add id field
+    const eventsWithId = events.map(e => ({ ...e, id: e._id }));
 
     res.status(200).json({
       success: true,
-      data: events
+      data: eventsWithId
     });
   } catch (error) {
     next(error);
@@ -110,6 +112,6 @@ const getCourseraCourses = async (req, res, next) => {
 
 module.exports = {
   getAllCourses,
-  getAllEvents
-  , getCourseraCourses
+  getAllEvents,
+  getCourseraCourses
 };

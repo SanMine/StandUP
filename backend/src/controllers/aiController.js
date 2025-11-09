@@ -129,12 +129,6 @@ Return only the Job IDs of matching positions in this exact format: [ID1, ID2, I
   }
 };
 
-// Example route setup (add this to your routes file)
-// router.post('/jobs/match', findMatchingJobs);
-
-// Example route setup (add this to your routes file)
-// router.post('/jobs/match', findMatchingJobs);
-
 // AI-powered job matching
 const matchJobs = async (req, res, next) => {
   try {
@@ -151,16 +145,22 @@ const matchJobs = async (req, res, next) => {
     }
 
     // Get active jobs
-    const jobs = await Job.findAll({
-      where: { status: 'active' },
-      include: [{ model: JobSkill, as: 'skills' }],
-      limit: 10,
-      order: [['posted_date', 'DESC']]
-    });
+    const jobs = await Job.find({ status: 'active' })
+      .limit(10)
+      .sort({ posted_date: -1 })
+      .lean();
+
+    // Get skills for each job
+    const jobsWithSkills = await Promise.all(
+      jobs.map(async (job) => {
+        const skills = await JobSkill.find({ job_id: job._id }).lean();
+        return { ...job, skills };
+      })
+    );
 
     // Calculate match scores using Gemini AI
     const matches = await Promise.all(
-      jobs.map(async (job) => {
+      jobsWithSkills.map(async (job) => {
         try {
           const matchData = await calculateJobMatch(
             {
@@ -178,15 +178,15 @@ const matchJobs = async (req, res, next) => {
           );
 
           return {
-            jobId: job.id,
-            job: job.toJSON(),
+            jobId: job._id,
+            job: { ...job, id: job._id },
             matchScore: matchData.matchScore,
             whyMatch: matchData.whyMatch,
             whyNotMatch: matchData.whyNotMatch,
             recommendation: matchData.recommendation
           };
         } catch (error) {
-          console.error('Error matching job:', job.id, error);
+          console.error('Error matching job:', job._id, error);
           return null;
         }
       })
@@ -262,11 +262,10 @@ const generateQuestions = async (req, res, next) => {
 const getRecommendations = async (req, res, next) => {
   try {
     // Get user profile
-    const user = await User.findByPk(req.session.userId, {
-      include: [{ model: UserSkill, as: 'skills' }]
-    });
+    const user = await User.findById(req.session.userId).lean();
+    const skills = await UserSkill.find({ user_id: req.session.userId }).lean();
 
-    if (!user || !user.skills || user.skills.length === 0) {
+    if (!user || !skills || skills.length === 0) {
       return res.status(400).json({
         success: false,
         error: {
@@ -277,7 +276,7 @@ const getRecommendations = async (req, res, next) => {
     }
 
     const recommendations = await getCareerRecommendations({
-      skills: user.skills.map(s => s.skill_name),
+      skills: skills.map(s => s.skill_name),
       desiredRoles: [], // Can be added to user model
       experienceLevel: 'entry-level'
     });
