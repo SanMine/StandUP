@@ -58,6 +58,24 @@ export const authAPI = {
   }
 };
 
+// User Profile API calls
+export const userAPI = {
+  getProfile: async () => {
+    const response = await api.get('/users/profile');
+    return response.data;
+  },
+  
+  updateProfile: async (profileData) => {
+    const response = await api.put('/users/profile', profileData);
+    return response.data;
+  },
+  
+  updateSkills: async (skills) => {
+    const response = await api.post('/users/skills', { skills });
+    return response.data;
+  }
+};
+
 // Jobs API calls
 export const jobsAPI = {
   getJobs: async (params = {}) => {
