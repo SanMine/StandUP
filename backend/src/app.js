@@ -157,13 +157,9 @@ app.use(errorHandler);
 // Database connection and server start
 const startServer = async () => {
   try {
-    // Test database connection
-    await sequelize.authenticate();
+    // Connect to MongoDB
+    await connectDB();
     console.log('✅ Database connection established successfully');
-
-    // Sync models with database
-    await sequelize.sync({ alter: false }); // Use alter: true only in development
-    console.log('✅ Database models synchronized');
 
     // Start server
     app.listen(PORT, () => {
@@ -181,13 +177,13 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM signal received: closing HTTP server');
-  await sequelize.close();
+  await mongoose.connection.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT signal received: closing HTTP server');
-  await sequelize.close();
+  await mongoose.connection.close();
   process.exit(0);
 });
 
