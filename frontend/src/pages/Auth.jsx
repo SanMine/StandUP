@@ -530,7 +530,7 @@ const Auth = () => {
             <div className="text-center text-sm">
               <button
                 type="button"
-                onClick={() => setAuthMode(authMode === 'signin' ? 'signup' : 'signin')}
+                onClick={toggleAuthMode}
                 className="text-[#FF7000] hover:underline font-medium"
               >
                 {authMode === 'signin' 
