@@ -17,6 +17,16 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     open: false,
+    allowedHosts: [
+      'cra-upgrade.preview.emergentagent.com',
+      '.emergentagent.com',
+      'localhost',
+    ],
+    hmr: {
+      host: 'cra-upgrade.preview.emergentagent.com',
+      protocol: 'wss',
+      clientPort: 443,
+    },
   },
   build: {
     outDir: 'build',
