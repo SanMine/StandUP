@@ -117,13 +117,17 @@ app.use('/api/auth/', authLimiter);
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   try {
-    await sequelize.authenticate();
-    res.status(200).json({
-      success: true,
-      message: 'Server is healthy',
-      database: 'Connected',
-      timestamp: new Date().toISOString()
-    });
+    // Check MongoDB connection
+    if (mongoose.connection.readyState === 1) {
+      res.status(200).json({
+        success: true,
+        message: 'Server is healthy',
+        database: 'Connected',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      throw new Error('MongoDB not connected');
+    }
   } catch (error) {
     res.status(503).json({
       success: false,
