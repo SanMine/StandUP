@@ -3,11 +3,12 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const rateLimit = require('express-rate-limit');
-const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-const { sequelize } = require('./models');
+const { mongoose } = require('./models');
+const { connectDB } = require('./config/database');
 const { errorHandler, notFoundHandler } = require('./middlewares/errorHandler');
 const { attachUser } = require('./middlewares/auth');
 
