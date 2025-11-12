@@ -127,7 +127,7 @@ const onSubmit = async (data) => {
 
     console.log(data);
 
-    // Include skills directly in the profile payload
+    // Include skills and desired positions directly in the profile payload
     const profileData = {
       name: data.name,
       email: data.email,
@@ -138,7 +138,9 @@ const onSubmit = async (data) => {
       company_size: data.company_size,
       industry: data.industry,
       website: data.website,
-      skills: tempSkills // <- include skills here
+      skills: tempSkills,
+      primary_goals: data.primary_goals,
+      desired_positions: tempPositions
     };
 
     const response = await userAPI.updateProfile(profileData);
