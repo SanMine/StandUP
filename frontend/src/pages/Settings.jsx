@@ -181,6 +181,22 @@ const onSubmit = async (data) => {
     form.setValue('skills', updated);
   };
 
+  // 🧩 Desired position management
+  const addPosition = () => {
+    if (newPosition.trim() && !tempPositions.includes(newPosition.trim())) {
+      const updated = [...tempPositions, newPosition.trim()];
+      setTempPositions(updated);
+      form.setValue('desired_positions', updated);
+      setNewPosition('');
+    }
+  };
+
+  const removePosition = (position) => {
+    const updated = tempPositions.filter(p => p !== position);
+    setTempPositions(updated);
+    form.setValue('desired_positions', updated);
+  };
+
   const currentUser = authUser || {};
 
   if (isLoading) {
