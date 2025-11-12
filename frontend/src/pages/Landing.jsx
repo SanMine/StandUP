@@ -95,19 +95,56 @@ const Landing = () => {
             />
           </div>
           <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate('/auth')}
-              className="text-gray-700 hover:text-[#FF7000] transition-colors"
-            >
-              Sign In
-            </Button>
-            <Button 
-              onClick={() => navigate('/auth')}
-              className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-6 transition-all shadow-sm hover:shadow-md"
-            >
-              Get Started
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-2 hover:bg-gray-100 rounded-lg px-3 py-2 transition-colors">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="bg-[#FF7000] text-white">
+                        {user.name?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-gray-700">{user.name}</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  {(user.role === 'employer' ? employerMenuItems : studentMenuItems).map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <DropdownMenuItem
+                        key={item.path}
+                        onClick={() => navigate(item.path)}
+                        className="cursor-pointer"
+                      >
+                        <Icon className="mr-2 h-4 w-4" />
+                        <span>{item.name}</span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                  <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-red-600">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Button 
+                  variant="ghost" 
+                  onClick={() => navigate('/auth')}
+                  className="text-gray-700 hover:text-[#FF7000] transition-colors"
+                >
+                  Sign In
+                </Button>
+                <Button 
+                  onClick={() => navigate('/auth')}
+                  className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-6 transition-all shadow-sm hover:shadow-md"
+                >
+                  Get Started
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </nav>
