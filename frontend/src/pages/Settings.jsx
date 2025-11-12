@@ -54,6 +54,8 @@ const Settings = () => {
       avatar: '',
       graduation: '',
       skills: [],
+      primary_goals: [],
+      desired_positions: [],
       company_name: '',
       company_size: '',
       industry: '',
