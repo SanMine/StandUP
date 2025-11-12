@@ -41,6 +41,7 @@ function App() {
           {/* Public */}
           <Route path="/jobs" element={<Jobs />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/demo" element={<EmployerDashboardDemo />} />
         </Routes>
       </AuthProvider>
       <Toaster />
