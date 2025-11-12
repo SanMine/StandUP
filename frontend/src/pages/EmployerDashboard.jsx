@@ -398,7 +398,7 @@ const EmployerDashboard = () => {
         initialData={selectedJob}
         isLoading={isLoading}
       />
-    </DashboardLayout>
+    </EmployerLayout>
   );
 };
 
