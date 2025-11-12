@@ -4,12 +4,39 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Badge } from '../components/ui/badge';
-import { CheckCircle2, Target, Users, TrendingUp, Award, Sparkles, ArrowRight, Star } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
+import { CheckCircle2, Target, Users, TrendingUp, Award, Sparkles, ArrowRight, Star, Settings as SettingsIcon, LogOut, LayoutDashboard, Briefcase, GraduationCap, BookOpen, Users2, Award as AwardIcon, FolderKanban } from 'lucide-react';
 import { jobs, mentors, testimonials, partnerCompanies } from '../utils/mockData';
+import { useAuth } from '../contexts/AuthContext';
 
 const Landing = () => {
   const navigate = useNavigate();
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const { user, signout } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signout();
+      navigate('/');
+    } catch (err) {
+      navigate('/');
+    }
+  };
+
+  const studentMenuItems = [
+    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Jobs', path: '/jobs', icon: Briefcase },
+    { name: 'Applications', path: '/applications', icon: FolderKanban },
+    { name: 'Mentors', path: '/mentors', icon: Users2 },
+    { name: 'Learning', path: '/learning', icon: GraduationCap },
+    { name: 'Skills', path: '/skills', icon: AwardIcon },
+    { name: 'Settings', path: '/settings', icon: SettingsIcon }
+  ];
+
+  const employerMenuItems = [
+    { name: 'Dashboard', path: '/employer-dashboard', icon: LayoutDashboard },
+    { name: 'Settings', path: '/settings', icon: SettingsIcon }
+  ];
 
   const featuredJobs = jobs.slice(0, 3);
   const featuredMentors = mentors.slice(0, 3);
