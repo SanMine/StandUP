@@ -4,6 +4,7 @@ import { Routes, Route } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import PublicRoute from "./components/Auth/PublicRoute";
 
 // Pages
 import Landing from "./pages/Landing";
