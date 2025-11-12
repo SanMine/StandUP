@@ -85,6 +85,10 @@ const Settings = () => {
           const skillNames = profile.skills?.map(s => s.skill_name || s.name || s) || [];
           setTempSkills(skillNames);
 
+          // Extract desired positions
+          const positions = profile.desired_positions || [];
+          setTempPositions(positions);
+
           // ✅ Populate form with fetched data
           form.reset({
             name: profile.name || '',
@@ -93,6 +97,8 @@ const Settings = () => {
             avatar: profile.avatar || '',
             graduation: graduationDate,
             skills: skillNames,
+            primary_goals: profile.primary_goals || [],
+            desired_positions: positions,
             company_name: profile.company_name || '',
             company_size: profile.company_size || '',
             industry: profile.industry || '',
