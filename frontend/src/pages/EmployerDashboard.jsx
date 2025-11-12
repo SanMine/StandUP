@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -13,50 +13,108 @@ import {
   Eye,
   Mail,
   Star,
-  CheckCircle2
+  CheckCircle2,
+  Edit,
+  Trash2
 } from 'lucide-react';
 import { users } from '../utils/mockData';
 import DashboardLayout from '../components/Layout/DashboardLayout';
+import JobModal from '../components/JobModal';
+import { jobsAPI } from '../services/api';
+import { toast } from 'sonner';
+import api from '../services/api';
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
   const currentUser = users.employer;
 
-  const kpis = [
-    { label: 'Open Roles', value: '5', icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-100' },
-    { label: 'Candidates in Pipeline', value: '23', icon: Users, color: 'text-[#FF7000]', bgColor: 'bg-[#FFE4CC]' },
-    { label: 'Avg. Time to Hire', value: '18 days', icon: Clock, color: 'text-green-600', bgColor: 'bg-green-100' },
-    { label: 'Quality Score', value: '4.7/5', icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-100' }
-  ];
+  const [jobs, setJobs] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingJobs, setIsFetchingJobs] = useState(true);
 
-  const openRoles = [
-    {
-      id: 'role-1',
-      title: 'Frontend Developer',
-      type: 'Full-time',
-      applicants: 12,
-      matched: 8,
-      postedDate: '2025-07-01',
-      status: 'Active'
-    },
-    {
-      id: 'role-2',
-      title: 'Backend Engineer',
-      type: 'Full-time',
-      applicants: 8,
-      matched: 5,
-      postedDate: '2025-07-05',
-      status: 'Active'
-    },
-    {
-      id: 'role-3',
-      title: 'Product Designer',
-      type: 'Contract',
-      applicants: 15,
-      matched: 10,
-      postedDate: '2025-06-28',
-      status: 'Active'
+  // Fetch jobs on component mount
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      setIsFetchingJobs(true);
+      const response = await jobsAPI.getJobs();
+      if (response.success) {
+        // Filter to show only jobs by this employer (in real scenario, backend should filter)
+        setJobs(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching jobs:', error);
+      toast.error('Failed to fetch jobs');
+    } finally {
+      setIsFetchingJobs(false);
     }
+  };
+
+  const handleCreateJob = () => {
+    setSelectedJob(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditJob = (job) => {
+    setSelectedJob(job);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteJob = async (jobId) => {
+    if (!window.confirm('Are you sure you want to delete this job posting?')) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      await api.delete(`/jobs/${jobId}`);
+      toast.success('Job deleted successfully');
+      fetchJobs(); // Refresh the list
+    } catch (error) {
+      console.error('Error deleting job:', error);
+      toast.error(error.response?.data?.error?.message || 'Failed to delete job');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJobSubmit = async (data) => {
+    try {
+      setIsLoading(true);
+      
+      if (selectedJob) {
+        // Update existing job
+        await api.put(`/jobs/${selectedJob._id || selectedJob.id}`, data);
+        toast.success('Job updated successfully');
+      } else {
+        // Create new job
+        const response = await jobsAPI.createJob(data);
+        if (response.success) {
+          toast.success('Job created successfully');
+        }
+      }
+      
+      setIsModalOpen(false);
+      setSelectedJob(null);
+      fetchJobs(); // Refresh the list
+    } catch (error) {
+      console.error('Error submitting job:', error);
+      toast.error(error.response?.data?.error?.message || 'Failed to save job');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const kpis = [
+    { label: 'Open Roles', value: jobs.filter(j => j.status === 'active').length.toString(), icon: Briefcase, color: 'text-blue-600', bgColor: 'bg-blue-100' },
+    { label: 'Total Jobs', value: jobs.length.toString(), icon: Users, color: 'text-[#FF7000]', bgColor: 'bg-[#FFE4CC]' },
+    { label: 'Draft Jobs', value: jobs.filter(j => j.status === 'draft').length.toString(), icon: Clock, color: 'text-green-600', bgColor: 'bg-green-100' },
+    { label: 'Closed Jobs', value: jobs.filter(j => j.status === 'closed').length.toString(), icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-100' }
   ];
 
   const topCandidates = [
@@ -91,16 +149,20 @@ const EmployerDashboard = () => {
 
   return (
     <DashboardLayout user={currentUser}>
-      <div className="space-y-8">
+      <div className="space-y-8" data-testid="employer-dashboard">
         {/* Welcome Section */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Space Grotesk, sans-serif' }}>
               Welcome back, {currentUser.name}!
             </h1>
             <p className="text-[#4B5563]">Here's your hiring overview</p>
           </div>
-          <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
+          <Button 
+            className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+            onClick={handleCreateJob}
+            data-testid="post-new-role-btn"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Post New Role
           </Button>
@@ -136,56 +198,86 @@ const EmployerDashboard = () => {
             <Card className="border-none shadow-md">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>Open Roles</CardTitle>
-                  <Button variant="ghost" className="text-[#FF7000] hover:text-[#FF7000]/90">
+                  <CardTitle>Posted Jobs</CardTitle>
+                  <Button 
+                    variant="ghost" 
+                    className="text-[#FF7000] hover:text-[#FF7000]/90"
+                    onClick={() => navigate('/jobs')}
+                  >
                     View All
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {openRoles.map((role) => (
-                  <div 
-                    key={role.id}
-                    className="border border-gray-200 rounded-xl p-4 hover:border-[#FF7000] hover:shadow-md transition-all cursor-pointer"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-[#0F151D] mb-1">{role.title}</h3>
-                        <div className="flex items-center gap-3 text-sm text-[#4B5563]">
-                          <span>{role.type}</span>
-                          <span>•</span>
-                          <span>Posted {new Date(role.postedDate).toLocaleDateString()}</span>
-                        </div>
-                      </div>
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
-                        {role.status}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-6 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4 text-[#4B5563]" />
-                        <span className="text-[#4B5563]">
-                          <span className="font-semibold text-[#0F151D]">{role.applicants}</span> applicants
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Star className="h-4 w-4 text-[#FF7000]" />
-                        <span className="text-[#4B5563]">
-                          <span className="font-semibold text-[#0F151D]">{role.matched}</span> top matches
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 mt-4">
-                      <Button size="sm" className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
-                        <Eye className="h-3 w-3 mr-1" />
-                        View Candidates
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        Edit Role
-                      </Button>
-                    </div>
+                {isFetchingJobs ? (
+                  <div className="text-center py-8 text-[#4B5563]">Loading jobs...</div>
+                ) : jobs.length === 0 ? (
+                  <div className="text-center py-8">
+                    <p className="text-[#4B5563] mb-4">No jobs posted yet</p>
+                    <Button 
+                      onClick={handleCreateJob}
+                      className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Post Your First Job
+                    </Button>
                   </div>
-                ))}
+                ) : (
+                  jobs.slice(0, 5).map((job) => (
+                    <div 
+                      key={job._id || job.id}
+                      className="border border-gray-200 rounded-xl p-4 hover:border-[#FF7000] hover:shadow-md transition-all"
+                      data-testid="job-card"
+                    >
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-[#0F151D] mb-1">{job.title}</h3>
+                          <div className="flex items-center gap-3 text-sm text-[#4B5563]">
+                            <span>{job.type}</span>
+                            <span>•</span>
+                            <span>{job.mode}</span>
+                            <span>•</span>
+                            <span>{job.location}</span>
+                          </div>
+                        </div>
+                        <Badge 
+                          className={
+                            job.status === 'active' 
+                              ? 'bg-green-100 text-green-700 hover:bg-green-100' 
+                              : job.status === 'draft'
+                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+                              : 'bg-gray-100 text-gray-700 hover:bg-gray-100'
+                          }
+                        >
+                          {job.status}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-[#4B5563] mb-3 line-clamp-2">{job.description}</p>
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleEditJob(job)}
+                          data-testid="edit-job-btn"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteJob(job._id || job.id)}
+                          disabled={isLoading}
+                          data-testid="delete-job-btn"
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
 
@@ -270,7 +362,11 @@ const EmployerDashboard = () => {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-[#0F151D] mb-4">Quick Actions</h3>
                 <div className="space-y-2">
-                  <Button variant="outline" className="w-full justify-start bg-white">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start bg-white"
+                    onClick={handleCreateJob}
+                  >
                     <Plus className="h-4 w-4 mr-2" />
                     Post New Job
                   </Button>
@@ -288,6 +384,18 @@ const EmployerDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Job Modal */}
+      <JobModal
+        open={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedJob(null);
+        }}
+        onSubmit={handleJobSubmit}
+        initialData={selectedJob}
+        isLoading={isLoading}
+      />
     </DashboardLayout>
   );
 };
