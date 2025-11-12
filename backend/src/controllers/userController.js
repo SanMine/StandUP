@@ -73,7 +73,9 @@ const updateProfile = async (req, res, next) => {
       company_size,
       industry,
       website,
-      skills // <- merged skills here
+      skills, // <- merged skills here
+      primary_goals,
+      desired_positions
     } = req.body;
 
     // Update basic fields
@@ -85,6 +87,8 @@ const updateProfile = async (req, res, next) => {
     if (company_size !== undefined) user.company_size = company_size;
     if (industry !== undefined) user.industry = industry;
     if (website !== undefined) user.website = website;
+    if (primary_goals !== undefined) user.primary_goals = primary_goals;
+    if (desired_positions !== undefined) user.desired_positions = desired_positions;
 
     await user.save({ session });
 
