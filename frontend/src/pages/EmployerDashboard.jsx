@@ -18,15 +18,17 @@ import {
   Trash2
 } from 'lucide-react';
 import { users } from '../utils/mockData';
-import DashboardLayout from '../components/Layout/DashboardLayout';
+import EmployerLayout from '../components/Layout/EmployerLayout';
 import JobModal from '../components/JobModal';
 import { jobsAPI } from '../services/api';
 import { toast } from 'sonner';
 import api from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
-  const currentUser = users.employer;
+  const { user } = useAuth();
+  const currentUser = user;
 
   const [jobs, setJobs] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
