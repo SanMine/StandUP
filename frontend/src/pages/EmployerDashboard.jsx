@@ -150,7 +150,7 @@ const EmployerDashboard = () => {
   ];
 
   return (
-    <DashboardLayout user={currentUser}>
+    <EmployerLayout user={currentUser}>
       <div className="space-y-8" data-testid="employer-dashboard">
         {/* Welcome Section */}
         <div className="flex items-center justify-between">
