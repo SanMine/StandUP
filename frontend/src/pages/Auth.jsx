@@ -106,7 +106,8 @@ const Auth = () => {
 
   const handleRoleSelection = (role) => {
     setSelectedRole(role);
-    setStep('onboarding');
+    setStep('auth');
+    setAuthMode('signup'); // Default to signup after role selection
   };
 
   const handleSkillToggle = (skill) => {
