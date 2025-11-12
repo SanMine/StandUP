@@ -209,6 +209,15 @@ const Auth = () => {
               I am a...
             </h1>
             <p className="text-[#4B5563]">Choose your role to get started</p>
+            <button
+              onClick={() => {
+                setStep('auth');
+                setAuthMode('signin');
+              }}
+              className="text-[#FF7000] hover:underline font-medium text-sm mt-4"
+            >
+              Already have an account? Sign In
+            </button>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             <Card 
