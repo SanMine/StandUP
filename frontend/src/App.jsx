@@ -17,6 +17,7 @@ import Learning from "./pages/Learning";
 import Portfolio from "./pages/Portfolio";
 import Settings from "./pages/Settings";
 import EmployerDashboard from "./pages/EmployerDashboard";
+import EmployerDashboardDemo from "./pages/EmployerDashboardDemo";
 import Pricing from "./pages/Pricing";
 
 function App() {
