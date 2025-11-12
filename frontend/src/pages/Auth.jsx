@@ -12,7 +12,7 @@ import { Briefcase, GraduationCap, ArrowRight } from 'lucide-react';
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState('auth'); // auth, role, onboarding
+  const [step, setStep] = useState('role'); // role, auth, onboarding
   const [authMode, setAuthMode] = useState('signin'); // signin, signup
   const [selectedRole, setSelectedRole] = useState(searchParams.get('role') || '');
   const [onboardingStep, setOnboardingStep] = useState(1);
@@ -20,10 +20,13 @@ const Auth = () => {
     email: '',
     password: '',
     name: '',
+    primaryGoals: [],
     skills: [],
-    roles: [],
+    desiredPositions: [],
     graduation: '',
-    companyName: ''
+    companyName: '',
+    customSkill: '',
+    customPosition: ''
   });
 
   const availableSkills = [
