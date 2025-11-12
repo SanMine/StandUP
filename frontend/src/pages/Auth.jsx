@@ -315,9 +315,9 @@ const Auth = () => {
                 onboardingStep === 2 ? 'Select your skills' :
                 onboardingStep === 3 ? 'Desired roles' : 'When do you graduate?'
               ) : (
-                onboardingStep === 1 ? 'Company Information' :
-                onboardingStep === 2 ? 'Industry & Size' :
-                onboardingStep === 3 ? 'Company Culture' : 'All Set!'
+                onboardingStep === 1 ? 'Company Name' :
+                onboardingStep === 2 ? 'Company Size' :
+                onboardingStep === 3 ? 'Industry & Website' : 'All Set!'
               )}
             </CardTitle>
             <CardDescription>
