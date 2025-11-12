@@ -110,6 +110,15 @@ const Auth = () => {
     setAuthMode('signup'); // Default to signup after role selection
   };
 
+  const handlePrimaryGoalToggle = (goal) => {
+    setFormData(prev => ({
+      ...prev,
+      primaryGoals: prev.primaryGoals.includes(goal)
+        ? prev.primaryGoals.filter(g => g !== goal)
+        : [...prev.primaryGoals, goal]
+    }));
+  };
+
   const handleSkillToggle = (skill) => {
     setFormData(prev => ({
       ...prev,
@@ -119,13 +128,33 @@ const Auth = () => {
     }));
   };
 
-  const handleRoleToggle = (role) => {
+  const addCustomSkill = () => {
+    if (formData.customSkill.trim() && !formData.skills.includes(formData.customSkill.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        skills: [...prev.skills, formData.customSkill.trim()],
+        customSkill: ''
+      }));
+    }
+  };
+
+  const handleDesiredPositionToggle = (position) => {
     setFormData(prev => ({
       ...prev,
-      roles: prev.roles.includes(role)
-        ? prev.roles.filter(r => r !== role)
-        : [...prev.roles, role]
+      desiredPositions: prev.desiredPositions.includes(position)
+        ? prev.desiredPositions.filter(p => p !== position)
+        : [...prev.desiredPositions, position]
     }));
+  };
+
+  const addCustomPosition = () => {
+    if (formData.customPosition.trim() && !formData.desiredPositions.includes(formData.customPosition.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        desiredPositions: [...prev.desiredPositions, formData.customPosition.trim()],
+        customPosition: ''
+      }));
+    }
   };
 
   const handleComplete = () => {
