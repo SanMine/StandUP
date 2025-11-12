@@ -324,22 +324,60 @@ const Auth = () => {
                   </div>
                 )}
                 {onboardingStep === 2 && (
-                  <div>
-                    <Label>Select your skills (choose at least 3)</Label>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {availableSkills.map((skill) => (
-                        <Badge
-                          key={skill}
-                          onClick={() => handleSkillToggle(skill)}
-                          className={`cursor-pointer transition-all ${
-                            formData.skills.includes(skill)
-                              ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Select your skills (choose multiple)</Label>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {availableSkills.map((skill) => (
+                          <Badge
+                            key={skill}
+                            onClick={() => handleSkillToggle(skill)}
+                            className={`cursor-pointer transition-all ${
+                              formData.skills.includes(skill)
+                                ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="customSkill">Add custom skill</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          id="customSkill"
+                          value={formData.customSkill}
+                          onChange={(e) => setFormData({ ...formData, customSkill: e.target.value })}
+                          placeholder="Enter a skill not listed above"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCustomSkill();
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          onClick={addCustomSkill}
+                          className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                         >
-                          {skill}
-                        </Badge>
-                      ))}
+                          Add
+                        </Button>
+                      </div>
+                      {formData.skills.filter(s => !availableSkills.includes(s)).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {formData.skills.filter(s => !availableSkills.includes(s)).map((skill) => (
+                            <Badge
+                              key={skill}
+                              className="bg-[#284688] text-white hover:bg-[#284688]/90"
+                            >
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
