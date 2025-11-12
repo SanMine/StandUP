@@ -382,23 +382,62 @@ const Auth = () => {
                   </div>
                 )}
                 {onboardingStep === 3 && (
-                  <div>
-                    <Label>What roles interest you?</Label>
-                    <div className="space-y-2 mt-3">
-                      {availableRoles.map((role) => (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>What roles/positions interest you? (Select multiple)</Label>
+                      <div className="space-y-2 mt-3">
+                        {availableRoles.map((role) => (
+                          <Button
+                            key={role}
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleDesiredPositionToggle(role)}
+                            className={`w-full justify-start transition-all ${
+                              formData.desiredPositions.includes(role)
+                                ? 'border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]'
+                                : 'hover:border-[#FF7000]'
+                            }`}
+                          >
+                            {role}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="customPosition">Add custom position</Label>
+                      <div className="flex gap-2 mt-2">
+                        <Input
+                          id="customPosition"
+                          value={formData.customPosition}
+                          onChange={(e) => setFormData({ ...formData, customPosition: e.target.value })}
+                          placeholder="Enter a position not listed above"
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              addCustomPosition();
+                            }
+                          }}
+                        />
                         <Button
-                          key={role}
-                          variant="outline"
-                          onClick={() => handleRoleToggle(role)}
-                          className={`w-full justify-start transition-all ${
-                            formData.roles.includes(role)
-                              ? 'border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]'
-                              : 'hover:border-[#FF7000]'
-                          }`}
+                          type="button"
+                          onClick={addCustomPosition}
+                          className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                         >
-                          {role}
+                          Add
                         </Button>
-                      ))}
+                      </div>
+                      {formData.desiredPositions.filter(p => !availableRoles.includes(p)).length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {formData.desiredPositions.filter(p => !availableRoles.includes(p)).map((position) => (
+                            <Badge
+                              key={position}
+                              className="bg-[#284688] text-white hover:bg-[#284688]/90"
+                            >
+                              {position}
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
