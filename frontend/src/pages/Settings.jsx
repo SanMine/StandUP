@@ -42,6 +42,8 @@ const Settings = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [tempSkills, setTempSkills] = useState([]);
+  const [newPosition, setNewPosition] = useState('');
+  const [tempPositions, setTempPositions] = useState([]);
 
   const form = useForm({
     resolver: zodResolver(profileSchema),
