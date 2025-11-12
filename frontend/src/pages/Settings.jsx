@@ -307,30 +307,58 @@ const onSubmit = async (data) => {
 
                     {/* Student Skills */}
                     {currentUser.role === 'student' && (
-                      <div className="space-y-3">
-                        <Label>Skills</Label>
-                        <div className="flex gap-2">
-                          <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="Add a skill"
-                            onKeyPress={(e) => {
-                              if (e.key === 'Enter') {
-                                e.preventDefault();
-                                addSkill();
-                              }
-                            }}
-                          />
-                          <Button type="button" onClick={addSkill} size="icon"><Plus className="h-4 w-4" /></Button>
+                      <>
+                        <div className="space-y-3">
+                          <Label>Skills</Label>
+                          <div className="flex gap-2">
+                            <Input value={newSkill} onChange={(e) => setNewSkill(e.target.value)} placeholder="Add a skill"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addSkill();
+                                }
+                              }}
+                            />
+                            <Button type="button" onClick={addSkill} size="icon"><Plus className="h-4 w-4" /></Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {tempSkills.map((skill) => (
+                              <Badge key={skill} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF] pr-1">
+                                {skill}
+                                <button type="button" onClick={() => removeSkill(skill)} className="ml-2 hover:text-red-600">
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                          {tempSkills.map((skill) => (
-                            <Badge key={skill} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF] pr-1">
-                              {skill}
-                              <button type="button" onClick={() => removeSkill(skill)} className="ml-2 hover:text-red-600">
-                                <X className="h-3 w-3" />
-                              </button>
-                            </Badge>
-                          ))}
+
+                        {/* Desired Positions */}
+                        <div className="space-y-3">
+                          <Label>Desired Positions</Label>
+                          <div className="flex gap-2">
+                            <Input value={newPosition} onChange={(e) => setNewPosition(e.target.value)} placeholder="Add a desired position"
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  addPosition();
+                                }
+                              }}
+                            />
+                            <Button type="button" onClick={addPosition} size="icon"><Plus className="h-4 w-4" /></Button>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {tempPositions.map((position) => (
+                              <Badge key={position} className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] pr-1">
+                                {position}
+                                <button type="button" onClick={() => removePosition(position)} className="ml-2 hover:text-red-600">
+                                  <X className="h-3 w-3" />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
-                      </div>
+                      </>
                     )}
 
                     {/* Employer Fields */}
