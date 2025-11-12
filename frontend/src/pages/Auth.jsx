@@ -25,9 +25,26 @@ const Auth = () => {
     desiredPositions: [],
     graduation: '',
     companyName: '',
+    companySize: '',
+    industry: '',
+    website: '',
     customSkill: '',
     customPosition: ''
   });
+
+  const companySizeOptions = [
+    '1-10 employees',
+    '11-50 employees',
+    '51-100 employees',
+    '101-500 employees',
+    '501-1000 employees',
+    '1000+ employees'
+  ];
+
+  const industryOptions = [
+    'Technology', 'Finance', 'Healthcare', 'Education', 
+    'E-commerce', 'Manufacturing', 'Consulting', 'Marketing'
+  ];
 
   const availableSkills = [
     'React', 'Node.js', 'Python', 'Java', 'SQL', 'MongoDB',
