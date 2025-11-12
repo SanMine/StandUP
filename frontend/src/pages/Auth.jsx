@@ -499,36 +499,56 @@ const Auth = () => {
                         className="mt-1"
                       />
                     </div>
+                  </div>
+                )}
+                {onboardingStep === 2 && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="companySize">Company Size</Label>
+                      <select
+                        id="companySize"
+                        value={formData.companySize}
+                        onChange={(e) => setFormData({ ...formData, companySize: e.target.value })}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#284688]"
+                      >
+                        <option value="">Select company size</option>
+                        {companySizeOptions.map((size) => (
+                          <option key={size} value={size}>{size}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+                {onboardingStep === 3 && (
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="industry">Industry</Label>
+                      <select
+                        id="industry"
+                        value={formData.industry}
+                        onChange={(e) => setFormData({ ...formData, industry: e.target.value })}
+                        className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#284688]"
+                      >
+                        <option value="">Select industry</option>
+                        {industryOptions.map((ind) => (
+                          <option key={ind} value={ind}>{ind}</option>
+                        ))}
+                      </select>
+                    </div>
                     <div>
                       <Label htmlFor="website">Company Website</Label>
                       <Input
                         id="website"
                         type="url"
+                        value={formData.website}
+                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
                         placeholder="https://company.com"
                         className="mt-1"
                       />
                     </div>
                   </div>
                 )}
-                {onboardingStep === 2 && (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Industry</Label>
-                      <div className="grid grid-cols-2 gap-3 mt-2">
-                        {['Technology', 'Finance', 'Healthcare', 'Education', 'E-commerce', 'Manufacturing'].map((industry) => (
-                          <Button
-                            key={industry}
-                            variant="outline"
-                            className="justify-start hover:border-[#284688] hover:text-[#284688]"
-                          >
-                            {industry}
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {onboardingStep >= 3 && (
+                {onboardingStep === 4 && (
                   <div className="text-center py-8">
                     <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                       <svg className="h-10 w-10 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
