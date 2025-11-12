@@ -12,9 +12,10 @@ import { Briefcase, GraduationCap, ArrowRight } from 'lucide-react';
 const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [step, setStep] = useState('role'); // role, auth, onboarding
-  const [authMode, setAuthMode] = useState('signin'); // signin, signup
-  const [selectedRole, setSelectedRole] = useState(searchParams.get('role') || '');
+  const roleFromUrl = searchParams.get('role');
+  const [step, setStep] = useState(roleFromUrl ? 'auth' : 'role'); // role, auth, onboarding
+  const [authMode, setAuthMode] = useState(roleFromUrl ? 'signup' : 'signin'); // signin, signup
+  const [selectedRole, setSelectedRole] = useState(roleFromUrl || '');
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [formData, setFormData] = useState({
     email: '',
