@@ -302,23 +302,19 @@ const Auth = () => {
                 {onboardingStep === 1 && (
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="name">Full Name</Label>
-                      <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Enter your name"
-                        className="mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label>What's your primary goal?</Label>
+                      <Label>What are your primary goals? (Select all that apply)</Label>
                       <div className="grid grid-cols-2 gap-3 mt-2">
                         {['Find Internship', 'Full-time Job', 'Skill Building', 'Career Change'].map((goal) => (
                           <Button
                             key={goal}
+                            type="button"
                             variant="outline"
-                            className="justify-start hover:border-[#FF7000] hover:text-[#FF7000]"
+                            onClick={() => handlePrimaryGoalToggle(goal)}
+                            className={`justify-start transition-all ${
+                              formData.primaryGoals.includes(goal)
+                                ? 'border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]'
+                                : 'hover:border-[#FF7000]'
+                            }`}
                           >
                             {goal}
                           </Button>
