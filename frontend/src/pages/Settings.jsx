@@ -26,6 +26,8 @@ const profileSchema = z.object({
   avatar: z.string().url().optional().or(z.literal('')),
   graduation: z.string().optional(),
   skills: z.array(z.string()).optional(),
+  primary_goals: z.array(z.string()).optional(),
+  desired_positions: z.array(z.string()).optional(),
   company_name: z.string().optional(),
   company_size: z.string().optional(),
   industry: z.string().optional(),
