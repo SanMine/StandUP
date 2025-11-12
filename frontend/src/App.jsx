@@ -27,17 +27,21 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<Auth />} />
+          <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
 
-          {/* Protected routes */}
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/applications" element={<ProtectedRoute><Applications /></ProtectedRoute>} />
-          <Route path="/interviews" element={<ProtectedRoute><Interviews /></ProtectedRoute>} />
-          <Route path="/mentors" element={<ProtectedRoute><Mentors /></ProtectedRoute>} />
-          <Route path="/learning" element={<ProtectedRoute><Learning /></ProtectedRoute>} />
-          <Route path="/portfolio" element={<ProtectedRoute><Portfolio /></ProtectedRoute>} />
+          {/* Protected Student routes */}
+          <Route path="/dashboard" element={<ProtectedRoute requireRole="student"><Dashboard /></ProtectedRoute>} />
+          <Route path="/applications" element={<ProtectedRoute requireRole="student"><Applications /></ProtectedRoute>} />
+          <Route path="/interviews" element={<ProtectedRoute requireRole="student"><Interviews /></ProtectedRoute>} />
+          <Route path="/mentors" element={<ProtectedRoute requireRole="student"><Mentors /></ProtectedRoute>} />
+          <Route path="/learning" element={<ProtectedRoute requireRole="student"><Learning /></ProtectedRoute>} />
+          <Route path="/portfolio" element={<ProtectedRoute requireRole="student"><Portfolio /></ProtectedRoute>} />
+          
+          {/* Protected Employer routes */}
+          <Route path="/employer-dashboard" element={<ProtectedRoute requireRole="employer"><EmployerDashboard /></ProtectedRoute>} />
+          
+          {/* Settings - accessible by both */}
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          <Route path="/employer-dashboard" element={<ProtectedRoute><EmployerDashboard /></ProtectedRoute>} />
 
           {/* Public */}
           <Route path="/jobs" element={<Jobs />} />
