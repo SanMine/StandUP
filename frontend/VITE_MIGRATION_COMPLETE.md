@@ -78,7 +78,7 @@ export default defineConfig({
 
 ### 🎯 Ready to Check:
 
-Visit: **https://job-manager-dash.preview.emergentagent.com**
+Visit: **https://user-onboarding-fix.preview.emergentagent.com**
 
 The app should now:
 - ✅ Load without "Blocked request" error
@@ -144,4 +144,4 @@ The migration is complete and your app is now running on Vite with:
 - 📦 Optimized production builds
 - 🎯 All functionality preserved
 
-**Test your app now at:** https://job-manager-dash.preview.emergentagent.com
+**Test your app now at:** https://user-onboarding-fix.preview.emergentagent.com
