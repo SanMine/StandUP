@@ -60,6 +60,14 @@ const userSchema = new mongoose.Schema({
   website: {
     type: String,
     default: null
+  },
+  primary_goals: {
+    type: [String],
+    default: null
+  },
+  desired_positions: {
+    type: [String],
+    default: null
   }
 }, {
   timestamps: true,
