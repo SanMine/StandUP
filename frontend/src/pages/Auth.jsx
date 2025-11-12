@@ -178,14 +178,19 @@ const Auth = () => {
     // Submit onboarding data to backend then navigate
     const submitOnboarding = async () => {
       try {
-        const payload = {
+        const payload = selectedRole === 'student' ? {
           name: formData.name,
           graduation: formData.graduation,
           skills: formData.skills,
           primary_goals: formData.primaryGoals,
-          desired_positions: formData.desiredPositions,
-          company_name: formData.companyName
+          desired_positions: formData.desiredPositions
+        } : {
+          company_name: formData.companyName,
+          company_size: formData.companySize,
+          industry: formData.industry,
+          website: formData.website
         };
+        
         const res = await api.put('/users/profile', payload);
         if (res?.data?.success) {
           // refresh auth context so App has updated user
