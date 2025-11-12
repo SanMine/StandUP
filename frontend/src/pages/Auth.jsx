@@ -165,10 +165,11 @@ const Auth = () => {
           name: formData.name,
           graduation: formData.graduation,
           skills: formData.skills,
-          roles: formData.roles,
+          primary_goals: formData.primaryGoals,
+          desired_positions: formData.desiredPositions,
           company_name: formData.companyName
         };
-        const res = await api.post('/users/onboarding', payload);
+        const res = await api.put('/users/profile', payload);
         if (res?.data?.success) {
           // refresh auth context so App has updated user
           try {
