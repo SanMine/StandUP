@@ -27,7 +27,7 @@ function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+          <Route path="/auth" element={<Auth />} />
 
           {/* Protected Student routes */}
           <Route path="/dashboard" element={<ProtectedRoute requireRole="student"><Dashboard /></ProtectedRoute>} />
