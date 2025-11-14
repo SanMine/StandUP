@@ -83,7 +83,7 @@ const Auth = () => {
     "Product Manager",
   ];
 
-  const { signin, signup, fetchMe } = useAuth();
+  const { signin, signup, fetchMe, setSignedIn } = useAuth();
   const [error, setError] = useState("");
 
   const handleAuth = async (e) => {
@@ -241,10 +241,12 @@ const Auth = () => {
           } catch (e) {
             // ignore fetchMe errors
           }
+          setSignedIn(true);
           if (selectedRole === "employer") navigate("/employer-dashboard");
           else navigate("/dashboard");
         } else {
           // fallback navigation
+          setSignedIn(true);
           if (selectedRole === "employer") navigate("/employer-dashboard");
           else navigate("/dashboard");
         }

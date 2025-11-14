@@ -6,6 +6,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
   const fetchMe = async () => {
     try {
@@ -13,11 +14,14 @@ export const AuthProvider = ({ children }) => {
       const res = await authAPI.getMe();
       if (res?.success) {
         setUser(res.user);
+        setIsSignedIn(true);
       } else {
         setUser(null);
+        setIsSignedIn(false);
       }
     } catch (err) {
       setUser(null);
+      setIsSignedIn(false);
     } finally {
       setLoading(false);
     }
@@ -31,6 +35,7 @@ export const AuthProvider = ({ children }) => {
     const res = await authAPI.signin(email, password);
     if (res?.success) {
       setUser(res.user);
+      setIsSignedIn(true);
     }
     return res;
   };
@@ -39,6 +44,7 @@ export const AuthProvider = ({ children }) => {
     const res = await authAPI.signup(userData);
     if (res?.success) {
       setUser(res.user);
+      setIsSignedIn(false); // Keep false until they actually sign in
     }
     return res;
   };
@@ -47,15 +53,21 @@ export const AuthProvider = ({ children }) => {
     try {
       const res = await authAPI.signout();
       setUser(null);
+      setIsSignedIn(false);
       return res;
     } catch (err) {
       setUser(null);
+      setIsSignedIn(false);
       throw err;
     }
   };
 
+  const setSignedIn = (value) => {
+    setIsSignedIn(value);
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signin, signup, signout, fetchMe }}>
+    <AuthContext.Provider value={{ user, loading, isSignedIn, signin, signup, signout, fetchMe, setSignedIn }}>
       {children}
     </AuthContext.Provider>
   );

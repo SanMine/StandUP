@@ -3,12 +3,12 @@ import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 const PublicRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isSignedIn } = useAuth();
 
   if (loading) return null;
 
   // If user is logged in, redirect to their dashboard
-  if (user) {
+  if (isSignedIn) {
     if (user.role === 'employer') {
       return <Navigate to="/employer-dashboard" replace />;
     } else {
