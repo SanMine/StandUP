@@ -5,8 +5,6 @@ import { Toaster } from "./components/ui/sonner";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import PublicRoute from "./components/Auth/PublicRoute";
-
-// Pages
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -20,6 +18,7 @@ import Settings from "./pages/Settings";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import EmployerDashboardDemo from "./pages/EmployerDashboardDemo";
 import Pricing from "./pages/Pricing";
+import EmployerSettings from "./pages/EmployerSettings";
 
 function App() {
   return (
@@ -36,12 +35,11 @@ function App() {
           <Route path="/mentors" element={<ProtectedRoute requireRole="student"><Mentors /></ProtectedRoute>} />
           <Route path="/learning" element={<ProtectedRoute requireRole="student"><Learning /></ProtectedRoute>} />
           <Route path="/portfolio" element={<ProtectedRoute requireRole="student"><Portfolio /></ProtectedRoute>} />
-          
+          <Route path="/settings" element={<ProtectedRoute requireRole="student"><Settings /></ProtectedRoute>} />
+
           {/* Protected Employer routes */}
           <Route path="/employer-dashboard" element={<ProtectedRoute requireRole="employer"><EmployerDashboard /></ProtectedRoute>} />
-          
-          {/* Settings - accessible by both */}
-          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/employer-settings" element={<ProtectedRoute requireRole="employer"><EmployerSettings /></ProtectedRoute>} />
 
           {/* Public */}
           <Route path="/jobs" element={<Jobs />} />
