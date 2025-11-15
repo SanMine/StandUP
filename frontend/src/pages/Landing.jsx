@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { CheckCircle2, Target, Users, TrendingUp, Award, Sparkles, ArrowRight, Star, Settings as SettingsIcon, LogOut, LayoutDashboard, Briefcase, GraduationCap, BookOpen, Users2, Award as AwardIcon, FolderKanban } from 'lucide-react';
 import { jobs, mentors, testimonials, partnerCompanies } from '../utils/mockData';
 import { useAuth } from '../contexts/AuthContext';
+import { Zap, Crown } from 'lucide-react';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -22,6 +23,56 @@ const Landing = () => {
       navigate('/');
     }
   };
+
+  const studentPlans = [
+    {
+      id: 'student-free',
+      name: 'Free',
+      price: '0',
+      type: 'student',
+      planType: 'free',
+      description: 'Perfect for getting started',
+      icon: Zap,
+      features: [
+        { text: 'Basic job matching', included: true },
+        { text: 'Resume builder', included: true },
+        { text: 'Profile creation', included: true },
+        { text: '3 applications per month', included: true },
+        { text: 'Community support', included: true },
+        { text: 'AI-powered matching', included: false },
+        { text: 'Mock interviews', included: false },
+        { text: 'Mentor sessions', included: false },
+        { text: 'Portfolio hosting', included: false },
+        { text: 'Priority support', included: false }
+      ],
+      cta: 'Get Started',
+      highlighted: false
+    },
+    {
+      id: 'student-premium',
+      name: 'Premium',
+      price: '50',
+      type: 'student',
+      planType: 'premium',
+      description: 'Everything you need to succeed',
+      icon: Crown,
+      popular: true,
+      features: [
+        { text: 'Everything in Free', included: true },
+        { text: 'AI-powered job matching', included: true },
+        { text: 'Unlimited applications', included: true },
+        { text: 'Mock interview practice', included: true },
+        { text: '2 mentor sessions/month', included: true },
+        { text: 'Portfolio website hosting', included: true },
+        { text: 'Resume optimization', included: true },
+        { text: 'Priority job alerts', included: true },
+        { text: 'Interview preparation', included: true },
+        { text: 'Priority support', included: true }
+      ],
+      cta: 'Upgrade to Premium',
+      highlighted: true
+    }
+  ];
 
   const studentMenuItems = [
     { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
@@ -437,66 +488,61 @@ const Landing = () => {
             </h2>
             <p className="text-[#4B5563]">Start free, upgrade when you're ready</p>
           </div>
+
           <div className="grid gap-8 md:grid-cols-2">
-            <Card className="border-2 border-gray-200 shadow-md">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Free</h3>
-                <p className="text-[#4B5563] mb-6">Get started with essential features</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-[#0F151D]">0</span>
-                  <span className="text-[#4B5563]"> THB/month</span>
-                </div>
-                <ul className="mb-8 space-y-3">
-                  {['Basic job matching', 'Resume builder', 'Profile creation', '3 applications/month'].map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5 text-green-600" />
-                      <span className="text-sm text-[#4B5563]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  onClick={() => navigate('/auth')}
-                  variant="outline"
-                  className="w-full border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white"
-                >
-                  Get Started
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="border-2 border-[#FF7000] shadow-xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 bg-[#FF7000] text-white px-4 py-1 text-xs font-medium">
-                POPULAR
-              </div>
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Premium</h3>
-                <p className="text-[#4B5563] mb-6">Unlock your full potential</p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-[#0F151D]">250</span>
-                  <span className="text-[#4B5563]"> THB/month</span>
-                </div>
-                <ul className="mb-8 space-y-3">
-                  {[
-                    'AI-powered matching',
-                    'Unlimited applications',
-                    'Mock interviews',
-                    'Mentor sessions',
-                    'Portfolio hosting',
-                    'Priority support'
-                  ].map((feature) => (
-                    <li key={feature} className="flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-[#FF7000]" />
-                      <span className="text-sm text-[#4B5563]">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button
-                  onClick={() => navigate('/auth')}
-                  className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white shadow-lg hover:shadow-xl"
-                >
-                  Upgrade to Premium
-                </Button>
-              </CardContent>
-            </Card>
+            {studentPlans.map((plan) => (
+              <Card
+                key={plan.id}
+                className={`relative overflow-hidden transition-shadow duration-300 ${plan.highlighted ? 'border-2 border-[#FF7000] shadow-xl' : 'border-2 border-gray-200 shadow-md'
+                  }`}
+              >
+                {/* Popular badge */}
+                {plan.popular && (
+                  <div className="absolute top-0 right-0 bg-[#FF7000] text-white px-4 py-1 text-xs font-medium">
+                    POPULAR
+                  </div>
+                )}
+
+                <CardContent className="p-8">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="text-2xl font-bold text-[#0F151D] mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        {plan.name}
+                      </h3>
+                      <p className="text-[#4B5563] mb-6">{plan.description}</p>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <div className="text-4xl font-bold text-[#0F151D]">{plan.price}</div>
+                      <div className="text-sm text-[#4B5563]">THB/month</div>
+                    </div>
+                  </div>
+
+                  <ul className="mt-6 mb-8 space-y-3">
+                    {plan.features.map((f, i) => (
+                      <li key={i} className="flex items-center gap-3">
+                        <CheckCircle2
+                          className={`w-5 h-5 ${f.included ? 'text-[#FF7000]' : 'text-gray-300'}`}
+                        />
+                        <span className={`text-sm ${f.included ? 'text-[#0F151D]' : 'text-gray-400'}`}>
+                          {f.text}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="flex items-center justify-between">
+                    <div />
+                    <Button
+                      onClick={() => navigate(`/payment?plan=${plan.id}`)}
+                      className={`px-6 py-3 rounded-md text-white shadow-sm ${plan.highlighted ? 'bg-[#FF7000] hover:bg-[#FF7000]/90' : 'bg-white text-[#284688] border-2 border-[#284688] hover:bg-[#284688] hover:text-white'
+                        }`}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>

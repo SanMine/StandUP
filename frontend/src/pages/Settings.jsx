@@ -18,7 +18,6 @@ import { userAPI } from '../services/api';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import { useToast } from '../hooks/use-toast';
 
-// 🧩 Validation schema
 const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
@@ -121,48 +120,48 @@ const Settings = () => {
   }, [form, toast]);
 
   // 📝 Submit handler
-const onSubmit = async (data) => {
-  try {
-    setIsSaving(true);
+  const onSubmit = async (data) => {
+    try {
+      setIsSaving(true);
 
-    console.log(data);
+      console.log(data);
 
-    // Include skills and desired positions directly in the profile payload
-    const profileData = {
-      name: data.name,
-      email: data.email,
-      bio: data.bio,
-      avatar: data.avatar,
-      graduation: data.graduation,
-      company_name: data.company_name,
-      company_size: data.company_size,
-      industry: data.industry,
-      website: data.website,
-      skills: tempSkills,
-      primary_goals: data.primary_goals,
-      desired_positions: tempPositions
-    };
+      // Include skills and desired positions directly in the profile payload
+      const profileData = {
+        name: data.name,
+        email: data.email,
+        bio: data.bio,
+        avatar: data.avatar,
+        graduation: data.graduation,
+        company_name: data.company_name,
+        company_size: data.company_size,
+        industry: data.industry,
+        website: data.website,
+        skills: tempSkills,
+        primary_goals: data.primary_goals,
+        desired_positions: tempPositions
+      };
 
-    const response = await userAPI.updateProfile(profileData);
+      const response = await userAPI.updateProfile(profileData);
 
-    if (response.success) {
-      if (fetchMe) await fetchMe();
+      if (response.success) {
+        if (fetchMe) await fetchMe();
+        toast({
+          title: 'Success',
+          description: 'Profile updated successfully'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
       toast({
-        title: 'Success',
-        description: 'Profile updated successfully'
+        variant: 'destructive',
+        title: 'Error',
+        description: error.response?.data?.error?.message || 'Failed to update profile'
       });
+    } finally {
+      setIsSaving(false);
     }
-  } catch (error) {
-    console.error('Error updating profile:', error);
-    toast({
-      variant: 'destructive',
-      title: 'Error',
-      description: error.response?.data?.error?.message || 'Failed to update profile'
-    });
-  } finally {
-    setIsSaving(false);
-  }
-};
+  };
 
 
   // 🧩 Skill management
@@ -228,7 +227,7 @@ const onSubmit = async (data) => {
           </TabsList>
 
           {/* 🧾 Profile Tab */}
-          <TabsContent value="profile" className="space-y-6 mt-6">
+          <TabsContent value="profile" className="mt-6 space-y-6">
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle>Profile Information</CardTitle>
@@ -246,20 +245,20 @@ const onSubmit = async (data) => {
                           <AvatarFallback>{form.watch('name')?.charAt(0) || 'U'}</AvatarFallback>
                         </Avatar>
                         <Button type="button" size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-[#FF7000] hover:bg-[#FF7000]/90">
-                          <Camera className="h-4 w-4" />
+                          <Camera className="w-4 h-4" />
                         </Button>
                       </div>
                       <div>
                         <h3 className="font-semibold text-[#0F151D] mb-1">{form.watch('name')}</h3>
                         <p className="text-sm text-[#4B5563] mb-2">{form.watch('email')}</p>
                         <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC]">
-                          {currentUser.role === 'employer' ? 'Employer' : 'Student'}
+                          {currentUser.plan}
                         </Badge>
                       </div>
                     </div>
 
                     {/* Basic Fields */}
-                    <div className="grid md:grid-cols-2 gap-4">
+                    <div className="grid gap-4 md:grid-cols-2">
                       <FormField control={form.control} name="name" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Full Name *</FormLabel>
@@ -319,14 +318,14 @@ const onSubmit = async (data) => {
                                 }
                               }}
                             />
-                            <Button type="button" onClick={addSkill} size="icon"><Plus className="h-4 w-4" /></Button>
+                            <Button type="button" onClick={addSkill} size="icon"><Plus className="w-4 h-4" /></Button>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {tempSkills.map((skill) => (
                               <Badge key={skill} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF] pr-1">
                                 {skill}
                                 <button type="button" onClick={() => removeSkill(skill)} className="ml-2 hover:text-red-600">
-                                  <X className="h-3 w-3" />
+                                  <X className="w-3 h-3" />
                                 </button>
                               </Badge>
                             ))}
@@ -345,14 +344,14 @@ const onSubmit = async (data) => {
                                 }
                               }}
                             />
-                            <Button type="button" onClick={addPosition} size="icon"><Plus className="h-4 w-4" /></Button>
+                            <Button type="button" onClick={addPosition} size="icon"><Plus className="w-4 h-4" /></Button>
                           </div>
                           <div className="flex flex-wrap gap-2">
                             {tempPositions.map((position) => (
                               <Badge key={position} className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] pr-1">
                                 {position}
                                 <button type="button" onClick={() => removePosition(position)} className="ml-2 hover:text-red-600">
-                                  <X className="h-3 w-3" />
+                                  <X className="w-3 h-3" />
                                 </button>
                               </Badge>
                             ))}
@@ -363,7 +362,7 @@ const onSubmit = async (data) => {
 
                     {/* Employer Fields */}
                     {currentUser.role === 'employer' && (
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid gap-4 md:grid-cols-2">
                         {['company_name', 'company_size', 'industry', 'website'].map((field) => (
                           <FormField key={field} control={form.control} name={field} render={({ field: f }) => (
                             <FormItem>
@@ -377,7 +376,7 @@ const onSubmit = async (data) => {
                     )}
 
                     <Button type="submit" className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white" disabled={isSaving}>
-                      {isSaving ? (<><Loader2 className="h-4 w-4 mr-2 animate-spin" />Saving...</>) : (<><Save className="h-4 w-4 mr-2" />Save Changes</>)}
+                      {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<><Save className="w-4 h-4 mr-2" />Save Changes</>)}
                     </Button>
                   </form>
                 </Form>
@@ -385,7 +384,7 @@ const onSubmit = async (data) => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-6 mt-6">
+          <TabsContent value="notifications" className="mt-6 space-y-6">
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle>Notification Preferences</CardTitle>
@@ -412,7 +411,7 @@ const onSubmit = async (data) => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="privacy" className="space-y-6 mt-6">
+          <TabsContent value="privacy" className="mt-6 space-y-6">
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle>Privacy Settings</CardTitle>
@@ -437,10 +436,10 @@ const onSubmit = async (data) => {
                 <div className="pt-4 border-t">
                   <h4 className="font-medium text-[#0F151D] mb-2">Data Management</h4>
                   <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start">
+                    <Button variant="outline" className="justify-start w-full">
                       Download Your Data
                     </Button>
-                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-600 hover:bg-red-50">
+                    <Button variant="outline" className="justify-start w-full text-red-600 border-red-600 hover:bg-red-50">
                       Delete Account
                     </Button>
                   </div>
@@ -449,7 +448,7 @@ const onSubmit = async (data) => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="billing" className="space-y-6 mt-6">
+          <TabsContent value="billing" className="mt-6 space-y-6">
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle>Subscription & Billing</CardTitle>
