@@ -128,7 +128,7 @@ const Auth = () => {
         }
         setSelectedRole(role);
         setStep("onboarding");
-        return;
+        //return;
       }
     } catch (err) {
       console.error(err);
