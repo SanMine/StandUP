@@ -18,6 +18,7 @@ import PaymentPage from "./pages/PaymentPage";
 import Portfolio from "./pages/Portfolio";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
+import StripePaymentSuccessPage from "./pages/StripePaymentSuccessPage";
 
 function App() {
   return (
@@ -39,6 +40,8 @@ function App() {
           {/* Protected Employer routes */}
           <Route path="/employer-dashboard" element={<ProtectedRoute requireRole="employer"><EmployerDashboard /></ProtectedRoute>} />
           <Route path="/employer-settings" element={<ProtectedRoute requireRole="employer"><EmployerSettings /></ProtectedRoute>} />
+
+          <Route path="/stripe-payment-success" element={<StripePaymentSuccessPage />} />
 
           {/* Public */}
           <Route path="/jobs" element={<Jobs />} />
