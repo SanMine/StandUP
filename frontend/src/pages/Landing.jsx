@@ -513,7 +513,7 @@ const Landing = () => {
                     </div>
                     <div className="flex flex-col items-end">
                       <div className="text-4xl font-bold text-[#0F151D]">{plan.price}</div>
-                      <div className="text-sm text-[#4B5563]">THB/month</div>
+                      <div className="text-sm text-[#4B5563]">$/month</div>
                     </div>
                   </div>
 
@@ -533,7 +533,7 @@ const Landing = () => {
                   <div className="flex items-center justify-between">
                     <div />
                     <Button
-                      onClick={() => navigate(`/payment?plan=${plan.id}`)}
+                      onClick={() => navigate(`/pricing`)}
                       className={`px-6 py-3 rounded-md text-white shadow-sm ${plan.highlighted ? 'bg-[#FF7000] hover:bg-[#FF7000]/90' : 'bg-white text-[#284688] border-2 border-[#284688] hover:bg-[#284688] hover:text-white'
                         }`}
                     >

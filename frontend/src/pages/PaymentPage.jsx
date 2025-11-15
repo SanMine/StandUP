@@ -10,6 +10,7 @@ import { FaStripe, FaCcPaypal } from "react-icons/fa6";
 import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import api from '../services/api';
 import { toast } from 'sonner';
+import StripePayment from '@/components/StripePayment';
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "AfhFIQjZoE-XLutk3Jc5APIHo8AYhm-mxlYnqiwNug6kq9QS5PuiAxoxVHeyTEc-SEUMlHizINa3nswJ";
 
@@ -121,33 +122,6 @@ const PaymentPage = () => {
         } catch (error) {
             console.error('Error approving PayPal order:', error);
             toast.error(error.response?.data?.error?.message || 'Payment approval failed');
-            setIsProcessing(false);
-        }
-    };
-
-    const handleStripePayment = async () => {
-        try {
-            setIsProcessing(true);
-            const response = await api.post('/users/payment/create-stripe-session', {
-                planId: selectedPlan.id,
-                amount: selectedPlan.price
-            });
-
-            if (response.data.success) {
-                toast.success('Redirecting to Stripe...');
-                setTimeout(async () => {
-                    toast.success('Payment successful! Your plan has been upgraded to Premium!');
-                    await fetchMe();
-                    if (user?.role === 'employer') {
-                        navigate('/employer-dashboard');
-                    } else {
-                        navigate('/dashboard');
-                    }
-                }, 2000);
-            }
-        } catch (error) {
-            console.error('Error creating Stripe session:', error);
-            toast.error('Failed to create Stripe session');
             setIsProcessing(false);
         }
     };
@@ -327,20 +301,8 @@ const PaymentPage = () => {
                                                     <p className="text-xs text-[#4B5563]">Credit or Debit Card</p>
                                                 </div>
                                             </div>
-                                            <Button
-                                                onClick={handleStripePayment}
-                                                disabled={isProcessing}
-                                                className="w-full h-12 text-base bg-[#635BFF] hover:bg-[#635BFF]/90 text-white"
-                                            >
-                                                {isProcessing ? (
-                                                    <span className="flex items-center gap-2">
-                                                        <div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin"></div>
-                                                        Processing...
-                                                    </span>
-                                                ) : (
-                                                    'Pay with Stripe'
-                                                )}
-                                            </Button>
+
+                                            <StripePayment planId={selectedPlan.id} amount={selectedPlan.price} />
                                         </div>
                                     )}
 
