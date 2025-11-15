@@ -211,9 +211,99 @@ const confirmStripePayment = async (req, res, next) => {
     }
 };
 
+const stripeWebhook = async (req, res, next) => {
+    try {
+        const sig = req.headers['stripe-signature'];
+        const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+        if (!webhookSecret) {
+            console.error('Stripe webhook secret not configured.');
+            return res.status(500).send('Webhook secret not configured');
+        }
+
+        // req.rawBody must be Buffer — see mount note below
+        const payload = req.rawBody || Buffer.from(req.body || '');
+
+        let event;
+        try {
+            event = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
+        } catch (err) {
+            console.error('⚠️  Webhook signature verification failed.', err?.message);
+            return res.status(400).send(`Webhook Error: ${err?.message}`);
+        }
+
+        // handle events
+        switch (event.type) {
+            case 'payment_intent.succeeded': {
+                const pi = event.data.object;
+                const paymentIntentId = pi.id;
+                const metadata = pi.metadata || {};
+                const planId = metadata.planId;
+                const userId = metadata.userId;
+
+                // Find the user by pending_payment.paymentIntentId or by metadata.userId
+                let user = null;
+                if (userId) {
+                    user = await User.findById(userId);
+                } else {
+                    user = await User.findOne({ 'pending_payment.paymentIntentId': paymentIntentId });
+                }
+
+                if (user) {
+                    // mark user plan active, add payment_history, clear pending_payment
+                    user.plan = 'premium';
+                    user.payment_history = user.payment_history || [];
+                    user.payment_history.push({
+                        orderId: paymentIntentId,
+                        planId: planId || (user.pending_payment && user.pending_payment.planId) || null,
+                        amount: (user.pending_payment && user.pending_payment.amount) || null,
+                        status: 'completed',
+                        paymentMethod: 'stripe',
+                        paidAt: new Date(),
+                        stripeDetails: {
+                            paymentIntentId
+                        }
+                    });
+                    user.pending_payment = null;
+                    await user.save();
+                    console.log(`User ${user._id} marked as premium from PI ${paymentIntentId}`);
+                } else {
+                    console.warn('User not found for payment_intent.succeeded', paymentIntentId);
+                }
+                break;
+            }
+
+            case 'payment_intent.payment_failed': {
+                const pi = event.data.object;
+                const paymentIntentId = pi.id;
+                // Optionally update user.pending_payment status = 'failed'
+                const user = await User.findOne({ 'pending_payment.paymentIntentId': paymentIntentId });
+                if (user) {
+                    user.pending_payment = {
+                        ...user.pending_payment,
+                        status: 'failed',
+                        lastError: pi.last_payment_error?.message || null
+                    };
+                    await user.save();
+                }
+                break;
+            }
+
+            default:
+                // Unexpected event type
+                console.log(`Unhandled Stripe event type ${event.type}`);
+        }
+
+        return res.json({ received: true });
+    } catch (err) {
+        console.error('stripeWebhook handler error:', err);
+        return res.status(500).send('Internal server error');
+    }
+};
+
 module.exports = {
     createPayPalOrder,
     approvePayPalOrder,
     createStripePaymentIntent,
-    confirmStripePayment
+    confirmStripePayment,
+    stripeWebhook
 };
