@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const userController = require('../controllers/userController');
+const paymentController = require('../controllers/paymentController');
 const validate = require('../middlewares/validate');
 const { isAuthenticated } = require('../middlewares/auth');
 
@@ -36,5 +37,27 @@ router.post(
 
 // Get dashboard stats
 router.get('/dashboard', isAuthenticated, userController.getDashboardStats);
+
+// * Payment routes
+router.post(
+  '/payment/create-paypal-order',
+  isAuthenticated,
+  [
+    body('planId').notEmpty().withMessage('Plan ID is required'),
+    body('amount').isNumeric().withMessage('Amount must be a number')
+  ],
+  validate,
+  paymentController.createPayPalOrder
+);
+
+router.post(
+  '/payment/approve-paypal-order',
+  isAuthenticated,
+  [
+    body('orderID').notEmpty().withMessage('Order ID is required')
+  ],
+  validate,
+  paymentController.approvePayPalOrder
+);
 
 module.exports = router;
