@@ -9,7 +9,8 @@
     "migrate": "node src/migrations/run-migrations.js",
     "seed": "node src/seeders/run-seeders.js",
     "lint": "eslint src/**/*.js",
-    "test": "jest --coverage"
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "keywords": [
     "career",

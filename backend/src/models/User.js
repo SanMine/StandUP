@@ -27,6 +27,11 @@ const userSchema = new mongoose.Schema({
     enum: ['student', 'employer', 'admin'],
     default: 'student'
   },
+  plan: {
+    type: String,
+    enum: ['free', 'premium'],
+    default: 'free'
+  },
   avatar: {
     type: String,
     default: null
@@ -76,9 +81,9 @@ const userSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-userSchema.pre('save', async function(next) {
+userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
-  
+
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -89,12 +94,12 @@ userSchema.pre('save', async function(next) {
 });
 
 // Instance method to validate password
-userSchema.methods.validatePassword = async function(password) {
+userSchema.methods.validatePassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
 // Instance method to get safe user data (without password)
-userSchema.methods.toSafeObject = function() {
+userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;
   obj.id = obj._id;
@@ -103,7 +108,7 @@ userSchema.methods.toSafeObject = function() {
 };
 
 // Virtual for id
-userSchema.virtual('id').get(function() {
+userSchema.virtual('id').get(function () {
   return this._id;
 });
 

@@ -31,7 +31,7 @@ app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000' || "https://stand-up-tau.vercel.app/",
   credentials: true
 }));
 
@@ -48,10 +48,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
 // MongoDB Session Store
-const MONGO_URL = process.env.MONGO_URL || 'mongodb+srv://sanmine:sanmine1234@cluster0.czqfdmt.mongodb.net/?appName=Cluster0';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://sanmine:sanmine1234@cluster0.czqfdmt.mongodb.net/?appName=Cluster0';
 
 const sessionStore = MongoStore.create({
-  mongoUrl: MONGO_URL,
+  mongoUrl: MONGODB_URI,
   dbName: 'standup_db',
   collectionName: 'sessions',
   ttl: 86400, // 24 hours in seconds
