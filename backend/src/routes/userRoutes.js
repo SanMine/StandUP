@@ -60,4 +60,25 @@ router.post(
   paymentController.approvePayPalOrder
 );
 
+router.post(
+  '/payment/create-stripe-payment-intent',
+  isAuthenticated,
+  [
+    body('planId').notEmpty(),
+    body('amount').isNumeric()
+  ],
+  validate,
+  paymentController.createStripePaymentIntent
+);
+
+router.post(
+  '/payment/confirm-stripe-payment',
+  isAuthenticated,
+  [
+    body('paymentIntentId').notEmpty().withMessage('paymentIntentId is required')
+  ],
+  validate,
+  paymentController.confirmStripePayment
+);
+
 module.exports = router;
