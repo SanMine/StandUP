@@ -1,7 +1,7 @@
 const { User } = require('../models');
 const { paypal } = require('../config/paypal');
 const Stripe = require('stripe');
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_51RXI3gQvW6ZMV09M6WIIdLUHfCb5zCHnOYaZC3bccWVESr09a6Q7UIWTbzr8pQJj8iwGqQrIFRSL29KSddaWZ0WC00aHTIWtQI");
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 const createPayPalOrder = async (req, res, next) => {
     try {
