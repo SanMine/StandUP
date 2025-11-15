@@ -23,6 +23,7 @@
   "dependencies": {
     "@ai-sdk/groq": "^2.0.28",
     "@google/generative-ai": "^0.21.0",
+    "@stripe/stripe-js": "^8.4.0",
     "ai": "^5.0.88",
     "bcrypt": "^5.1.1",
     "connect-mongo": "^5.1.0",
@@ -37,6 +38,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.3",
     "morgan": "^1.10.0",
+    "stripe": "^19.3.1",
     "uuid": "^11.0.5",
     "zod": "^4.1.12"
   },
