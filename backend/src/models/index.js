@@ -13,6 +13,7 @@ const Course = require('./Course');
 const Event = require('./Event');
 const SavedJob = require('./SavedJob');
 const CareerRoadmap = require('./CareerRoadmap');
+const Enrollment = require('./Enrollment');
 
 // Export all models
 module.exports = {
@@ -28,5 +29,6 @@ module.exports = {
   Course,
   Event,
   SavedJob,
-  CareerRoadmap
+  CareerRoadmap,
+  Enrollment
 };

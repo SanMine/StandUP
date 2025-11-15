@@ -19,6 +19,7 @@ import Portfolio from "./pages/Portfolio";
 import Settings from "./pages/Settings";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import EmployerDashboardDemo from "./pages/EmployerDashboardDemo";
+import Events from "./pages/Events";
 import Pricing from "./pages/Pricing";
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
           
           {/* Protected Employer routes */}
           <Route path="/employer-dashboard" element={<ProtectedRoute requireRole="employer"><EmployerDashboard /></ProtectedRoute>} />
+          <Route path="/events" element={<ProtectedRoute requireRole="employer"><Events /></ProtectedRoute>} />
           
           {/* Settings - accessible by both */}
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

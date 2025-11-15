@@ -6,6 +6,11 @@ const eventSchema = new mongoose.Schema({
     type: String,
     default: () => uuidv4()
   },
+  employer_id: {
+    type: String,
+    ref: 'User',
+    required: true
+  },
   title: {
     type: String,
     required: true
@@ -30,6 +35,35 @@ const eventSchema = new mongoose.Schema({
   description: {
     type: String,
     default: null
+  },
+  presenter: {
+    type: String,
+    required: true
+  },
+  company: {
+    type: String,
+    required: true
+  },
+  target_audience: {
+    type: String,
+    default: null
+  },
+  skills: {
+    type: [String],
+    default: []
+  },
+  image: {
+    type: String,
+    default: null
+  },
+  attachments: {
+    type: [String],
+    default: []
+  },
+  status: {
+    type: String,
+    enum: ['active', 'cancelled', 'completed'],
+    default: 'active'
   }
 }, {
   timestamps: true,

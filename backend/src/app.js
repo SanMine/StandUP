@@ -22,6 +22,7 @@ const mentorRoutes = require('./routes/mentorRoutes');
 const portfolioRoutes = require('./routes/portfolioRoutes');
 const learningRoutes = require('./routes/learningRoutes');
 const aiRoutes = require('./routes/aiRoutes');
+const eventRoutes = require('./routes/eventRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -149,6 +150,7 @@ app.use('/api/mentors', mentorRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/learning', learningRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/events', eventRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

@@ -1,20 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { 
   Search, 
-  Star,
   MapPin,
-  Briefcase,
-  Globe,
   Calendar,
   Clock,
+  Users,
+  Award,
+  Building,
   CheckCircle2
 } from 'lucide-react';
-import { mentors, users } from '../utils/mockData';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import {
   Dialog,
@@ -23,27 +21,65 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { Textarea } from '../components/ui/textarea';
-import { Label } from '../components/ui/label';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
+import api from '../services/api';
 
 const Mentors = () => {
-  const currentUser = users.student;
+  const { user } = useAuth();
+  const [events, setEvents] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedMentor, setSelectedMentor] = useState(null);
-  const [bookingOpen, setBookingOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedFilters, setSelectedFilters] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [enrolledEvents, setEnrolledEvents] = useState(new Set());
 
-  const filterOptions = ['Software Engineering', 'Product Management', 'Data Science', 'Leadership', 'Career Growth'];
+  const filterOptions = ['Webinar', 'Workshop', 'Career Fair', 'Networking', 'Interview'];
 
-  const filteredMentors = mentors.filter(mentor => {
+  useEffect(() => {
+    fetchEvents();
+    fetchMyEnrollments();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/events', {
+        params: { status: 'active' }
+      });
+      if (response.data.success) {
+        setEvents(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      toast.error('Failed to fetch events');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchMyEnrollments = async () => {
+    try {
+      const response = await api.get('/events/my/enrollments');
+      if (response.data.success) {
+        const eventIds = new Set(response.data.data.map(e => e.event_id));
+        setEnrolledEvents(eventIds);
+      }
+    } catch (error) {
+      console.error('Error fetching enrollments:', error);
+    }
+  };
+
+  const filteredEvents = events.filter(event => {
     const matchesSearch = searchQuery === '' || 
-      mentor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mentor.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mentor.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mentor.expertise.some(exp => exp.toLowerCase().includes(searchQuery.toLowerCase()));
+      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.presenter.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.skills && event.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())));
     
     const matchesFilter = selectedFilters.length === 0 ||
-      selectedFilters.some(filter => mentor.expertise.includes(filter));
+      selectedFilters.includes(event.type);
 
     return matchesSearch && matchesFilter;
   });
@@ -54,23 +90,40 @@ const Mentors = () => {
     );
   };
 
-  const handleBookSession = (mentor) => {
-    setSelectedMentor(mentor);
-    setBookingOpen(true);
+  const handleViewDetails = (event) => {
+    setSelectedEvent(event);
+    setDetailsOpen(true);
+  };
+
+  const handleEnroll = async (eventId) => {
+    try {
+      const response = await api.post(`/events/${eventId}/enroll`);
+      if (response.data.success) {
+        toast.success('Successfully enrolled in event!');
+        setEnrolledEvents(prev => new Set([...prev, eventId]));
+        setDetailsOpen(false);
+        fetchEvents();
+      }
+    } catch (error) {
+      console.error('Error enrolling:', error);
+      toast.error(error.response?.data?.error?.message || 'Failed to enroll in event');
+    }
+  };
+
+  const isEnrolled = (eventId) => {
+    return enrolledEvents.has(eventId);
   };
 
   return (
-    <DashboardLayout user={currentUser}>
+    <DashboardLayout user={user}>
       <div className="space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Find Your Mentor
+            Events & Mentorship
           </h1>
-          <p className="text-[#4B5563]">Learn from industry experts and accelerate your career growth</p>
+          <p className="text-[#4B5563]">Discover events and workshops to boost your career</p>
         </div>
 
-        {/* Search & Filters */}
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="space-y-4">
@@ -78,14 +131,14 @@ const Mentors = () => {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Search mentors by name, role, company, or expertise..."
+                  placeholder="Search events by title, company, presenter, or skills..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 h-12 text-base"
                 />
               </div>
               <div>
-                <h4 className="text-sm font-medium text-[#4B5563] mb-2">Filter by Expertise</h4>
+                <h4 className="text-sm font-medium text-[#4B5563] mb-2">Filter by Type</h4>
                 <div className="flex flex-wrap gap-2">
                   {filterOptions.map((filter) => {
                     const isSelected = selectedFilters.includes(filter);
@@ -109,133 +162,232 @@ const Mentors = () => {
           </CardContent>
         </Card>
 
-        {/* Results */}
         <div className="flex items-center justify-between">
           <p className="text-[#4B5563]">
-            <span className="font-semibold text-[#0F151D]">{filteredMentors.length}</span> mentors found
+            <span className="font-semibold text-[#0F151D]">{filteredEvents.length}</span> events found
           </p>
         </div>
 
-        {/* Mentor Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredMentors.map((mentor) => (
-            <Card key={mentor.id} className="border-none shadow-md hover:shadow-xl transition-all">
-              <CardContent className="p-6">
-                <div className="text-center mb-4">
-                  <Avatar className="h-24 w-24 mx-auto mb-4 border-4 border-[#FFE4CC]">
-                    <AvatarImage src={mentor.avatar} alt={mentor.name} />
-                    <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <h3 className="text-lg font-semibold text-[#0F151D] mb-1">{mentor.name}</h3>
-                  <p className="text-sm text-[#4B5563] mb-1">{mentor.title}</p>
-                  <p className="text-xs text-[#FF7000] font-medium mb-3">{mentor.company}</p>
-                  <div className="flex items-center justify-center gap-1 mb-3">
-                    <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                    <span className="text-sm font-medium">{mentor.rating}</span>
-                    <span className="text-xs text-[#4B5563]">({mentor.sessions} sessions)</span>
+        {isLoading ? (
+          <div className="text-center py-12">
+            <p className="text-[#4B5563]">Loading events...</p>
+          </div>
+        ) : filteredEvents.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-[#4B5563]">No events found. Check back later!</p>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredEvents.map((event) => (
+              <Card key={event._id || event.id} className="border-none shadow-md hover:shadow-xl transition-all">
+                <CardContent className="p-6">
+                  {event.image && (
+                    <div className="mb-4 rounded-lg overflow-hidden">
+                      <img
+                        src={event.image}
+                        alt={event.title}
+                        className="w-full h-40 object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Badge variant="outline" className="text-xs">
+                        {event.type}
+                      </Badge>
+                      {isEnrolled(event._id || event.id) && (
+                        <Badge className="text-xs bg-green-100 text-green-700">
+                          <CheckCircle2 className="h-3 w-3 mr-1" />
+                          Enrolled
+                        </Badge>
+                      )}
+                    </div>
+                    <h3 className="text-lg font-semibold text-[#0F151D] mb-2">{event.title}</h3>
+                    <p className="text-sm text-[#4B5563] mb-3 line-clamp-2">{event.description}</p>
+                  </div>
+
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+                      <Calendar className="h-4 w-4" />
+                      <span>{new Date(event.date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+                      <Clock className="h-4 w-4" />
+                      <span>{event.time}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+                      <Building className="h-4 w-4" />
+                      <span>{event.company}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+                      <Users className="h-4 w-4" />
+                      <span>{event.enrollmentCount || 0} enrolled</span>
+                    </div>
+                  </div>
+
+                  {event.skills && event.skills.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-[#4B5563] mb-2">Skills you'll gain</p>
+                      <div className="flex flex-wrap gap-1">
+                        {event.skills.slice(0, 3).map((skill, idx) => (
+                          <Badge key={idx} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                        {event.skills.length > 3 && (
+                          <Badge variant="outline" className="text-xs">
+                            +{event.skills.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleViewDetails(event)}
+                    >
+                      See Details
+                    </Button>
+                    {!isEnrolled(event._id || event.id) && (
+                      <Button 
+                        className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                        onClick={() => handleEnroll(event._id || event.id)}
+                      >
+                        Enroll
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          {selectedEvent && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge variant="outline">{selectedEvent.type}</Badge>
+                  {isEnrolled(selectedEvent._id || selectedEvent.id) && (
+                    <Badge className="bg-green-100 text-green-700">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                      Enrolled
+                    </Badge>
+                  )}
+                </div>
+                <DialogTitle className="text-2xl">{selectedEvent.title}</DialogTitle>
+                <DialogDescription>by {selectedEvent.presenter} from {selectedEvent.company}</DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                {selectedEvent.image && (
+                  <div className="rounded-lg overflow-hidden">
+                    <img
+                      src={selectedEvent.image}
+                      alt={selectedEvent.title}
+                      className="w-full h-48 object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-[#FF7000]" />
+                    <div>
+                      <p className="font-medium">Date</p>
+                      <p className="text-[#4B5563]">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-[#FF7000]" />
+                    <div>
+                      <p className="font-medium">Time</p>
+                      <p className="text-[#4B5563]">{selectedEvent.time}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="h-4 w-4 text-[#FF7000]" />
+                    <div>
+                      <p className="font-medium">Location</p>
+                      <p className="text-[#4B5563]">{selectedEvent.location}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Users className="h-4 w-4 text-[#FF7000]" />
+                    <div>
+                      <p className="font-medium">Enrolled</p>
+                      <p className="text-[#4B5563]">{selectedEvent.enrollmentCount || 0} students</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-3 mb-4">
+                <div>
+                  <h4 className="font-medium text-[#0F151D] mb-2">Description</h4>
+                  <p className="text-sm text-[#4B5563]">{selectedEvent.description}</p>
+                </div>
+
+                {selectedEvent.target_audience && (
                   <div>
-                    <p className="text-xs font-medium text-[#4B5563] mb-2">Expertise</p>
-                    <div className="flex flex-wrap gap-1">
-                      {mentor.expertise.slice(0, 3).map((exp) => (
-                        <Badge key={exp} variant="outline" className="text-xs">
-                          {exp}
+                    <h4 className="font-medium text-[#0F151D] mb-2">Who is this for?</h4>
+                    <p className="text-sm text-[#4B5563]">{selectedEvent.target_audience}</p>
+                  </div>
+                )}
+
+                {selectedEvent.skills && selectedEvent.skills.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-[#0F151D] mb-2">Skills you'll gain</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedEvent.skills.map((skill, idx) => (
+                        <Badge key={idx} variant="outline" className="text-xs">
+                          <Award className="h-3 w-3 mr-1" />
+                          {skill}
                         </Badge>
                       ))}
                     </div>
                   </div>
+                )}
+
+                {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
                   <div>
-                    <p className="text-xs font-medium text-[#4B5563] mb-2">Languages</p>
-                    <div className="flex items-center gap-2 text-xs text-[#4B5563]">
-                      <Globe className="h-3 w-3" />
-                      <span>{mentor.languages.join(', ')}</span>
+                    <h4 className="font-medium text-[#0F151D] mb-2">Attachments</h4>
+                    <div className="space-y-2">
+                      {selectedEvent.attachments.map((attachment, idx) => (
+                        <a
+                          key={idx}
+                          href={attachment}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="block text-sm text-[#FF7000] hover:underline"
+                        >
+                          📎 Attachment {idx + 1}
+                        </a>
+                      ))}
                     </div>
                   </div>
-                  <div>
-                    <p className="text-xs font-medium text-[#4B5563] mb-2">Availability</p>
-                    <div className="flex items-center gap-2 text-xs text-[#4B5563]">
-                      <Clock className="h-3 w-3" />
-                      <span>{mentor.availability}</span>
-                    </div>
-                  </div>
-                </div>
+                )}
 
-                <p className="text-sm text-[#4B5563] mb-4">{mentor.bio}</p>
-
-                <Button 
-                  className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
-                  onClick={() => handleBookSession(mentor)}
-                >
-                  Book Session
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Booking Dialog */}
-      <Dialog open={bookingOpen} onOpenChange={setBookingOpen}>
-        <DialogContent className="sm:max-w-md">
-          {selectedMentor && (
-            <>
-              <DialogHeader>
-                <div className="flex items-center gap-3 mb-2">
-                  <Avatar className="h-12 w-12 border-2 border-[#FFE4CC]">
-                    <AvatarImage src={selectedMentor.avatar} alt={selectedMentor.name} />
-                    <AvatarFallback>{selectedMentor.name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <DialogTitle>{selectedMentor.name}</DialogTitle>
-                    <DialogDescription>{selectedMentor.title}</DialogDescription>
-                  </div>
-                </div>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="topic">Session Topic</Label>
-                  <Input id="topic" placeholder="e.g., Career guidance, Technical interview prep" className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="date">Preferred Date</Label>
-                  <Input id="date" type="date" className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="time">Preferred Time</Label>
-                  <Input id="time" type="time" className="mt-1" />
-                </div>
-                <div>
-                  <Label htmlFor="message">Message (Optional)</Label>
-                  <Textarea 
-                    id="message" 
-                    placeholder="Tell the mentor what you'd like to discuss..."
-                    className="mt-1 min-h-[100px]"
-                  />
-                </div>
-                <div className="bg-[#E8F0FF] rounded-lg p-4">
-                  <h4 className="font-medium text-[#0F151D] mb-2">Session Topics</h4>
-                  <ul className="space-y-1">
-                    {selectedMentor.topics.map((topic, idx) => (
-                      <li key={idx} className="flex items-center gap-2 text-sm text-[#4B5563]">
-                        <CheckCircle2 className="h-4 w-4 text-[#284688]" />
-                        <span>{topic}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <Button 
-                  className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
-                  onClick={() => {
-                    alert(`Session request sent to ${selectedMentor.name}!`);
-                    setBookingOpen(false);
-                  }}
-                >
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Request Session
-                </Button>
+                {!isEnrolled(selectedEvent._id || selectedEvent.id) && (
+                  <Button 
+                    className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                    onClick={() => handleEnroll(selectedEvent._id || selectedEvent.id)}
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Enroll in Event
+                  </Button>
+                )}
               </div>
             </>
           )}
