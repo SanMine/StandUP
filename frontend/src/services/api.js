@@ -78,6 +78,13 @@ export const userAPI = {
 
 // Jobs API calls
 export const jobsAPI = {
+
+  //Get current employer's jobs
+  getMyJobs: async (params = {}) => {
+    const response = await api.get('/jobs/my-jobs', { params });
+    return response.data;
+  },
+
   getJobs: async (params = {}) => {
     const response = await api.get('/jobs', { params });
     return response.data;

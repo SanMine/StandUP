@@ -44,9 +44,8 @@ const EmployerDashboard = () => {
   const fetchJobs = async () => {
     try {
       setIsFetchingJobs(true);
-      const response = await jobsAPI.getJobs();
+      const response = await jobsAPI.getMyJobs();
       if (response.success) {
-        // Filter to show only jobs by this employer (in real scenario, backend should filter)
         setJobs(response.data);
       }
     } catch (error) {

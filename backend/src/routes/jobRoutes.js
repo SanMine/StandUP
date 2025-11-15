@@ -5,6 +5,9 @@ const jobController = require('../controllers/jobController');
 const validate = require('../middlewares/validate');
 const { isAuthenticated, isEmployer } = require('../middlewares/auth');
 
+//Get current employer's jobs (must be BEFORE '/:id')
+router.get('/my-jobs', isAuthenticated, isEmployer, jobController.getMyJobs);
+
 // Get all jobs (public)
 router.get('/', jobController.getAllJobs);
 

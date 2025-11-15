@@ -71,9 +71,14 @@ const getAllJobs = async (req, res, next) => {
 
     // If user is authenticated, calculate match scores using AI
     let jobsWithScores = jobsWithDetails;
-    if (req.session && req.session.userId && req.session.userRole === 'student') {
-      const user = await User.findById(req.session.userId).lean();
-      const userSkills = await UserSkill.find({ user_id: req.session.userId }).lean();
+    // if (req.session && req.session.userId && req.session.userRole === 'student') {
+    //   const user = await User.findById(req.session.userId).lean();
+    //   const userSkills = await UserSkill.find({ user_id: req.session.userId }).lean();
+
+    // FIXED: Use req.user instead of req.session
+    if (req.user && req.user.role === 'student') {
+      const user = await User.findById(req.user.userId).lean();
+      const userSkills = await UserSkill.find({ user_id: req.user.userId }).lean();
 
       if (user && userSkills && userSkills.length > 0) {
         jobsWithScores = await Promise.all(
@@ -163,9 +168,13 @@ const getJobById = async (req, res, next) => {
     };
 
     // Calculate match score if user is authenticated
-    if (req.session && req.session.userId && req.session.userRole === 'student') {
-      const user = await User.findById(req.session.userId).lean();
-      const userSkills = await UserSkill.find({ user_id: req.session.userId }).lean();
+    // if (req.session && req.session.userId && req.session.userRole === 'student') {
+    //   const user = await User.findById(req.session.userId).lean();
+    //   const userSkills = await UserSkill.find({ user_id: req.session.userId }).lean();
+
+    if (req.user && req.user.role === 'student') {
+      const user = await User.findById(req.user.userId).lean();
+      const userSkills = await UserSkill.find({ user_id: req.user.userId }).lean();
 
       if (user && userSkills && userSkills.length > 0) {
         try {
@@ -223,8 +232,10 @@ const createJob = async (req, res, next) => {
       culture
     } = req.body;
 
+
     const job = await Job.create({
-      employer_id: req.session.userId,
+      //   employer_id: req.session.userId,
+      employer_id: req.user.userId,
       title,
       company,
       logo,
@@ -282,7 +293,9 @@ const updateJob = async (req, res, next) => {
     }
 
     // Check if user owns this job
-    if (job.employer_id !== req.session.userId) {
+    // if (job.employer_id !== req.session.userId) {
+
+    if (job.employer_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {
@@ -366,7 +379,9 @@ const deleteJob = async (req, res, next) => {
     }
 
     // Check if user owns this job
-    if (job.employer_id !== req.session.userId) {
+    // if (job.employer_id !== req.session.userId) {
+
+    if (job.employer_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {
@@ -380,7 +395,7 @@ const deleteJob = async (req, res, next) => {
     await JobSkill.deleteMany({ job_id: job._id });
     await Application.deleteMany({ job_id: job._id });
     await SavedJob.deleteMany({ job_id: job._id });
-    
+
     await job.deleteOne();
 
     res.status(200).json({
@@ -392,10 +407,100 @@ const deleteJob = async (req, res, next) => {
   }
 };
 
+// Get all jobs for current employer
+const getMyJobs = async (req, res, next) => {
+  try {
+    const {
+      status,
+      search,
+      page = 1,
+      limit = 10,
+      sortBy = 'posted_date',
+      sortOrder = 'desc'
+    } = req.query;
+
+    const skip = (page - 1) * limit;
+
+    // Base query - only jobs by this employer
+    const query = { employer_id: req.user.userId };
+
+    // Status filter (active, closed, draft)
+    if (status) {
+      query.status = status;
+    }
+
+    // Search filter
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count
+    const count = await Job.countDocuments(query);
+
+    // Sorting
+    const sortOptions = {};
+    sortOptions[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+    // Fetch jobs
+    const jobs = await Job.find(query)
+      .limit(parseInt(limit))
+      .skip(parseInt(skip))
+      .sort(sortOptions)
+      .lean();
+
+    // Enrich with skills and application counts
+    const jobsWithDetails = await Promise.all(
+      jobs.map(async (job) => {
+        const skills = await JobSkill.find({ job_id: job._id }).lean();
+        const applicationCount = await Application.countDocuments({ job_id: job._id });
+        const savedCount = await SavedJob.countDocuments({ job_id: job._id });
+
+        return {
+          ...job,
+          id: job._id,
+          skills,
+          applicationCount,
+          savedCount
+        };
+      })
+    );
+
+    // Calculate statistics
+    const stats = {
+      total: count,
+      active: await Job.countDocuments({ employer_id: req.user.userId, status: 'active' }),
+      draft: await Job.countDocuments({ employer_id: req.user.userId, status: 'draft' }),
+      closed: await Job.countDocuments({ employer_id: req.user.userId, status: 'closed' }),
+      totalApplications: await Application.countDocuments({
+        job_id: { $in: jobs.map(j => j._id) }
+      })
+    };
+
+    res.status(200).json({
+      success: true,
+      data: jobsWithDetails,
+      stats,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getAllJobs,
   getJobById,
   createJob,
   updateJob,
-  deleteJob
+  deleteJob,
+  getMyJobs
 };
