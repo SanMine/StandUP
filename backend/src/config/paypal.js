@@ -1,11 +1,11 @@
 require('dotenv').config();
 
-const base = process.env.PAYPAL_API_URL || "https://api-m.sandbox.paypal.com"
+const base = process.env.PAYPAL_API_URL
 
 async function generateAccessToken() {
     const {
-        PAYPAL_CLIENT_ID = "AfhFIQjZoE-XLutk3Jc5APIHo8AYhm-mxlYnqiwNug6kq9QS5PuiAxoxVHeyTEc-SEUMlHizINa3nswJ",
-        PAYPAL_APP_SECRET = "ECM6zHYT4uN1UgRHE1N9QzjYwYxAnw81CkHB2ml53m7HfYnr0cynZD53I5FDnswXMjiJ0ogo07Eeqg7r"
+        PAYPAL_CLIENT_ID,
+        PAYPAL_APP_SECRET
     } = process.env
     const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_APP_SECRET}`).toString('base64')
 

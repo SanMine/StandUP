@@ -12,7 +12,7 @@ import api from '../services/api';
 import { toast } from 'sonner';
 import StripePayment from '@/components/StripePayment';
 
-const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID || "AfhFIQjZoE-XLutk3Jc5APIHo8AYhm-mxlYnqiwNug6kq9QS5PuiAxoxVHeyTEc-SEUMlHizINa3nswJ";
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID
 
 const PrintLoadingState = () => {
     const [{ isPending }] = usePayPalScriptReducer();

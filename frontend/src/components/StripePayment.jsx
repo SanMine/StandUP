@@ -6,7 +6,7 @@ import api from '../services/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || "pk_test_51RXI3gQvW6ZMV09MFBEikgmkt32ExlSwsmWXi6xkWbQnuGYAK0FBCYk6e8faYvvnJHaM2gzd0q8wmzBOh8dbCR5i00kcu0QyZ4");
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
 
 function _InnerStripeForm({ orderOrPlanId, amount }) {
     const stripe = useStripe();
