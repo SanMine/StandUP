@@ -41,17 +41,17 @@ export const authAPI = {
     const response = await api.post('/auth/signin', { email, password });
     return response.data;
   },
-  
+
   signup: async (userData) => {
     const response = await api.post('/auth/signup', userData);
     return response.data;
   },
-  
+
   signout: async () => {
     const response = await api.post('/auth/signout');
     return response.data;
   },
-  
+
   getMe: async () => {
     const response = await api.get('/auth/me');
     return response.data;
@@ -64,12 +64,12 @@ export const userAPI = {
     const response = await api.get('/users/profile');
     return response.data;
   },
-  
+
   updateProfile: async (profileData) => {
     const response = await api.put('/users/profile', profileData);
     return response.data;
   },
-  
+
   updateSkills: async (skills) => {
     const response = await api.post('/users/skills', { skills });
     return response.data;
@@ -89,22 +89,22 @@ export const jobsAPI = {
     const response = await api.get('/jobs', { params });
     return response.data;
   },
-  
+
   getJob: async (jobId) => {
     const response = await api.get(`/jobs/${jobId}`);
     return response.data;
   },
-  
+
   createJob: async (jobData) => {
     const response = await api.post('/jobs', jobData);
     return response.data;
   },
-  
+
   updateJob: async (jobId, jobData) => {
     const response = await api.put(`/jobs/${jobId}`, jobData);
     return response.data;
   },
-  
+
   deleteJob: async (jobId) => {
     const response = await api.delete(`/jobs/${jobId}`);
     return response.data;
@@ -117,12 +117,12 @@ export const applicationsAPI = {
     const response = await api.get('/applications');
     return response.data;
   },
-  
+
   applyForJob: async (jobId, notes) => {
     const response = await api.post('/applications', { jobId, notes });
     return response.data;
   },
-  
+
   updateApplication: async (applicationId, updates) => {
     const response = await api.put(`/applications/${applicationId}`, updates);
     return response.data;
@@ -135,7 +135,7 @@ export const mentorsAPI = {
     const response = await api.get('/mentors');
     return response.data;
   },
-  
+
   bookSession: async (mentorId, sessionData) => {
     const response = await api.post('/mentors/sessions', { mentorId, ...sessionData });
     return response.data;
@@ -154,7 +154,7 @@ export const learningAPI = {
     const response = await api.get('/learning/courses/coursera');
     return response.data;
   },
-  
+
   getEvents: async () => {
     const response = await api.get('/learning/events');
     return response.data;
@@ -167,7 +167,7 @@ export const portfolioAPI = {
     const response = await api.get('/portfolio/projects');
     return response.data;
   },
-  
+
   createProject: async (projectData) => {
     const response = await api.post('/portfolio/projects', projectData);
     return response.data;
@@ -180,7 +180,7 @@ export const aiAPI = {
     const response = await api.post('/ai/match-jobs', preferences);
     return response.data;
   },
-  
+
   analyzeResume: async (resumeText) => {
     const response = await api.post('/ai/analyze-resume', { resumeText });
     return response.data;

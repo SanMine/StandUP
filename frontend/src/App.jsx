@@ -1,24 +1,23 @@
-import React from "react";
+import { Route, Routes } from "react-router-dom";
 import "./App.css";
-import { Routes, Route } from "react-router-dom";
-import { Toaster } from "./components/ui/sonner";
-import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import PublicRoute from "./components/Auth/PublicRoute";
-import Landing from "./pages/Landing";
+import { AuthProvider } from "./contexts/AuthContext";
+import Applications from "./pages/Applications";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
-import Jobs from "./pages/Jobs";
-import Applications from "./pages/Applications";
-import Interviews from "./pages/Interviews";
-import Mentors from "./pages/Mentors";
-import Learning from "./pages/Learning";
-import Portfolio from "./pages/Portfolio";
-import Settings from "./pages/Settings";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import EmployerDashboardDemo from "./pages/EmployerDashboardDemo";
-import Pricing from "./pages/Pricing";
 import EmployerSettings from "./pages/EmployerSettings";
+import Interviews from "./pages/Interviews";
+import Jobs from "./pages/Jobs";
+import Landing from "./pages/Landing";
+import Learning from "./pages/Learning";
+import Mentors from "./pages/Mentors";
+import PaymentPage from "./pages/PaymentPage";
+import Portfolio from "./pages/Portfolio";
+import Pricing from "./pages/Pricing";
+import Settings from "./pages/Settings";
 
 function App() {
   return (
@@ -43,11 +42,11 @@ function App() {
 
           {/* Public */}
           <Route path="/jobs" element={<Jobs />} />
+          <Route path="/payment" element={<PaymentPage />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/demo" element={<EmployerDashboardDemo />} />
         </Routes>
       </AuthProvider>
-      <Toaster />
     </div>
   );
 }
