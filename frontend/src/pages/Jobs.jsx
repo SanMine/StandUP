@@ -29,6 +29,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../components/ui/sheet';
+import EmployerLayout from '@/components/Layout/EmployerLayout';
 
 const Jobs = () => {
   const navigate = useNavigate();
@@ -143,8 +144,10 @@ const Jobs = () => {
     return () => { mounted = false; };
   }, []);
 
+  const Layout = currentUser.role === 'employer' ? EmployerLayout : DashboardLayout;
+
   return (
-    <DashboardLayout user={currentUser}>
+    <Layout user={currentUser}>
       <div className="space-y-6">
         {/* Header */}
         <div>
@@ -474,7 +477,7 @@ const Jobs = () => {
           )}
         </SheetContent>
       </Sheet>
-    </DashboardLayout>
+    </Layout>
   );
 };
 

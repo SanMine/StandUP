@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import AppBar from './AppBar';
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, Settings } from 'lucide-react';
+import { LayoutDashboard, Settings, Briefcase } from 'lucide-react';
 
 const EmployerLayout = ({ children, user }) => {
   const { user: authUser } = useAuth();
@@ -15,6 +15,7 @@ const EmployerLayout = ({ children, user }) => {
       path: '/employer-dashboard',
       icon: LayoutDashboard
     },
+    { name: 'Jobs', path: '/jobs', icon: Briefcase },
     {
       name: 'Settings',
       path: '/settings',
