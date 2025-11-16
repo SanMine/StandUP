@@ -342,7 +342,6 @@ const Jobs = () => {
                   className="border-none shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden group"
                   onClick={() => setSelectedJobId(jobId)}
                 >
-                  <div className={`absolute inset-0 bg-gradient-to-r ${getMatchScoreGradient(matchScore)}/5 opacity-0 group-hover:opacity-100 transition-opacity`} />
                   <CardContent className="p-6 relative">
                     <div className="flex items-start gap-6">
                       {/* Company Logo */}

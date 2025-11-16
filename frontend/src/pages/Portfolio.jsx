@@ -1142,7 +1142,6 @@ const Portfolio = () => {
               <div className="space-y-4">
                 {resume.education.map((edu, index) => (
                   <Card key={edu._id || index} className="border-none shadow-lg hover:shadow-xl transition-all overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <CardContent className="pt-6 relative">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex gap-4 flex-1 min-w-0">
@@ -1426,7 +1425,6 @@ const Portfolio = () => {
               <div className="space-y-4">
                 {resume.experience.map((exp, index) => (
                   <Card key={exp._id || index} className="border-none shadow-lg hover:shadow-xl transition-all overflow-hidden group">
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <CardContent className="pt-6 relative">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex gap-4 flex-1 min-w-0">
