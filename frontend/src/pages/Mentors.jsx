@@ -11,7 +11,9 @@ import {
   Users,
   Award,
   Building,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles,
+  Filter
 } from 'lucide-react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import {
@@ -114,31 +116,68 @@ const Mentors = () => {
     return enrolledEvents.has(eventId);
   };
 
+  const getTypeColor = (type) => {
+    const colors = {
+      'Webinar': 'bg-blue-100 text-blue-700 border-blue-200',
+      'Workshop': 'bg-purple-100 text-purple-700 border-purple-200',
+      'Career Fair': 'bg-green-100 text-green-700 border-green-200',
+      'Networking': 'bg-orange-100 text-orange-700 border-orange-200',
+      'Interview': 'bg-pink-100 text-pink-700 border-pink-200'
+    };
+    return colors[type] || 'bg-gray-100 text-gray-700 border-gray-200';
+  };
+
+  const getTypeGradient = (type) => {
+    const gradients = {
+      'Webinar': 'from-blue-500/10 to-blue-600/10',
+      'Workshop': 'from-purple-500/10 to-purple-600/10',
+      'Career Fair': 'from-green-500/10 to-green-600/10',
+      'Networking': 'from-orange-500/10 to-orange-600/10',
+      'Interview': 'from-pink-500/10 to-pink-600/10'
+    };
+    return gradients[type] || 'from-gray-500/10 to-gray-600/10';
+  };
+
   return (
     <DashboardLayout user={user}>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Events & Mentorship
-          </h1>
-          <p className="text-[#4B5563]">Discover events and workshops to boost your career</p>
+        {/* Enhanced Header */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-transparent to-purple-500/10 rounded-3xl blur-3xl" />
+          <div className="relative">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
+                <Sparkles className="w-7 h-7 text-white" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  Events & Mentorship
+                </h1>
+                <p className="text-gray-600 text-lg">Discover events and workshops to boost your career</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <Card className="border-none shadow-md">
+        {/* Enhanced Search & Filters Card */}
+        <Card className="border-none shadow-xl bg-white/80 backdrop-blur-sm hover:shadow-2xl transition-shadow">
           <CardContent className="p-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <Input
                   type="text"
                   placeholder="Search events by title, company, presenter, or skills..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12 text-base"
+                  className="pl-12 h-14 text-base border-2 border-gray-200 focus:border-orange-500 focus:ring-orange-500 rounded-xl shadow-sm transition-all"
                 />
               </div>
               <div>
-                <h4 className="text-sm font-medium text-[#4B5563] mb-2">Filter by Type</h4>
+                <div className="flex items-center gap-2 mb-3">
+                  <Filter className="w-4 h-4 text-gray-600" />
+                  <h4 className="text-sm font-semibold text-gray-700">Filter by Type</h4>
+                </div>
                 <div className="flex flex-wrap gap-2">
                   {filterOptions.map((filter) => {
                     const isSelected = selectedFilters.includes(filter);
@@ -146,10 +185,10 @@ const Mentors = () => {
                       <Badge
                         key={filter}
                         onClick={() => toggleFilter(filter)}
-                        className={`cursor-pointer transition-all ${
+                        className={`cursor-pointer transition-all px-4 py-2 text-sm font-medium ${
                           isSelected
-                            ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg scale-105'
+                            : `${getTypeColor(filter)} hover:shadow-md border`
                         }`}
                       >
                         {filter}
@@ -162,197 +201,277 @@ const Mentors = () => {
           </CardContent>
         </Card>
 
-        <div className="flex items-center justify-between">
-          <p className="text-[#4B5563]">
-            <span className="font-semibold text-[#0F151D]">{filteredEvents.length}</span> events found
+        {/* Results Count */}
+        <div className="flex items-center justify-between px-2">
+          <p className="text-gray-600">
+            <span className="font-bold text-2xl text-gray-900">{filteredEvents.length}</span>
+            <span className="ml-2">events found</span>
           </p>
         </div>
 
+        {/* Events Grid */}
         {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-[#4B5563]">Loading events...</p>
+          <div className="text-center py-16">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-orange-500 border-t-transparent" />
+            <p className="text-gray-600 mt-4">Loading events...</p>
           </div>
         ) : filteredEvents.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-[#4B5563]">No events found. Check back later!</p>
-          </div>
+          <Card className="border-none shadow-lg">
+            <CardContent className="p-16 text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-10 h-10 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">No events found</h3>
+              <p className="text-gray-600">Check back later for new opportunities!</p>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
-              <Card key={event._id || event.id} className="border-none shadow-md hover:shadow-xl transition-all">
-                <CardContent className="p-6">
+            {filteredEvents.map((event) => {
+              const eventId = event._id || event.id;
+              const enrolled = isEnrolled(eventId);
+              return (
+                <Card 
+                  key={eventId} 
+                  className="border-none shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
+                  onClick={() => handleViewDetails(event)}
+                >
+                  {/* Image with Overlay */}
                   {event.image && (
-                    <div className="mb-4 rounded-lg overflow-hidden">
+                    <div className="relative h-48 overflow-hidden">
+                      <div className={`absolute inset-0 bg-gradient-to-t ${getTypeGradient(event.type)} opacity-60 group-hover:opacity-40 transition-opacity`} />
                       <img
                         src={event.image}
                         alt={event.title}
-                        className="w-full h-40 object-cover"
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         onError={(e) => {
                           e.target.style.display = 'none';
                         }}
                       />
-                    </div>
-                  )}
-                  
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs">
-                        {event.type}
-                      </Badge>
-                      {isEnrolled(event._id || event.id) && (
-                        <Badge className="text-xs bg-green-100 text-green-700">
-                          <CheckCircle2 className="h-3 w-3 mr-1" />
-                          Enrolled
+                      <div className="absolute top-3 left-3 flex gap-2">
+                        <Badge className={`${getTypeColor(event.type)} border shadow-md`}>
+                          {event.type}
                         </Badge>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold text-[#0F151D] mb-2">{event.title}</h3>
-                    <p className="text-sm text-[#4B5563] mb-3 line-clamp-2">{event.description}</p>
-                  </div>
-
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                      <Calendar className="h-4 w-4" />
-                      <span>{new Date(event.date).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                      <Clock className="h-4 w-4" />
-                      <span>{event.time}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                      <Building className="h-4 w-4" />
-                      <span>{event.company}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                      <Users className="h-4 w-4" />
-                      <span>{event.enrollmentCount || 0} enrolled</span>
-                    </div>
-                  </div>
-
-                  {event.skills && event.skills.length > 0 && (
-                    <div className="mb-4">
-                      <p className="text-xs font-medium text-[#4B5563] mb-2">Skills you'll gain</p>
-                      <div className="flex flex-wrap gap-1">
-                        {event.skills.slice(0, 3).map((skill, idx) => (
-                          <Badge key={idx} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {event.skills.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{event.skills.length - 3} more
+                        {enrolled && (
+                          <Badge className="bg-green-500 text-white border-0 shadow-md">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Enrolled
                           </Badge>
                         )}
                       </div>
                     </div>
                   )}
-
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => handleViewDetails(event)}
-                    >
-                      See Details
-                    </Button>
-                    {!isEnrolled(event._id || event.id) && (
-                      <Button 
-                        className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
-                        onClick={() => handleEnroll(event._id || event.id)}
-                      >
-                        Enroll
-                      </Button>
+                  
+                  <CardContent className="p-6">
+                    {!event.image && (
+                      <div className="flex items-center gap-2 mb-3">
+                        <Badge className={`${getTypeColor(event.type)} border`}>
+                          {event.type}
+                        </Badge>
+                        {enrolled && (
+                          <Badge className="bg-green-500 text-white">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Enrolled
+                          </Badge>
+                        )}
+                      </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-2">
+                      {event.title}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4 line-clamp-2">{event.description}</p>
+
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="p-1.5 bg-orange-100 rounded-lg">
+                          <Calendar className="h-3.5 w-3.5 text-orange-600" />
+                        </div>
+                        <span className="font-medium">{new Date(event.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="p-1.5 bg-blue-100 rounded-lg">
+                          <Clock className="h-3.5 w-3.5 text-blue-600" />
+                        </div>
+                        <span className="font-medium">{event.time}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="p-1.5 bg-purple-100 rounded-lg">
+                          <Building className="h-3.5 w-3.5 text-purple-600" />
+                        </div>
+                        <span className="font-medium truncate">{event.company}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="p-1.5 bg-green-100 rounded-lg">
+                          <Users className="h-3.5 w-3.5 text-green-600" />
+                        </div>
+                        <span className="font-medium">{event.enrollmentCount || 0} enrolled</span>
+                      </div>
+                    </div>
+
+                    {event.skills && event.skills.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Skills you'll gain</p>
+                        <div className="flex flex-wrap gap-1">
+                          {event.skills.slice(0, 3).map((skill, idx) => (
+                            <Badge key={idx} variant="outline" className="text-xs bg-gray-50">
+                              {skill}
+                            </Badge>
+                          ))}
+                          {event.skills.length > 3 && (
+                            <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                              +{event.skills.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        className="flex-1 hover:bg-gray-50 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewDetails(event);
+                        }}
+                      >
+                        Details
+                      </Button>
+                      {!enrolled && (
+                        <Button 
+                          className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEnroll(eventId);
+                          }}
+                        >
+                          Enroll Now
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
       </div>
 
+      {/* Enhanced Event Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
           {selectedEvent && (
             <>
-              <DialogHeader>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline">{selectedEvent.type}</Badge>
-                  {isEnrolled(selectedEvent._id || selectedEvent.id) && (
-                    <Badge className="bg-green-100 text-green-700">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Enrolled
+              {selectedEvent.image && (
+                <div className="-mx-6 -mt-6 mb-6 relative h-56 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                  <img
+                    src={selectedEvent.image}
+                    alt={selectedEvent.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute bottom-4 left-6 z-20 flex gap-2">
+                    <Badge className={`${getTypeColor(selectedEvent.type)} border shadow-lg`}>
+                      {selectedEvent.type}
                     </Badge>
-                  )}
+                    {isEnrolled(selectedEvent._id || selectedEvent.id) && (
+                      <Badge className="bg-green-500 text-white shadow-lg">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Enrolled
+                      </Badge>
+                    )}
+                  </div>
                 </div>
-                <DialogTitle className="text-2xl">{selectedEvent.title}</DialogTitle>
-                <DialogDescription>by {selectedEvent.presenter} from {selectedEvent.company}</DialogDescription>
+              )}
+
+              <DialogHeader>
+                {!selectedEvent.image && (
+                  <div className="flex items-center gap-2 mb-2">
+                    <Badge className={`${getTypeColor(selectedEvent.type)} border`}>{selectedEvent.type}</Badge>
+                    {isEnrolled(selectedEvent._id || selectedEvent.id) && (
+                      <Badge className="bg-green-500 text-white">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Enrolled
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                <DialogTitle className="text-3xl font-bold">{selectedEvent.title}</DialogTitle>
+                <DialogDescription className="text-base">by <span className="font-semibold text-gray-900">{selectedEvent.presenter}</span> from <span className="font-semibold text-gray-900">{selectedEvent.company}</span></DialogDescription>
               </DialogHeader>
               
-              <div className="space-y-4">
-                {selectedEvent.image && (
-                  <div className="rounded-lg overflow-hidden">
-                    <img
-                      src={selectedEvent.image}
-                      alt={selectedEvent.title}
-                      className="w-full h-48 object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                  </div>
-                )}
-
+              <div className="space-y-6">
+                {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Calendar className="h-4 w-4 text-[#FF7000]" />
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-50 to-orange-100 rounded-xl">
+                    <div className="p-2 bg-orange-500 rounded-lg">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
                     <div>
-                      <p className="font-medium">Date</p>
-                      <p className="text-[#4B5563]">{new Date(selectedEvent.date).toLocaleDateString()}</p>
+                      <p className="text-xs font-medium text-orange-600 uppercase">Date</p>
+                      <p className="text-sm font-semibold text-gray-900">{new Date(selectedEvent.date).toLocaleDateString()}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="h-4 w-4 text-[#FF7000]" />
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl">
+                    <div className="p-2 bg-blue-500 rounded-lg">
+                      <Clock className="h-5 w-5 text-white" />
+                    </div>
                     <div>
-                      <p className="font-medium">Time</p>
-                      <p className="text-[#4B5563]">{selectedEvent.time}</p>
+                      <p className="text-xs font-medium text-blue-600 uppercase">Time</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedEvent.time}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-[#FF7000]" />
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl">
+                    <div className="p-2 bg-purple-500 rounded-lg">
+                      <MapPin className="h-5 w-5 text-white" />
+                    </div>
                     <div>
-                      <p className="font-medium">Location</p>
-                      <p className="text-[#4B5563]">{selectedEvent.location}</p>
+                      <p className="text-xs font-medium text-purple-600 uppercase">Location</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedEvent.location}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-[#FF7000]" />
+                  <div className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100 rounded-xl">
+                    <div className="p-2 bg-green-500 rounded-lg">
+                      <Users className="h-5 w-5 text-white" />
+                    </div>
                     <div>
-                      <p className="font-medium">Enrolled</p>
-                      <p className="text-[#4B5563]">{selectedEvent.enrollmentCount || 0} students</p>
+                      <p className="text-xs font-medium text-green-600 uppercase">Enrolled</p>
+                      <p className="text-sm font-semibold text-gray-900">{selectedEvent.enrollmentCount || 0} students</p>
                     </div>
                   </div>
                 </div>
 
+                {/* Description */}
                 <div>
-                  <h4 className="font-medium text-[#0F151D] mb-2">Description</h4>
-                  <p className="text-sm text-[#4B5563]">{selectedEvent.description}</p>
+                  <h4 className="font-bold text-gray-900 mb-3 text-lg">About This Event</h4>
+                  <p className="text-sm text-gray-700 leading-relaxed">{selectedEvent.description}</p>
                 </div>
 
+                {/* Target Audience */}
                 {selectedEvent.target_audience && (
-                  <div>
-                    <h4 className="font-medium text-[#0F151D] mb-2">Who is this for?</h4>
-                    <p className="text-sm text-[#4B5563]">{selectedEvent.target_audience}</p>
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                    <h4 className="font-bold text-blue-900 mb-2 flex items-center gap-2">
+                      <Users className="w-4 h-4" />
+                      Who is this for?
+                    </h4>
+                    <p className="text-sm text-blue-800">{selectedEvent.target_audience}</p>
                   </div>
                 )}
 
+                {/* Skills */}
                 {selectedEvent.skills && selectedEvent.skills.length > 0 && (
                   <div>
-                    <h4 className="font-medium text-[#0F151D] mb-2">Skills you'll gain</h4>
+                    <h4 className="font-bold text-gray-900 mb-3 text-lg flex items-center gap-2">
+                      <Award className="w-5 h-5 text-orange-500" />
+                      Skills You'll Gain
+                    </h4>
                     <div className="flex flex-wrap gap-2">
                       {selectedEvent.skills.map((skill, idx) => (
-                        <Badge key={idx} variant="outline" className="text-xs">
-                          <Award className="h-3 w-3 mr-1" />
+                        <Badge key={idx} className="bg-gradient-to-r from-orange-100 to-amber-100 text-orange-700 border border-orange-200 px-3 py-1.5">
                           {skill}
                         </Badge>
                       ))}
@@ -360,9 +479,10 @@ const Mentors = () => {
                   </div>
                 )}
 
+                {/* Attachments */}
                 {selectedEvent.attachments && selectedEvent.attachments.length > 0 && (
                   <div>
-                    <h4 className="font-medium text-[#0F151D] mb-2">Attachments</h4>
+                    <h4 className="font-bold text-gray-900 mb-3 text-lg">Attachments</h4>
                     <div className="space-y-2">
                       {selectedEvent.attachments.map((attachment, idx) => (
                         <a
@@ -370,7 +490,7 @@ const Mentors = () => {
                           href={attachment}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block text-sm text-[#FF7000] hover:underline"
+                          className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors text-sm text-orange-600 hover:text-orange-700 font-medium"
                         >
                           📎 Attachment {idx + 1}
                         </a>
@@ -379,13 +499,14 @@ const Mentors = () => {
                   </div>
                 )}
 
+                {/* Enroll Button */}
                 {!isEnrolled(selectedEvent._id || selectedEvent.id) && (
                   <Button 
-                    className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                    className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
                     onClick={() => handleEnroll(selectedEvent._id || selectedEvent.id)}
                   >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Enroll in Event
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Enroll in This Event
                   </Button>
                 )}
               </div>
