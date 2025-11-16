@@ -118,13 +118,13 @@ const Mentors = () => {
 
   const getTypeColor = (type) => {
     const colors = {
-      'Webinar': 'bg-blue-100 text-blue-700 border-blue-200',
-      'Workshop': 'bg-purple-100 text-purple-700 border-purple-200',
-      'Career Fair': 'bg-green-100 text-green-700 border-green-200',
-      'Networking': 'bg-orange-100 text-orange-700 border-orange-200',
-      'Interview': 'bg-pink-100 text-pink-700 border-pink-200'
+      'Webinar': 'bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:border-blue-300',
+      'Workshop': 'bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:border-purple-300',
+      'Career Fair': 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:border-green-300',
+      'Networking': 'bg-orange-100 text-orange-700 border-orange-200 hover:bg-orange-200 hover:border-orange-300',
+      'Interview': 'bg-pink-100 text-pink-700 border-pink-200 hover:bg-pink-200 hover:border-pink-300'
     };
-    return colors[type] || 'bg-gray-100 text-gray-700 border-gray-200';
+    return colors[type] || 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:border-gray-300';
   };
 
   const getTypeGradient = (type) => {
