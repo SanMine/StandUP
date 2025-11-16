@@ -21,7 +21,7 @@ const userSkillSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-userSkillSchema.virtual('id').get(function() {
+userSkillSchema.virtual('id').get(function () {
   return this._id;
 });
 

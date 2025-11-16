@@ -76,6 +76,51 @@ export const userAPI = {
   }
 };
 
+// Applications API calls
+export const applicationsAPI = {
+  // GET /applications
+  getApplications: async () => {
+    const response = await api.get('/applications');
+    return response.data;
+  },
+
+  // POST /applications  → apply for a job
+  applyForJob: async (jobId, notes) => {
+    const response = await api.post('/applications', { jobId, notes });
+    return response.data;
+  },
+
+  // PUT /applications/:id  → update notes or status
+  updateApplication: async (applicationId, updates) => {
+    const response = await api.put(`/applications/${applicationId}`, updates);
+    return response.data;
+  },
+
+  // DELETE /applications/:id  → withdraw application
+  deleteApplication: async (applicationId) => {
+    const response = await api.delete(`/applications/${applicationId}`);
+    return response.data;
+  },
+
+  // GET /applications/saved/jobs
+  getSavedJobs: async () => {
+    const response = await api.get('/applications/saved/jobs');
+    return response.data;
+  },
+
+  // POST /applications/saved
+  saveJob: async (jobId) => {
+    const response = await api.post('/applications/saved', { jobId });
+    return response.data;
+  },
+
+  // DELETE /applications/saved/:jobId
+  unsaveJob: async (jobId) => {
+    const response = await api.delete(`/applications/saved/${jobId}`);
+    return response.data;
+  },
+};
+
 // Jobs API calls
 export const jobsAPI = {
 
@@ -112,22 +157,22 @@ export const jobsAPI = {
 };
 
 // Applications API calls
-export const applicationsAPI = {
-  getApplications: async () => {
-    const response = await api.get('/applications');
-    return response.data;
-  },
+// export const applicationsAPI = {
+//   getApplications: async () => {
+//     const response = await api.get('/applications');
+//     return response.data;
+//   },
 
-  applyForJob: async (jobId, notes) => {
-    const response = await api.post('/applications', { jobId, notes });
-    return response.data;
-  },
+//   applyForJob: async (jobId, notes) => {
+//     const response = await api.post('/applications', { jobId, notes });
+//     return response.data;
+//   },
 
-  updateApplication: async (applicationId, updates) => {
-    const response = await api.put(`/applications/${applicationId}`, updates);
-    return response.data;
-  }
-};
+//   updateApplication: async (applicationId, updates) => {
+//     const response = await api.put(`/applications/${applicationId}`, updates);
+//     return response.data;
+//   }
+// };
 
 // Mentors API calls
 export const mentorsAPI = {

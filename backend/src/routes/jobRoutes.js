@@ -9,7 +9,7 @@ const { isAuthenticated, isEmployer } = require('../middlewares/auth');
 router.get('/my-jobs', isAuthenticated, isEmployer, jobController.getMyJobs);
 
 // Get all jobs (public)
-router.get('/', jobController.getAllJobs);
+router.get('/', isAuthenticated, jobController.getAllJobs);
 
 // Get single job (public)
 router.get('/:id', jobController.getJobById);

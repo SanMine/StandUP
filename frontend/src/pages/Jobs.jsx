@@ -4,19 +4,22 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { 
-  Search, 
-  MapPin, 
-  Briefcase, 
+import {
+  Search,
+  MapPin,
+  Briefcase,
   DollarSign,
   X,
   Filter,
   Bookmark,
   Share2,
   Building,
-  Users,
   TrendingUp,
-  CheckCircle2
+  CheckCircle2,
+  ArrowUpRight,
+  Lock,
+  Sparkles,
+  Crown
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { jobsAPI } from '../services/api';
@@ -29,12 +32,13 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../components/ui/sheet';
+import JobDetailsSheet from '@/components/JobDetailsSheet';
 
 const Jobs = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user: authUser } = useAuth();
-  const currentUser = authUser || { name: 'Student', role: 'student' };
+  const currentUser = authUser || { name: 'Student', role: 'student', plan: 'free' };
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilters, setSelectedFilters] = useState({
     roles: [],
@@ -47,6 +51,7 @@ const Jobs = () => {
   const [jobsList, setJobsList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [userPlan, setUserPlan] = useState('free');
 
   const filterOptions = {
     roles: ['Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'UI/UX Designer', 'Data Analyst'],
@@ -99,18 +104,26 @@ const Jobs = () => {
     return matchesSearch && matchesRole && matchesLocation && matchesMode && matchesType;
   });
 
-  const sortedJobs = [...filteredJobs].sort((a, b) => ( (b.matchScore ?? b.match_score ?? 0) - (a.matchScore ?? a.match_score ?? 0) ));
+  // Sort by match percentage (AI-powered) if premium, otherwise by posted date
+  const sortedJobs = [...filteredJobs].sort((a, b) => {
+    if (userPlan === 'premium') {
+      const scoreA = a.matchPercentage ?? a.matchScore ?? a.match_score ?? 0;
+      const scoreB = b.matchPercentage ?? b.matchScore ?? b.match_score ?? 0;
+      return scoreB - scoreA;
+    }
+    // Default sort by posted date for free users
+    return new Date(b.posted_date) - new Date(a.posted_date);
+  });
 
   const selectedJob = selectedJobId ? jobsList.find(j => j.id === selectedJobId) : null;
 
   const toggleSave = (jobId) => {
-    setSavedJobIds(prev => 
+    setSavedJobIds(prev =>
       prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
     );
   };
 
   const handleApply = (job) => {
-    // Mock application
     alert(`Application submitted for ${job.title} at ${job.company}!`);
     navigate('/applications');
   };
@@ -125,9 +138,11 @@ const Jobs = () => {
       setError(null);
       try {
         const res = await jobsAPI.getJobs();
-        // jobsAPI returns response.data from axios; backend sends { success: true, data: [...] }
         if (res && res.success) {
-          if (mounted) setJobsList(Array.isArray(res.data) ? res.data : []);
+          if (mounted) {
+            setJobsList(Array.isArray(res.data) ? res.data : []);
+            setUserPlan(res.userPlan || 'free');
+          }
         } else {
           if (mounted) setJobsList([]);
         }
@@ -143,37 +158,80 @@ const Jobs = () => {
     return () => { mounted = false; };
   }, []);
 
+  const isPremium = authUser.plan === 'premium'
+
   return (
     <DashboardLayout user={currentUser}>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Explore Opportunities
-          </h1>
-          <p className="text-[#4B5563]">Find your perfect role with AI-powered matching</p>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Explore Opportunities
+            </h1>
+            <p className="text-[#4B5563]">
+              {isPremium ? 'Find your perfect role with AI-powered matching' : 'Browse available job opportunities'}
+            </p>
+          </div>
+          {!isPremium && (
+            <Button
+              onClick={() => navigate('/pricing')}
+              className="bg-gradient-to-r from-[#FF7000] to-[#FF9500] hover:from-[#FF7000]/90 hover:to-[#FF9500]/90 text-white"
+            >
+              <Crown className="w-4 h-4 mr-2" />
+              Upgrade to Premium
+            </Button>
+          )}
         </div>
+
+        {/* Premium Banner for Free Users */}
+        {!isPremium && (
+          <Card className="border-2 border-[#FF7000] bg-gradient-to-r from-[#FFF7ED] to-[#FFEDD5]">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-[#FF7000] rounded-lg">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-[#0F151D] mb-2">
+                    Unlock AI-Powered Job Matching
+                  </h3>
+                  <p className="text-[#4B5563] mb-4">
+                    Get personalized match scores, discover why you're perfect for each role, and receive tailored skill recommendations with Premium.
+                  </p>
+                  <Button
+                    onClick={() => navigate('/pricing')}
+                    className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                  >
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade Now
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Search & Filters */}
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
             <div className="flex gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <div className="relative flex-1">
+                <Search className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
                 <Input
                   type="text"
                   placeholder="Search by role, company, or skills..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-12 text-base"
+                  className="h-12 pl-10 text-base"
                 />
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="h-12 px-6"
                 onClick={() => document.getElementById('filter-section')?.scrollIntoView({ behavior: 'smooth' })}
               >
-                <Filter className="h-5 w-5 mr-2" />
+                <Filter className="w-5 h-5 mr-2" />
                 Filters
                 {activeFilterCount > 0 && (
                   <Badge className="ml-2 bg-[#FF7000] text-white hover:bg-[#FF7000]">
@@ -195,11 +253,10 @@ const Jobs = () => {
                         <Badge
                           key={option}
                           onClick={() => toggleFilter(category, option)}
-                          className={`cursor-pointer transition-all ${
-                            isSelected
-                              ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
+                          className={`cursor-pointer transition-all ${isSelected
+                            ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
                         >
                           {option}
                         </Badge>
@@ -209,13 +266,13 @@ const Jobs = () => {
                 </div>
               ))}
               {activeFilterCount > 0 && (
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   size="sm"
                   onClick={clearFilters}
                   className="text-[#FF7000] hover:text-[#FF7000]/90 hover:bg-[#FFE4CC]"
                 >
-                  <X className="h-4 w-4 mr-1" />
+                  <X className="w-4 h-4 mr-1" />
                   Clear All Filters
                 </Button>
               )}
@@ -228,252 +285,134 @@ const Jobs = () => {
           <p className="text-[#4B5563]">
             <span className="font-semibold text-[#0F151D]">{sortedJobs.length}</span> opportunities found
           </p>
-          <p className="text-sm text-[#4B5563]">Sorted by match score</p>
+          {isPremium && <p className="text-sm text-[#4B5563]">Sorted by match score</p>}
         </div>
 
         {/* Job Listings */}
         <div className="grid gap-4">
-          {sortedJobs.map((job) => {
-            const isSaved = savedJobIds.includes(job.id);
-            return (
-              <Card 
-                key={job.id}
-                className="border-none shadow-md hover:shadow-xl transition-all cursor-pointer"
-                onClick={() => setSelectedJobId(job.id)}
-              >
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <img 
-                      src={job.logo} 
-                      alt={job.company} 
-                      className="h-16 w-16 rounded-lg object-cover flex-shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-semibold text-[#0F151D] mb-1">{job.title}</h3>
-                          <p className="text-[#4B5563] mb-2">{job.company}</p>
-                          <div className="flex flex-wrap gap-3 text-sm text-[#4B5563]">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4" />
-                              {job.location}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Briefcase className="h-4 w-4" />
-                              {job.type}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Building className="h-4 w-4" />
-                              {job.mode}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <DollarSign className="h-4 w-4" />
-                              {job.salary}
-                            </span>
+          {isLoading ? (
+            <div className="py-12 text-center">
+              <p className="text-[#4B5563]">Loading opportunities...</p>
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center">
+              <p className="text-red-600">Error: {error}</p>
+            </div>
+          ) : sortedJobs.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-[#4B5563]">No opportunities found matching your criteria</p>
+            </div>
+          ) : (
+            sortedJobs.map((job) => {
+              const isSaved = savedJobIds.includes(job.id);
+              const matchScore = job.matchPercentage ?? job.matchScore ?? job.match_score ?? 0;
+
+              return (
+                <Card
+                  key={job.id}
+                  className="transition-all border-none shadow-md cursor-pointer hover:shadow-xl"
+                  onClick={() => setSelectedJobId(job.id)}
+                >
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <img
+                        src={job.logo}
+                        alt={job.company}
+                        className="flex-shrink-0 object-cover w-16 h-16 rounded-lg"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-4 mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-[#0F151D] mb-1">{job.title}</h3>
+                            <p className="text-[#4B5563] mb-2">{job.company}</p>
+                            <div className="flex flex-wrap gap-3 text-sm text-[#4B5563]">
+                              <span className="flex items-center gap-1">
+                                <MapPin className="w-4 h-4" />
+                                {job.location}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Briefcase className="w-4 h-4" />
+                                {job.type}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Building className="w-4 h-4" />
+                                {job.mode}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <DollarSign className="w-4 h-4" />
+                                {job.salary}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {isPremium ? (
+                              <div className={`${getMatchBgColor(matchScore)} ${getMatchColor(matchScore)} px-4 py-2 rounded-full text-base font-semibold whitespace-nowrap`}>
+                                {matchScore}% Match
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 px-4 py-2 text-base font-semibold text-gray-400 bg-gray-100 rounded-full whitespace-nowrap">
+                                <Lock className="w-4 h-4" />
+                                Premium
+                              </div>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleSave(job.id);
+                              }}
+                              className={isSaved ? 'text-[#FF7000]' : 'text-gray-400'}
+                            >
+                              <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-[#FF7000]' : ''}`} />
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {(() => {
-                            const score = job.matchScore ?? job.match_score ?? 0;
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          {(job.skills || []).slice(0, 8).map((skill, idx) => {
+                            const name = skill && (skill.skill_name || skill.name || skill);
                             return (
-                              <div className={`${getMatchBgColor(score)} ${getMatchColor(score)} px-4 py-2 rounded-full text-base font-semibold whitespace-nowrap`}>
-                                {score}% Match
-                              </div>
+                              <Badge key={`${name}-${idx}`} variant="outline" className="text-xs">
+                                {name}
+                              </Badge>
                             );
-                          })()}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleSave(job.id);
-                            }}
-                            className={isSaved ? 'text-[#FF7000]' : 'text-gray-400'}
-                          >
-                            <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-[#FF7000]' : ''}`} />
-                          </Button>
+                          })}
                         </div>
+                        <p className="text-sm text-[#4B5563]">
+                          Posted {formatDate(job.postedDate || job.posted_date || job.posted_at || job.postedAt)}
+                        </p>
                       </div>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {(job.skills || []).slice(0, 8).map((skill) => {
-                          const name = skill && (skill.skill_name || skill.name || skill);
-                          return (
-                            <Badge key={name} variant="outline" className="text-xs">
-                              {name}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                      <p className="text-sm text-[#4B5563]">
-                        Posted {formatDate(job.postedDate || job.posted_date || job.posted_at || job.postedAt)}
-                      </p>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       </div>
 
       {/* Job Details Drawer */}
-      <Sheet open={!!selectedJob} onOpenChange={(open) => !open && setSelectedJobId(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-          {selectedJob && (
-            <>
-              <SheetHeader>
-                  <div className="flex items-start gap-4 mb-4">
-                  <img 
-                    src={selectedJob.logo} 
-                    alt={selectedJob.company} 
-                    className="h-16 w-16 rounded-lg object-cover"
-                  />
-                  <div className="flex-1">
-                    <SheetTitle className="text-2xl mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                      {selectedJob.title}
-                    </SheetTitle>
-                    <SheetDescription className="text-base">
-                      {selectedJob.company}
-                    </SheetDescription>
-                  </div>
-                  {(() => {
-                    const score = selectedJob.matchScore ?? selectedJob.match_score ?? 0;
-                    return (
-                      <div className={`${getMatchBgColor(score)} ${getMatchColor(score)} px-4 py-2 rounded-full text-base font-semibold`}>
-                        {score}% Match
-                      </div>
-                    );
-                  })()}
-                </div>
-              </SheetHeader>
+      <JobDetailsSheet
+        job={selectedJob}
+        open={!!selectedJob}
+        onOpenChange={(open) => { if (!open) setSelectedJobId(null); }}
+        onApply={(applicationData) => {
+          // update jobsList so the card shows Applied
+          setJobsList(prev => prev.map(j => j.id === selectedJob?.id ? { ...j, applicationStatus: 'applied' } : j));
 
-              <div className="space-y-6 mt-6">
-                {/* Quick Info */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="h-4 w-4 text-[#4B5563]" />
-                    <span className="text-[#4B5563]">{selectedJob.location}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Briefcase className="h-4 w-4 text-[#4B5563]" />
-                    <span className="text-[#4B5563]">{selectedJob.type}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Building className="h-4 w-4 text-[#4B5563]" />
-                    <span className="text-[#4B5563]">{selectedJob.mode}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <DollarSign className="h-4 w-4 text-[#4B5563]" />
-                    <span className="text-[#4B5563]">{selectedJob.salary}</span>
-                  </div>
-                </div>
+          // update local saved/applications state if you have one
+          setSavedJobIds(prev => prev); // optional
 
-                {/* Skills */}
-                <div>
-                  <h3 className="font-semibold text-[#0F151D] mb-3">Required Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(selectedJob.skills || []).map((skill) => {
-                      const name = skill && (skill.skill_name || skill.name || skill);
-                      return (
-                        <Badge key={name} className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF]">
-                          {name}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
+          // show toast via sonner (sheet already shows one, this is optional)
+          // toast.success('Application submitted');
 
-                {/* Match Analysis */}
-                <div className="bg-[#FFFDFA] rounded-lg p-4">
-                  <h3 className="font-semibold text-[#0F151D] mb-3">Why you match</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-sm font-medium text-green-700 mb-2">Strong Match:</p>
-                      <ul className="space-y-1">
-                        {(selectedJob.whyMatch || []).map((reason, idx) => (
-                          <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
-                            <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <span>{reason}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    {(selectedJob.whyNotMatch || []).length > 0 && (
-                      <div>
-                        <p className="text-sm font-medium text-yellow-700 mb-2">Areas to Improve:</p>
-                        <ul className="space-y-1">
-                          {(selectedJob.whyNotMatch || []).map((reason, idx) => (
-                            <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
-                              <span className="h-4 w-4 rounded-full border-2 border-yellow-600 mt-0.5 flex-shrink-0" />
-                              <span>{reason}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div>
-                  <h3 className="font-semibold text-[#0F151D] mb-3">Job Description</h3>
-                  <p className="text-sm text-[#4B5563] leading-relaxed">{selectedJob.description}</p>
-                </div>
-
-                {/* Requirements */}
-                <div>
-                  <h3 className="font-semibold text-[#0F151D] mb-3">Requirements</h3>
-                  <ul className="space-y-2">
-                    {(selectedJob.requirements || []).map((req, idx) => (
-                      <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#FF7000] mt-2 flex-shrink-0" />
-                        <span>{req}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Culture */}
-                <div>
-                  <h3 className="font-semibold text-[#0F151D] mb-3">Company Culture</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(selectedJob.culture || []).map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-3 pt-4 border-t">
-                  <Button 
-                    className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-12 text-base"
-                    onClick={() => handleApply(selectedJob)}
-                  >
-                    Apply Now
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12"
-                    onClick={() => toggleSave(selectedJob.id)}
-                  >
-                    <Bookmark className={`h-5 w-5 ${savedJobIds.includes(selectedJob.id) ? 'fill-[#FF7000] text-[#FF7000]' : ''}`} />
-                  </Button>
-                  <Button 
-                    variant="outline"
-                    size="icon"
-                    className="h-12 w-12"
-                  >
-                    <Share2 className="h-5 w-5" />
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+          // if you still want to redirect to applications page:
+          // navigate('/applications');
+        }}
+        onToggleSave={(jobId) => toggleSave(jobId)} // keep your toggleSave implementation
+        savedJobIds={savedJobIds}
+        isPremium={isPremium}
+      />
     </DashboardLayout>
   );
 };

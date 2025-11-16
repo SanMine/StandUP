@@ -1,17 +1,17 @@
-import React, { useEffect, useState } from 'react';
+// src/pages/Applications.jsx
+import React, { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
-import { 
+import {
   MoreVertical,
   Calendar,
   FileText,
-  Plus,
-  X
+  Plus
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { applicationsAPI } from '../services/api';
+import { applicationsAPI } from '../services/api'; // uses methods below
 import { formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import {
@@ -21,73 +21,116 @@ import {
   SheetHeader,
   SheetTitle,
 } from '../components/ui/sheet';
+import { toast } from 'sonner';
+
+const statuses = [
+  { id: 'saved', label: 'Saved', color: 'bg-gray-100' },
+  { id: 'applied', label: 'Applied', color: 'bg-blue-100' },
+  { id: 'screening', label: 'Screening', color: 'bg-yellow-100' },
+  { id: 'interview', label: 'Interview', color: 'bg-purple-100' },
+  { id: 'offer', label: 'Offer', color: 'bg-green-100' }
+];
+
+const getStatusColor = (status) => {
+  const s = statuses.find(x => x.id === status);
+  return s?.color || 'bg-gray-100';
+};
 
 const Applications = () => {
   const { user: authUser } = useAuth();
   const currentUser = authUser || { name: 'Student', role: 'student' };
+
   const [applicationsList, setApplicationsList] = useState([]);
   const [selectedApp, setSelectedApp] = useState(null);
   const [notes, setNotes] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const statuses = [
-    { id: 'saved', label: 'Saved', color: 'bg-gray-100' },
-    { id: 'applied', label: 'Applied', color: 'bg-blue-100' },
-    { id: 'screening', label: 'Screening', color: 'bg-yellow-100' },
-    { id: 'interview', label: 'Interview', color: 'bg-purple-100' },
-    { id: 'offer', label: 'Offer', color: 'bg-green-100' }
-  ];
-
   const groupedApps = statuses.reduce((acc, status) => {
     acc[status.id] = applicationsList.filter(app => (app.status === status.id));
     return acc;
   }, {});
 
-  // job details are included on the application as `job` via backend include
-  const getJobDetails = (app) => app?.job || null;
-
-  const getStatusColor = (status) => {
-    const statusObj = statuses.find(s => s.id === status);
-    return statusObj?.color || 'bg-gray-100';
+  const handleWithdraw = async (app) => {
+    try {
+      await toast.promise(
+        applicationsAPI.deleteApplication(app.id),
+        {
+          loading: 'Withdrawing application...',
+          success: (res) => {
+            loadApplications();       // refresh list
+            setSelectedApp(null);     // close sheet
+            return res?.message || 'Application withdrawn';
+          },
+          error: (err) => err?.message || 'Failed to withdraw'
+        }
+      );
+    } catch (err) {
+      console.error('Withdraw error', err);
+    }
   };
 
-  const timeline = selectedApp ? (selectedApp.timeline || [
-    { date: selectedApp.applied_date || selectedApp.appliedDate, event: 'Application Submitted', status: 'completed' },
-    { date: (selectedApp.status === 'screening' || selectedApp.status === 'interview') ? (selectedApp.last_update || selectedApp.lastUpdate) : null, event: 'Initial Screening', status: selectedApp.status === 'applied' ? 'pending' : 'completed' },
-    { date: selectedApp.status === 'interview' ? (selectedApp.last_update || selectedApp.lastUpdate) : null, event: 'Technical Interview', status: selectedApp.status === 'interview' ? 'in-progress' : (selectedApp.status === 'screening' || selectedApp.status === 'applied') ? 'pending' : 'completed' },
-    { date: null, event: 'Offer Decision', status: 'pending' }
-  ]) : [];
-
-  // Load applications from backend
-  useEffect(() => {
-    let mounted = true;
-    const load = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const res = await applicationsAPI.getApplications();
-        if (res && res.success) {
-          if (mounted) setApplicationsList(Array.isArray(res.data) ? res.data : []);
-        } else {
-          if (mounted) setApplicationsList([]);
-        }
-      } catch (err) {
-        console.error('Error fetching applications', err);
-        if (mounted) setError(err.message || 'Failed to load applications');
-      } finally {
-        if (mounted) setIsLoading(false);
+  const loadApplications = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await applicationsAPI.getApplications();
+      if (res && res.success) {
+        setApplicationsList(Array.isArray(res.data) ? res.data : []);
+      } else {
+        setApplicationsList([]);
       }
-    };
-
-    load();
-    return () => { mounted = false; };
+    } catch (err) {
+      console.error('Error fetching applications', err);
+      setError(err.message || 'Failed to load applications');
+      setApplicationsList([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
+
+  useEffect(() => {
+    if (!selectedApp) return;
+    setNotes(prev => ({ ...prev, [selectedApp.id]: selectedApp.notes || '' }));
+  }, [selectedApp]);
+
+
+  const handleSaveNotes = async (appId) => {
+    const noteText = notes[appId] ?? '';
+    try {
+      await toast.promise(
+        applicationsAPI.updateApplication(appId, { notes: noteText }),
+        {
+          loading: 'Saving notes...',
+          success: () => {
+            loadApplications();
+            return 'Notes saved';
+          },
+          error: (err) => err?.message || 'Failed to save notes'
+        }
+      );
+    } catch (err) {
+      console.error('Save notes error', err);
+    }
+  };
+
+  const handleViewJobDetails = (app) => {
+    // if you have a JobDetailsSheet and want to open it from here, lift state to parent.
+    const jobId = app.job?.id || app.job_id || app.jobId;
+    if (jobId) {
+      window.open(`/jobs?id=${jobId}`, '_blank');
+    } else {
+      toast('Job details unavailable');
+    }
+  };
 
   return (
     <DashboardLayout user={currentUser}>
       <div className="space-y-6">
-        {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Application Tracker
@@ -95,8 +138,7 @@ const Applications = () => {
           <p className="text-[#4B5563]">Track all your job applications in one place</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
           {statuses.map((status) => (
             <Card key={status.id} className="border-none shadow-md">
               <CardContent className="p-4 text-center">
@@ -109,8 +151,7 @@ const Applications = () => {
           ))}
         </div>
 
-        {/* Kanban Board */}
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-4 pb-4 overflow-x-auto">
           {statuses.map((status) => (
             <div key={status.id} className="flex-shrink-0 w-80">
               <div className={`${status.color} rounded-t-lg px-4 py-3`}>
@@ -121,60 +162,77 @@ const Applications = () => {
                   </Badge>
                 </h3>
               </div>
-              <div className="space-y-3 bg-gray-50 rounded-b-lg p-4 min-h-[600px]">
-                {groupedApps[status.id]?.map((app) => {
-                  const job = getJobDetails(app);
+              <div className="space-y-3 bg-gray-50 rounded-b-lg p-4 min-h-[420px]">
+                {isLoading && (
+                  <div className="py-8 text-center">
+                    <p className="text-sm text-[#4B5563]">Loading…</p>
+                  </div>
+                )}
+
+                {!isLoading && groupedApps[status.id]?.map((app) => {
+                  const job = app.job || null;
                   return (
-                    <Card 
+                    <Card
                       key={app.id}
-                      className="border-none shadow-sm hover:shadow-md transition-all cursor-pointer"
-                      onClick={() => setSelectedApp(app)}
+                      className="transition-all border-none shadow-sm cursor-default hover:shadow-md"
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-[#0F151D] text-sm mb-1">
-                              {job?.title || app.jobTitle}
-                            </h4>
-                            <p className="text-xs text-[#4B5563]">{job?.company || app.company}</p>
-                          </div>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <MoreVertical className="h-4 w-4" />
+                      <CardContent className="flex items-start justify-between p-4">
+                        <div className="flex-1" onClick={() => setSelectedApp(app)} style={{ cursor: 'pointer' }}>
+                          <h4 className="font-semibold text-[#0F151D] text-sm mb-1">
+                            {job?.title || app.jobTitle || 'Untitled'}
+                          </h4>
+                          <p className="text-xs text-[#4B5563]">{job?.company || app.company || ''}</p>
+
+                          {job && (
+                            <div className="flex flex-wrap gap-1 mt-3">
+                              {(job.skills || []).slice(0, 2).map((skillObj, idx) => {
+                                const name = skillObj && (skillObj.skill_name || skillObj.name || skillObj);
+                                return (
+                                  <Badge key={`${name || idx}`} variant="outline" className="text-xs">
+                                    {name || '—'}
+                                  </Badge>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* 3-dots button opens sheet */}
+                        <div className="flex flex-col items-end ml-3">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="w-8 h-8"
+                            onClick={() => setSelectedApp(app)}
+                            aria-label="Open application"
+                          >
+                            <MoreVertical className="w-4 h-4" />
                           </Button>
-                        </div>
-                        {job && (
-                          <div className="flex flex-wrap gap-1 mb-3">
-                            {(job.skills || []).slice(0, 2).map((skillObj) => {
-                              const name = skillObj && (skillObj.skill_name || skillObj.name || skillObj);
-                              return (
-                                <Badge key={name} variant="outline" className="text-xs">
-                                  {name}
-                                </Badge>
-                              );
-                            })}
+
+                          <div className="mt-auto text-xs text-[#4B5563]">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              <span>{formatDate(app.applied_date || app.appliedDate)}</span>
+                            </div>
+                            <Badge className={`${getStatusColor(app.status)} mt-2 text-[#0F151D]`}>
+                              {status.label}
+                            </Badge>
                           </div>
-                        )}
-                        <div className="flex items-center justify-between text-xs text-[#4B5563]">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(app.applied_date || app.appliedDate)}
-                          </span>
-                          <Badge className={`${getStatusColor(app.status)} text-[#0F151D] hover:${getStatusColor(app.status)} text-xs`}>
-                            {status.label}
-                          </Badge>
                         </div>
-                        {app.notes && (
-                          <p className="text-xs text-[#4B5563] mt-2 line-clamp-2">
-                            {app.notes}
-                          </p>
-                        )}
                       </CardContent>
                     </Card>
                   );
                 })}
-                {groupedApps[status.id]?.length === 0 && (
-                  <div className="text-center py-8">
+
+                {!isLoading && groupedApps[status.id]?.length === 0 && (
+                  <div className="py-8 text-center">
                     <p className="text-sm text-[#4B5563]">No applications yet</p>
+                  </div>
+                )}
+
+                {error && (
+                  <div className="py-4 text-center">
+                    <p className="text-sm text-red-600">{error}</p>
                   </div>
                 )}
               </div>
@@ -184,110 +242,112 @@ const Applications = () => {
       </div>
 
       {/* Application Details Drawer */}
-      <Sheet open={!!selectedApp} onOpenChange={(open) => !open && setSelectedApp(null)}>
-        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+      <Sheet
+        open={!!selectedApp}
+        onOpenChange={(open) => {
+          if (!open) setSelectedApp(null);
+        }}
+      >
+        <SheetContent className="w-full overflow-y-auto sm:max-w-2xl">
           {selectedApp && (
             <>
               <SheetHeader>
                 <SheetTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {selectedApp.jobTitle || selectedApp.job?.title}
+                  {selectedApp.jobTitle || selectedApp.job?.title || 'Application'}
                 </SheetTitle>
                 <SheetDescription className="text-base">
-                  {selectedApp.company || selectedApp.job?.company}
+                  {selectedApp.company || selectedApp.job?.company || ''}
                 </SheetDescription>
               </SheetHeader>
 
-              <div className="space-y-6 mt-6">
-                {/* Status */}
+              <div className="mt-6 space-y-6">
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-2">Status</h3>
-                  <Badge className={`${getStatusColor(selectedApp.status)} text-[#0F151D] hover:${getStatusColor(selectedApp.status)}`}>
-                    {statuses.find(s => s.id === selectedApp.status)?.label}
+                  <Badge className={`${getStatusColor(selectedApp.status)} text-[#0F151D]`}>
+                    {statuses.find(s => s.id === selectedApp.status)?.label || selectedApp.status}
                   </Badge>
                 </div>
 
-                {/* Timeline */}
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-4">Application Timeline</h3>
                   <div className="space-y-4">
-                    {timeline.map((item, index) => {
-                      const isLast = index === timeline.length - 1;
-                      return (
-                        <div key={index} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
-                              item.status === 'completed' ? 'bg-green-100' :
-                              item.status === 'in-progress' ? 'bg-[#FFE4CC]' :
+                    {(selectedApp.timeline && selectedApp.timeline.length > 0 ? selectedApp.timeline : [
+                      { date: selectedApp.applied_date || selectedApp.appliedDate, event: 'Application Submitted', status: 'completed' },
+                      { date: null, event: 'Initial Screening', status: selectedApp.status === 'screening' ? 'in-progress' : 'pending' },
+                      { date: null, event: 'Technical Interview', status: selectedApp.status === 'interview' ? 'in-progress' : 'pending' },
+                      { date: null, event: 'Offer Decision', status: 'pending' }
+                    ]).map((item, index) => (
+                      <div key={index} className="flex gap-4">
+                        <div className="flex flex-col items-center">
+                          <div className={`h-10 w-10 rounded-full flex items-center justify-center ${item.status === 'completed' ? 'bg-green-100' :
+                            item.status === 'in-progress' ? 'bg-[#FFE4CC]' :
                               'bg-gray-100'
                             }`}>
-                              {item.status === 'completed' ? (
-                                <svg className="h-5 w-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                              ) : item.status === 'in-progress' ? (
-                                <span className="h-3 w-3 rounded-full bg-[#FF7000]" />
-                              ) : (
-                                <span className="h-2 w-2 rounded-full bg-gray-400" />
-                              )}
-                            </div>
-                            {!isLast && (
-                              <div className={`w-0.5 h-12 ${
-                                item.status === 'completed' ? 'bg-green-200' : 'bg-gray-200'
-                              }`} />
-                            )}
-                          </div>
-                          <div className="flex-1 pb-4">
-                            <p className="font-medium text-[#0F151D]">{item.event}</p>
-                            {item.date && (
-                              <p className="text-xs text-[#4B5563] mt-1">{formatDate(item.date)}</p>
+                            {item.status === 'completed' ? (
+                              <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                            ) : item.status === 'in-progress' ? (
+                              <span className="h-3 w-3 rounded-full bg-[#FF7000]" />
+                            ) : (
+                              <span className="w-2 h-2 bg-gray-400 rounded-full" />
                             )}
                           </div>
                         </div>
-                      );
-                    })}
+                        <div className="flex-1 pb-4">
+                          <p className="font-medium text-[#0F151D]">{item.event}</p>
+                          {item.date && <p className="text-xs text-[#4B5563] mt-1">{formatDate(item.date)}</p>}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Notes */}
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-3">Notes</h3>
                   <Textarea
                     placeholder="Add notes about this application..."
-                    value={notes[selectedApp.id] || selectedApp.notes || ''}
+                    value={notes[selectedApp.id] ?? selectedApp.notes ?? ''}
                     onChange={(e) => setNotes({ ...notes, [selectedApp.id]: e.target.value })}
                     className="min-h-[120px]"
                   />
-                  <Button 
-                    className="mt-2 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
-                    size="sm"
-                  >
-                    Save Notes
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                      onClick={() => handleSaveNotes(selectedApp.id)}
+                    >
+                      Save Notes
+                    </Button>
+                    <Button variant="outline" onClick={() => setNotes({ ...notes, [selectedApp.id]: '' })}>
+                      Clear
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Attachments */}
                 <div>
                   <h3 className="font-semibold text-[#0F151D] mb-3">Attachments</h3>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <div className="p-6 text-center border-2 border-gray-300 border-dashed rounded-lg">
+                    <FileText className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                     <p className="text-sm text-[#4B5563] mb-2">No attachments yet</p>
                     <Button size="sm" variant="outline">
-                      <Plus className="h-4 w-4 mr-1" />
+                      <Plus className="w-4 h-4 mr-1" />
                       Add Attachment
                     </Button>
                   </div>
                 </div>
 
-                {/* Actions */}
                 <div className="flex gap-3 pt-4 border-t">
-                  <Button 
+                  <Button
                     className="flex-1 bg-[#284688] hover:bg-[#284688]/90 text-white"
+                    onClick={() => handleViewJobDetails(selectedApp)}
                   >
                     View Job Details
                   </Button>
-                  <Button 
+
+                  <Button
                     variant="outline"
                     className="flex-1 text-red-600 border-red-600 hover:bg-red-50"
+                    onClick={() => handleWithdraw(selectedApp)}
                   >
                     Withdraw Application
                   </Button>

@@ -1,13 +1,12 @@
 const { Application, Job, JobSkill, SavedJob } = require('../models');
 
-// Get user's applications
 const getUserApplications = async (req, res, next) => {
   try {
-    const applications = await Application.find({ user_id: req.session.userId })
+    // <-- use req.user.userId
+    const applications = await Application.find({ user_id: req.user.userId })
       .sort({ applied_date: -1 })
       .lean();
 
-    // Populate job and skills for each application
     const applicationsWithDetails = await Promise.all(
       applications.map(async (app) => {
         const job = await Job.findById(app.job_id).lean();
@@ -41,37 +40,28 @@ const applyForJob = async (req, res, next) => {
   try {
     const { jobId, notes } = req.body;
 
-    // Check if job exists
     const job = await Job.findById(jobId);
     if (!job) {
       return res.status(404).json({
         success: false,
-        error: {
-          code: 'JOB_NOT_FOUND',
-          message: 'Job not found'
-        }
+        error: { code: 'JOB_NOT_FOUND', message: 'Job not found' }
       });
     }
 
-    // Check if already applied
     const existingApplication = await Application.findOne({
-      user_id: req.session.userId,
+      user_id: req.user.userId,        // <-- use req.user.userId
       job_id: jobId
     });
 
     if (existingApplication) {
       return res.status(400).json({
         success: false,
-        error: {
-          code: 'ALREADY_APPLIED',
-          message: 'You have already applied for this job'
-        }
+        error: { code: 'ALREADY_APPLIED', message: 'You have already applied for this job' }
       });
     }
 
-    // Create application
     const application = await Application.create({
-      user_id: req.session.userId,
+      user_id: req.user.userId,        // <-- use req.user.userId
       job_id: jobId,
       status: 'applied',
       applied_date: new Date(),
@@ -84,7 +74,6 @@ const applyForJob = async (req, res, next) => {
       }]
     });
 
-    // Get job with skills
     const jobWithSkills = await Job.findById(jobId).lean();
     const skills = await JobSkill.find({ job_id: jobId }).lean();
 
@@ -157,7 +146,7 @@ const updateApplication = async (req, res, next) => {
     if (notes !== undefined) application.notes = notes;
     application.last_update = new Date();
     application.timeline = timeline;
-    
+
     await application.save();
 
     // Get job with skills
@@ -200,7 +189,7 @@ const deleteApplication = async (req, res, next) => {
     }
 
     // Check if user owns this application
-    if (application.user_id !== req.session.userId) {
+    if (application.user_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {

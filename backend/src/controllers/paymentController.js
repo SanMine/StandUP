@@ -220,18 +220,17 @@ const stripeWebhook = async (req, res, next) => {
             return res.status(500).send('Webhook secret not configured');
         }
 
-        // req.rawBody must be Buffer — see mount note below
-        const payload = req.rawBody || Buffer.from(req.body || '');
+        // req.body is raw buffer because route is mounted with express.raw(...)
+        const payload = req.body;
 
         let event;
         try {
             event = stripe.webhooks.constructEvent(payload, sig, webhookSecret);
         } catch (err) {
-            console.error('⚠️  Webhook signature verification failed.', err?.message);
+            console.error('Webhook signature verification failed.', err?.message);
             return res.status(400).send(`Webhook Error: ${err?.message}`);
         }
 
-        // handle events
         switch (event.type) {
             case 'payment_intent.succeeded': {
                 const pi = event.data.object;
@@ -240,22 +239,20 @@ const stripeWebhook = async (req, res, next) => {
                 const planId = metadata.planId;
                 const userId = metadata.userId;
 
-                // Find the user by pending_payment.paymentIntentId or by metadata.userId
                 let user = null;
                 if (userId) {
                     user = await User.findById(userId);
                 } else {
-                    user = await User.findOne({ 'pending_payment.paymentIntentId': paymentIntentId });
+                    user = await User.findOne({ 'pending_payment.stripePaymentIntentId': paymentIntentId });
                 }
 
                 if (user) {
-                    // mark user plan active, add payment_history, clear pending_payment
                     user.plan = 'premium';
                     user.payment_history = user.payment_history || [];
                     user.payment_history.push({
                         orderId: paymentIntentId,
                         planId: planId || (user.pending_payment && user.pending_payment.planId) || null,
-                        amount: (user.pending_payment && user.pending_payment.amount) || null,
+                        amount: (pi.amount ? pi.amount / 100 : (user.pending_payment && user.pending_payment.amount)) || null,
                         status: 'completed',
                         paymentMethod: 'stripe',
                         paidAt: new Date(),
@@ -275,8 +272,7 @@ const stripeWebhook = async (req, res, next) => {
             case 'payment_intent.payment_failed': {
                 const pi = event.data.object;
                 const paymentIntentId = pi.id;
-                // Optionally update user.pending_payment status = 'failed'
-                const user = await User.findOne({ 'pending_payment.paymentIntentId': paymentIntentId });
+                const user = await User.findOne({ 'pending_payment.stripePaymentIntentId': paymentIntentId });
                 if (user) {
                     user.pending_payment = {
                         ...user.pending_payment,
@@ -289,7 +285,6 @@ const stripeWebhook = async (req, res, next) => {
             }
 
             default:
-                // Unexpected event type
                 console.log(`Unhandled Stripe event type ${event.type}`);
         }
 
@@ -299,6 +294,7 @@ const stripeWebhook = async (req, res, next) => {
         return res.status(500).send('Internal server error');
     }
 };
+
 
 module.exports = {
     createPayPalOrder,

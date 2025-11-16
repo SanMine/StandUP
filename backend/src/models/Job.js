@@ -68,7 +68,7 @@ const jobSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-jobSchema.virtual('id').get(function() {
+jobSchema.virtual('id').get(function () {
   return this._id;
 });
 
