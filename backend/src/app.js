@@ -23,6 +23,8 @@ const portfolioRoutes = require('./routes/portfolioRoutes');
 const learningRoutes = require('./routes/learningRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const eventRoutes = require('./routes/eventRoutes');
+const resumeRoutes = require('./routes/resumeRoutes');
+const candidateRoutes = require('./routes/candidateRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -151,6 +153,8 @@ app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/learning', learningRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/resume', resumeRoutes);
+app.use('/api/candidates', candidateRoutes);
 
 // 404 handler
 app.use(notFoundHandler);

@@ -3,7 +3,7 @@ const { Project } = require('../models');
 // Get user's projects
 const getUserProjects = async (req, res, next) => {
   try {
-    const projects = await Project.find({ user_id: req.session.userId })
+    const projects = await Project.find({ user_id: req.user.userId })
       .sort({ featured: -1, createdAt: -1 })
       .lean();
 
@@ -25,7 +25,7 @@ const addProject = async (req, res, next) => {
     const { title, description, image, tags, githubUrl, liveUrl, featured } = req.body;
 
     const project = await Project.create({
-      user_id: req.session.userId,
+      user_id: req.user.userId,
       title,
       description,
       image,
@@ -62,7 +62,7 @@ const updateProject = async (req, res, next) => {
     }
 
     // Check if user owns this project
-    if (project.user_id !== req.session.userId) {
+    if (project.user_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {
@@ -111,7 +111,7 @@ const deleteProject = async (req, res, next) => {
     }
 
     // Check if user owns this project
-    if (project.user_id !== req.session.userId) {
+    if (project.user_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {

@@ -10,7 +10,7 @@ const DashboardLayout = ({ children, user }) => {
   return (
     <div className="min-h-screen bg-[#FFFDFA]">
       <AppBar user={currentUser} />
-      <Sidebar />
+      <Sidebar user={currentUser} />
       <main className="ml-64 mt-16 p-8">
         {children}
       </main>

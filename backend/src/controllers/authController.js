@@ -28,7 +28,7 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
 
   res.cookie('accessToken', accessToken, {
     ...cookieOptions,
-    maxAge: 15 * 60 * 1000 // 15 mins
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours (matches JWT expiration)
   });
 
   res.cookie('refreshToken', refreshToken, {

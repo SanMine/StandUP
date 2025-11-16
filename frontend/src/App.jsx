@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import EmployerDashboard from "./pages/EmployerDashboard";
 import EmployerDashboardDemo from "./pages/EmployerDashboardDemo";
 import EmployerSettings from "./pages/EmployerSettings";
+import Events from "./pages/Events";
 import Interviews from "./pages/Interviews";
 import Jobs from "./pages/Jobs";
 import Landing from "./pages/Landing";
@@ -19,6 +20,8 @@ import Portfolio from "./pages/Portfolio";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import StripePaymentSuccessPage from "./pages/StripePaymentSuccessPage";
+import Candidates from "./pages/candidates";
+import EmployerJobs from "./pages/EmployerJobs";
 
 function App() {
   return (
@@ -40,6 +43,9 @@ function App() {
           {/* Protected Employer routes */}
           <Route path="/employer-dashboard" element={<ProtectedRoute requireRole="employer"><EmployerDashboard /></ProtectedRoute>} />
           <Route path="/employer-settings" element={<ProtectedRoute requireRole="employer"><EmployerSettings /></ProtectedRoute>} />
+          <Route path="/candidates" element={<ProtectedRoute requireRole="employer"><Candidates /></ProtectedRoute>} />
+          <Route path="/employer-jobs" element={<ProtectedRoute requireRole="employer"><EmployerJobs /></ProtectedRoute>} />
+          <Route path="/events" element={<ProtectedRoute requireRole="employer"><Events /></ProtectedRoute>} />
 
           <Route path="/stripe-payment-success" element={<StripePaymentSuccessPage />} />
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Switch } from '../components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { 
   Briefcase,
@@ -34,6 +35,7 @@ const EmployerDashboard = () => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingJobs, setIsFetchingJobs] = useState(true);
+  const [showAllJobs, setShowAllJobs] = useState(false);
 
   useEffect(() => {
     fetchJobs();
@@ -62,6 +64,18 @@ const EmployerDashboard = () => {
   const handleEditJob = (job) => {
     setSelectedJob(job);
     setIsModalOpen(true);
+  };
+
+  const handleToggleJobStatus = async (jobId, currentStatus) => {
+    try {
+      const newStatus = currentStatus === 'active' ? 'closed' : 'active';
+      await api.put(`/jobs/${jobId}`, { status: newStatus });
+      toast.success(`Job ${newStatus === 'active' ? 'activated' : 'closed'} successfully`);
+      fetchJobs();
+    } catch (error) {
+      console.error('Error toggling job status:', error);
+      toast.error(error.response?.data?.error?.message || 'Failed to update job status');
+    }
   };
 
   const handleDeleteJob = async (jobId) => {
@@ -198,13 +212,15 @@ const EmployerDashboard = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Posted Jobs</CardTitle>
-                  <Button 
-                    variant="ghost" 
-                    className="text-[#FF7000] hover:text-[#FF7000]/90"
-                    onClick={() => navigate('/jobs')}
-                  >
-                    View All
-                  </Button>
+                  {jobs.length > 5 && (
+                    <Button 
+                      variant="ghost" 
+                      className="text-[#FF7000] hover:text-[#FF7000]/90"
+                      onClick={() => setShowAllJobs(!showAllJobs)}
+                    >
+                      {showAllJobs ? 'Show Less' : `View All (${jobs.length})`}
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -222,7 +238,7 @@ const EmployerDashboard = () => {
                     </Button>
                   </div>
                 ) : (
-                  jobs.slice(0, 5).map((job) => (
+                  (showAllJobs ? jobs : jobs.slice(0, 5)).map((job) => (
                     <div 
                       key={job._id || job.id}
                       className="border border-gray-200 rounded-xl p-4 hover:border-[#FF7000] hover:shadow-md transition-all"
@@ -252,27 +268,41 @@ const EmployerDashboard = () => {
                         </Badge>
                       </div>
                       <p className="text-sm text-[#4B5563] mb-3 line-clamp-2">{job.description}</p>
-                      <div className="flex gap-2">
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          onClick={() => handleEditJob(job)}
-                          data-testid="edit-job-btn"
-                        >
-                          <Edit className="w-3 h-3 mr-1" />
-                          Edit
-                        </Button>
-                        <Button 
-                          size="sm" 
-                          variant="outline"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          onClick={() => handleDeleteJob(job._id || job.id)}
-                          disabled={isLoading}
-                          data-testid="delete-job-btn"
-                        >
-                          <Trash2 className="w-3 h-3 mr-1" />
-                          Delete
-                        </Button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <Switch 
+                              checked={job.status === 'active'}
+                              onCheckedChange={() => handleToggleJobStatus(job._id || job.id, job.status)}
+                              className="data-[state=checked]:bg-[#FF7000]"
+                            />
+                            <span className="text-sm text-[#4B5563]">
+                              {job.status === 'active' ? 'Active' : 'Closed'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleEditJob(job)}
+                            data-testid="edit-job-btn"
+                          >
+                            <Edit className="w-3 h-3 mr-1" />
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={() => handleDeleteJob(job._id || job.id)}
+                            disabled={isLoading}
+                            data-testid="delete-job-btn"
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))

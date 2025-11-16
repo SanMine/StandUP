@@ -8,11 +8,13 @@ import {
   FolderOpen, 
   Video, 
   FileText, 
-  Settings 
+  Settings,
+  CalendarDays
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
-const menuItems = [
+// Student menu items
+const studentMenuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
   { icon: Briefcase, label: 'Jobs', path: '/jobs' },
   { icon: Users, label: 'Mentors', path: '/mentors' },
@@ -23,8 +25,25 @@ const menuItems = [
   { icon: Settings, label: 'Settings', path: '/settings' }
 ];
 
-const Sidebar = () => {
+// Employer menu items
+const employerMenuItems = [
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/employer-dashboard' },
+  { icon: Users, label: 'Candidates', path: '/candidates' },
+  { icon: CalendarDays, label: 'Events', path: '/events' },
+  { icon: Settings, label: 'Settings', path: '/employer-settings' }
+];
+
+const Sidebar = ({ user }) => {
   const location = useLocation();
+  
+  // Debug: Log user object
+  console.log('Sidebar - user:', user);
+  console.log('Sidebar - user.role:', user?.role);
+  
+  // Determine which menu items to show based on user role
+  const menuItems = user?.role === 'employer' ? employerMenuItems : studentMenuItems;
+  
+  console.log('Sidebar - selected menuItems:', menuItems === employerMenuItems ? 'employer' : 'student');
 
   return (
     <aside className="fixed left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 overflow-y-auto">

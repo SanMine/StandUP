@@ -3,7 +3,7 @@ const { Application, Job, JobSkill, SavedJob } = require('../models');
 // Get user's applications
 const getUserApplications = async (req, res, next) => {
   try {
-    const applications = await Application.find({ user_id: req.session.userId })
+    const applications = await Application.find({ user_id: req.user.userId })
       .sort({ applied_date: -1 })
       .lean();
 
@@ -55,7 +55,7 @@ const applyForJob = async (req, res, next) => {
 
     // Check if already applied
     const existingApplication = await Application.findOne({
-      user_id: req.session.userId,
+      user_id: req.user.userId,
       job_id: jobId
     });
 
@@ -71,7 +71,7 @@ const applyForJob = async (req, res, next) => {
 
     // Create application
     const application = await Application.create({
-      user_id: req.session.userId,
+      user_id: req.user.userId,
       job_id: jobId,
       status: 'applied',
       applied_date: new Date(),
@@ -125,7 +125,7 @@ const updateApplication = async (req, res, next) => {
     }
 
     // Check if user owns this application
-    if (application.user_id !== req.session.userId) {
+    if (application.user_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {
@@ -200,7 +200,7 @@ const deleteApplication = async (req, res, next) => {
     }
 
     // Check if user owns this application
-    if (application.user_id !== req.session.userId) {
+    if (application.user_id !== req.user.userId) {
       return res.status(403).json({
         success: false,
         error: {
@@ -224,7 +224,7 @@ const deleteApplication = async (req, res, next) => {
 // Get saved jobs
 const getSavedJobs = async (req, res, next) => {
   try {
-    const savedJobs = await SavedJob.find({ user_id: req.session.userId })
+    const savedJobs = await SavedJob.find({ user_id: req.user.userId })
       .sort({ saved_date: -1 })
       .lean();
 
@@ -276,7 +276,7 @@ const saveJob = async (req, res, next) => {
 
     // Check if already saved
     const existing = await SavedJob.findOne({
-      user_id: req.session.userId,
+      user_id: req.user.userId,
       job_id: jobId
     });
 
@@ -291,7 +291,7 @@ const saveJob = async (req, res, next) => {
     }
 
     const savedJob = await SavedJob.create({
-      user_id: req.session.userId,
+      user_id: req.user.userId,
       job_id: jobId,
       saved_date: new Date()
     });
@@ -312,7 +312,7 @@ const unsaveJob = async (req, res, next) => {
     const { jobId } = req.params;
 
     const savedJob = await SavedJob.findOne({
-      user_id: req.session.userId,
+      user_id: req.user.userId,
       job_id: jobId
     });
 

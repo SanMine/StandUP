@@ -19,9 +19,10 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { jobsAPI } from '../services/api';
+import { jobsAPI, applicationsAPI } from '../services/api';
 import { getMatchColor, getMatchBgColor, formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
+import { toast } from 'sonner';
 import {
   Sheet,
   SheetContent,
@@ -44,10 +45,12 @@ const Jobs = () => {
     types: []
   });
   const [selectedJobId, setSelectedJobId] = useState(searchParams.get('id'));
-  const [savedJobIds, setSavedJobIds] = useState(['job-3', 'job-4']);
+  const [savedJobIds, setSavedJobIds] = useState([]);
   const [jobsList, setJobsList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const filterOptions = {
     roles: ['Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'UI/UX Designer', 'Data Analyst'],
@@ -76,6 +79,11 @@ const Jobs = () => {
 
   // Filter jobs based on search and selected filters
   const filteredJobs = jobsList.filter(job => {
+    // If showing saved only, filter by saved job IDs
+    if (showSavedOnly && !savedJobIds.includes(job._id || job.id)) {
+      return false;
+    }
+
     const title = (job.title || '').toString();
     const company = (job.company || '').toString();
     const skillsArr = Array.isArray(job.skills) ? job.skills.map(s => s.skill_name || s) : [];
@@ -104,10 +112,30 @@ const Jobs = () => {
 
   const selectedJob = selectedJobId ? jobsList.find(j => j.id === selectedJobId) : null;
 
-  const toggleSave = (jobId) => {
-    setSavedJobIds(prev => 
-      prev.includes(jobId) ? prev.filter(id => id !== jobId) : [...prev, jobId]
-    );
+  const toggleSave = async (jobId) => {
+    if (isSaving) return;
+    
+    try {
+      setIsSaving(true);
+      const isSaved = savedJobIds.includes(jobId);
+      
+      if (isSaved) {
+        // Unsave the job
+        await applicationsAPI.unsaveJob(jobId);
+        setSavedJobIds(prev => prev.filter(id => id !== jobId));
+        toast.success('Job removed from saved');
+      } else {
+        // Save the job
+        await applicationsAPI.saveJob(jobId);
+        setSavedJobIds(prev => [...prev, jobId]);
+        toast.success('Job saved successfully');
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+      toast.error(error.response?.data?.error?.message || 'Failed to update saved job');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleApply = (job) => {
@@ -140,9 +168,27 @@ const Jobs = () => {
       }
     };
 
+    const loadSavedJobs = async () => {
+      try {
+        const res = await applicationsAPI.getSavedJobs();
+        if (res && res.success && Array.isArray(res.data)) {
+          // Extract job IDs from saved jobs
+          const savedIds = res.data.map(savedJob => savedJob.job_id).filter(Boolean);
+          if (mounted) setSavedJobIds(savedIds);
+        }
+      } catch (err) {
+        console.error('Failed to load saved jobs', err);
+        // Don't show error toast for saved jobs as it's not critical
+      }
+    };
+
     loadJobs();
+    if (currentUser.role === 'student') {
+      loadSavedJobs();
+    }
+    
     return () => { mounted = false; };
-  }, []);
+  }, [currentUser.role]);
 
   const Layout = currentUser.role === 'employer' ? EmployerLayout : DashboardLayout;
 
@@ -150,11 +196,23 @@ const Jobs = () => {
     <Layout user={currentUser}>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Explore Opportunities
-          </h1>
-          <p className="text-[#4B5563]">Find your perfect role with AI-powered matching</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              Explore Opportunities
+            </h1>
+            <p className="text-[#4B5563]">Find your perfect role with AI-powered matching</p>
+          </div>
+          {currentUser.role === 'student' && (
+            <Button
+              variant={showSavedOnly ? "default" : "outline"}
+              className={showSavedOnly ? "bg-[#FF7000] hover:bg-[#FF7000]/90 text-white" : "border-[#FF7000] text-[#FF7000] hover:bg-[#FFE4CC]"}
+              onClick={() => setShowSavedOnly(!showSavedOnly)}
+            >
+              <Bookmark className={`h-4 w-4 mr-2 ${showSavedOnly ? 'fill-white' : ''}`} />
+              {showSavedOnly ? 'Show All Jobs' : `Saved Jobs (${savedJobIds.length})`}
+            </Button>
+          )}
         </div>
 
         {/* Search & Filters */}
@@ -237,12 +295,13 @@ const Jobs = () => {
         {/* Job Listings */}
         <div className="grid gap-4">
           {sortedJobs.map((job) => {
-            const isSaved = savedJobIds.includes(job.id);
+            const jobId = job._id || job.id;
+            const isSaved = savedJobIds.includes(jobId);
             return (
               <Card 
-                key={job.id}
+                key={jobId}
                 className="border-none shadow-md hover:shadow-xl transition-all cursor-pointer"
-                onClick={() => setSelectedJobId(job.id)}
+                onClick={() => setSelectedJobId(jobId)}
               >
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
@@ -289,8 +348,9 @@ const Jobs = () => {
                             size="icon"
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleSave(job.id);
+                              toggleSave(jobId);
                             }}
+                            disabled={isSaving}
                             className={isSaved ? 'text-[#FF7000]' : 'text-gray-400'}
                           >
                             <Bookmark className={`h-5 w-5 ${isSaved ? 'fill-[#FF7000]' : ''}`} />
@@ -460,9 +520,10 @@ const Jobs = () => {
                     variant="outline"
                     size="icon"
                     className="h-12 w-12"
-                    onClick={() => toggleSave(selectedJob.id)}
+                    onClick={() => toggleSave(selectedJob._id || selectedJob.id)}
+                    disabled={isSaving}
                   >
-                    <Bookmark className={`h-5 w-5 ${savedJobIds.includes(selectedJob.id) ? 'fill-[#FF7000] text-[#FF7000]' : ''}`} />
+                    <Bookmark className={`h-5 w-5 ${savedJobIds.includes(selectedJob._id || selectedJob.id) ? 'fill-[#FF7000] text-[#FF7000]' : ''}`} />
                   </Button>
                   <Button 
                     variant="outline"
