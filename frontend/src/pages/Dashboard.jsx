@@ -1,44 +1,29 @@
 // src/pages/Dashboard.jsx
-import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Progress } from '../components/ui/progress';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import {
-  Briefcase,
-  Video,
-  CheckCircle2,
-  Clock,
-  Target,
-  Lightbulb,
-  ArrowRight,
-  Star,
-  Lock,
-  Crown,
-  Sparkles,
-  MapPin,
-  Building,
-  DollarSign,
-  TrendingUp,
-  ArrowUpRight,
-  Bookmark,
-  Share2,
-} from 'lucide-react';
-import { jobsAPI, mentorsAPI, learningAPI } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
-import { getMatchColor, getMatchBgColor } from '../lib/utils';
-import DashboardLayout from '../components/Layout/DashboardLayout';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '../components/ui/sheet';
 import JobDetailsSheet from '@/components/JobDetailsSheet';
+import {
+  ArrowRight,
+  Briefcase,
+  Clock,
+  Crown,
+  Lightbulb,
+  Lock,
+  Sparkles,
+  Star,
+  Target,
+  Video
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import DashboardLayout from '../components/Layout/DashboardLayout';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { Progress } from '../components/ui/progress';
+import { useAuth } from '../contexts/AuthContext';
+import { getMatchBgColor, getMatchColor } from '../lib/utils';
+import { jobsAPI, learningAPI, mentorsAPI } from '../services/api';
 
 const normalizeJob = (job) => {
   const companyName =

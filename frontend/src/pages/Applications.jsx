@@ -11,7 +11,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { applicationsAPI } from '../services/api'; // uses methods below
+import { applicationsAPI } from '../services/api';
 import { formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import {
@@ -174,50 +174,75 @@ const Applications = () => {
                   return (
                     <Card
                       key={app.id}
-                      className="transition-all border-none shadow-sm cursor-default hover:shadow-md"
+                      className="transition-all bg-white border-none shadow-sm cursor-pointer hover:shadow-md group"
+                      onClick={() => setSelectedApp(app)}
                     >
-                      <CardContent className="flex items-start justify-between p-4">
-                        <div className="flex-1" onClick={() => setSelectedApp(app)} style={{ cursor: 'pointer' }}>
-                          <h4 className="font-semibold text-[#0F151D] text-sm mb-1">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <h4 className="font-semibold text-[#0F151D] text-base leading-tight flex-1 pr-2 group-hover:text-[#FF7000] transition-colors">
                             {job?.title || app.jobTitle || 'Untitled'}
                           </h4>
-                          <p className="text-xs text-[#4B5563]">{job?.company || app.company || ''}</p>
-
-                          {job && (
-                            <div className="flex flex-wrap gap-1 mt-3">
-                              {(job.skills || []).slice(0, 2).map((skillObj, idx) => {
-                                const name = skillObj && (skillObj.skill_name || skillObj.name || skillObj);
-                                return (
-                                  <Badge key={`${name || idx}`} variant="outline" className="text-xs">
-                                    {name || '—'}
-                                  </Badge>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* 3-dots button opens sheet */}
-                        <div className="flex flex-col items-end ml-3">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="w-8 h-8"
-                            onClick={() => setSelectedApp(app)}
+                            className="flex-shrink-0 w-8 h-8 transition-opacity opacity-0 group-hover:opacity-100"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedApp(app);
+                            }}
                             aria-label="Open application"
                           >
                             <MoreVertical className="w-4 h-4" />
                           </Button>
+                        </div>
 
-                          <div className="mt-auto text-xs text-[#4B5563]">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              <span>{formatDate(app.applied_date || app.appliedDate)}</span>
-                            </div>
-                            <Badge className={`${getStatusColor(app.status)} mt-2 text-[#0F151D]`}>
-                              {status.label}
-                            </Badge>
+                        <p className="text-sm text-[#4B5563] mb-3 font-medium">
+                          {job?.company || app.company || ''}
+                        </p>
+
+                        {job?.location && (
+                          <p className="text-xs text-[#4B5563] mb-3 flex items-center gap-1">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            {job.location}
+                          </p>
+                        )}
+
+                        {job && job.skills && job.skills.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-4">
+                            {(job.skills || []).slice(0, 3).map((skillObj, idx) => {
+                              const name = skillObj && (skillObj.skill_name || skillObj.name || skillObj);
+                              return (
+                                <Badge
+                                  key={`${name || idx}`}
+                                  variant="outline"
+                                  className="text-xs px-2 py-0.5 bg-[#F3F4F6] border-[#E5E7EB] text-[#374151]"
+                                >
+                                  {name || '—'}
+                                </Badge>
+                              );
+                            })}
+                            {job.skills.length > 3 && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-2 py-0.5 bg-[#F3F4F6] border-[#E5E7EB] text-[#374151]"
+                              >
+                                +{job.skills.length - 3}
+                              </Badge>
+                            )}
                           </div>
+                        )}
+
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          <div className="flex items-center gap-1.5 text-xs text-[#6B7280]">
+                            <Calendar className="w-3.5 h-3.5" />
+                            <span>{formatDate(app.applied_date || app.appliedDate)}</span>
+                          </div>
+                          <Badge className={`${getStatusColor(app.status)} text-[#0F151D] text-xs px-2 py-0.5`}>
+                            {status.label}
+                          </Badge>
                         </div>
                       </CardContent>
                     </Card>

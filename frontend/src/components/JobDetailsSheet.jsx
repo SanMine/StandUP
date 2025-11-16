@@ -207,7 +207,7 @@ const JobDetailsSheet = ({
                                 <div className="bg-gradient-to-br from-[#FFFDFA] to-[#FFF7ED] rounded-lg p-5 border border-orange-100">
                                     <div className="flex items-center gap-2 mb-4">
                                         <TrendingUp className="w-5 h-5 text-[#FF7000]" />
-                                        <h3 className="font-semibold text-[#0F151D]">AI Match Analysis</h3>
+                                        {<h3 className="font-semibold text-[#0F151D]">AI Match Analysis</h3>}
                                     </div>
                                     <div className="space-y-4">
                                         {Array.isArray(localJob?.strongMatchFacts) && localJob.strongMatchFacts.length > 0 && (
@@ -259,13 +259,27 @@ const JobDetailsSheet = ({
                                         </p>
                                     </div>
                                 </div>
-                                <div className="p-5 pointer-events-none filter blur-sm">
+                                <div className="p-5 pointer-events-none filter blur-[7px]">
                                     <div className="flex items-center gap-2 mb-4">
                                         <TrendingUp className="w-5 h-5 text-gray-400" />
                                         <h3 className="font-semibold text-gray-400">AI Match Analysis</h3>
                                     </div>
                                     <div className="space-y-2">
                                         <p className="text-sm text-gray-400">Why You're a Great Fit</p>
+                                        <ul className="space-y-2">
+                                            <li className="flex items-start gap-2 text-sm text-[#1F2937]">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                                <span className="leading-relaxed">If you want this CTA to open an in-app modal or to surface a trial offer</span>
+                                            </li>
+                                            <li className="flex items-start gap-2 text-sm text-[#1F2937]">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                                <span className="leading-relaxed">If you want this CTA to open an in-app modal or to surface a trial offer</span>
+                                            </li>
+                                            <li className="flex items-start gap-2 text-sm text-[#1F2937]">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                                <span className="leading-relaxed">If you want this CTA to open an in-app modal or to surface a trial offer</span>
+                                            </li>
+                                        </ul>
                                     </div>
                                 </div>
                             </div>
@@ -328,9 +342,13 @@ const JobDetailsSheet = ({
                                 try {
                                     const url = `${window.location.origin}/jobs?id=${job.id}`;
                                     navigator.clipboard.writeText(url);
-                                    toast.success('Job link copied to clipboard');
+                                    toast.success('Success', {
+                                        description: "Job link copied to clipboard"
+                                    });
                                 } catch (e) {
-                                    toast.error('Failed to copy link');
+                                    toast.error("Error", {
+                                        description: 'Failed to copy link'
+                                    });
                                 }
                             }}>
                                 <Share2 className="w-5 h-5" />

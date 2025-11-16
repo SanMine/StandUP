@@ -178,8 +178,8 @@ const EmployerSettings = () => {
                       <div>
                         <h3 className="font-semibold text-[#0F151D] mb-1">{form.watch('company_name') || form.watch('name')}</h3>
                         <p className="text-sm text-[#4B5563] mb-2">{form.watch('email')}</p>
-                        <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC]">
-                          {currentUser.plan || 'Employer'}
+                        <Badge className="bg-[#FFE4CC] capitalize text-[#FF7000] hover:bg-[#FFE4CC]">
+                          {currentUser.plan}
                         </Badge>
                       </div>
                     </div>

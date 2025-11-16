@@ -9,6 +9,7 @@ module.exports = {
 		extend: {
 			fontFamily: {
 				'mulish': ['Mulish', 'sans-serif'],
+				'mich': ["Michroma", "sans-serif"]
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

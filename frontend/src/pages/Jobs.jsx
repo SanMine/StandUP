@@ -1,41 +1,34 @@
+import {
+  Bookmark,
+  Briefcase,
+  Building,
+  Calendar,
+  Clock,
+  Crown,
+  DollarSign,
+  Filter,
+  Lock,
+  MapPin,
+  Search,
+  Sparkles,
+  Target,
+  TrendingUp,
+  X,
+  Zap
+} from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Card, CardContent } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import {
-  Search,
-  MapPin,
-  Briefcase,
-  DollarSign,
-  X,
-  Filter,
-  Bookmark,
-  Building,
-  Clock,
-  Lock,
-  Sparkles,
-  Crown,
-  Target,
-  Zap,
-  TrendingUp,
-  Users,
-  Calendar
-} from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
-import { jobsAPI, applicationsAPI } from '../services/api';
-import { getMatchColor, getMatchBgColor, formatDate } from '../lib/utils';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import EmployerLayout from '../components/Layout/EmployerLayout';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '../components/ui/sheet';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import JobDetailsSheet from '../components/JobDetailsSheet';
+import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
+import { formatDate, getMatchBgColor, getMatchColor } from '../lib/utils';
+import { applicationsAPI, jobsAPI } from '../services/api';
 
 const Jobs = () => {
   const navigate = useNavigate();
@@ -84,7 +77,7 @@ const Jobs = () => {
     });
   };
 
-  const isPremium = userPlan === 'premium';
+  const isPremium = authUser?.plan === 'premium';
 
   // Filter jobs based on search, filters, and saved status
   const filteredJobs = jobsList.filter(job => {
@@ -125,14 +118,14 @@ const Jobs = () => {
       return scoreB - scoreA;
     }
     // Default sort by posted date for free users
-    return new Date(b.posted_date) - new Date(a.posted_date);
+    return new Date(b.posted_date || b.postedAt || b.postedDate) - new Date(a.posted_date || a.postedAt || a.postedDate);
   });
 
-  const selectedJob = selectedJobId ? jobsList.find(j => j.id === selectedJobId) : null;
+  const selectedJob = selectedJobId ? jobsList.find(j => String(j.id) === String(selectedJobId)) : null;
 
   const toggleSave = async (jobId) => {
     if (isSaving) return;
-    
+
     const isSaved = savedJobIds.includes(jobId);
     setIsSaving(true);
 
@@ -159,11 +152,13 @@ const Jobs = () => {
         description: 'Failed to update saved status',
         variant: 'destructive',
       });
+      throw error; // rethrow so callers (like JobDetailsSheet) can react
     } finally {
       setIsSaving(false);
     }
   };
 
+  // NOTE: keep this for other in-file apply flows (e.g., listings quick-apply)
   const handleApply = async (job) => {
     try {
       await applicationsAPI.applyForJob(job.id);
@@ -172,7 +167,7 @@ const Jobs = () => {
         description: `Your application for ${job.title} at ${job.company} has been submitted!`,
       });
       // Update local state
-      setJobsList(prev => prev.map(j => 
+      setJobsList(prev => prev.map(j =>
         j.id === job.id ? { ...j, applicationStatus: 'applied' } : j
       ));
       setSelectedJobId(null);
@@ -239,6 +234,23 @@ const Jobs = () => {
 
   const Layout = currentUser.role === 'employer' ? EmployerLayout : DashboardLayout;
 
+  // onApply handler coming from JobDetailsSheet: best-effort update of local jobsList.
+  const handleSheetApply = (payload) => {
+    // payload might be application object or job object; attempt to extract job id
+    const jobId =
+      payload?.job?.id ||
+      payload?.job_id ||
+      payload?.jobId ||
+      payload?.id ||
+      payload?.job?._id;
+
+    if (jobId) {
+      setJobsList(prev => prev.map(j => String(j.id) === String(jobId) ? { ...j, applicationStatus: 'applied' } : j));
+    }
+    // close sheet
+    setSelectedJobId(null);
+  };
+
   return (
     <Layout user={currentUser}>
       <div className="space-y-6">
@@ -246,7 +258,7 @@ const Jobs = () => {
         <div className="relative p-8 overflow-hidden bg-gradient-to-br from-[#FF7000] via-[#FF8A00] to-[#FF9500] rounded-2xl">
           <div className="absolute top-0 right-0 w-64 h-64 transform translate-x-20 -translate-y-20 bg-white rounded-full opacity-10"></div>
           <div className="absolute bottom-0 left-0 w-48 h-48 transform -translate-x-16 translate-y-16 bg-white rounded-full opacity-10"></div>
-          
+
           <div className="relative z-10">
             <div className="flex items-start justify-between">
               <div>
@@ -256,30 +268,30 @@ const Jobs = () => {
                     {isPremium ? 'Your Perfect Match Awaits' : 'Explore Opportunities'}
                   </h1>
                 </div>
-                <p className="text-lg text-white/90 max-w-2xl">
-                  {isPremium 
-                    ? 'Discover opportunities tailored to your unique profile with AI-powered matching' 
+                <p className="max-w-2xl text-lg text-white/90">
+                  {isPremium
+                    ? 'Discover opportunities tailored to your unique profile with AI-powered matching'
                     : 'Browse available job opportunities and unlock AI-powered matching with Premium'}
                 </p>
-                
+
                 {isPremium && (
                   <div className="flex gap-6 mt-6">
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                      <Target className="w-5 h-5 text-white" />
+                    <div className="flex items-start gap-3 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                      <Target className="w-5 h-5 mt-1 text-white" />
                       <div>
                         <div className="text-sm text-white/70">Best Match</div>
                         <div className="text-xl font-bold text-white">{sortedJobs[0]?.matchPercentage || 0}%</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                      <Briefcase className="w-5 h-5 text-white" />
+                    <div className="flex items-start gap-3 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                      <Briefcase className="w-5 h-5 mt-1 text-white" />
                       <div>
                         <div className="text-sm text-white/70">New Opportunities</div>
                         <div className="text-xl font-bold text-white">{sortedJobs.length}</div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
-                      <Bookmark className="w-5 h-5 text-white" />
+                    <div className="flex items-start gap-3 px-4 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
+                      <Bookmark className="w-5 h-5 mt-1 text-white" />
                       <div>
                         <div className="text-sm text-white/70">Saved Jobs</div>
                         <div className="text-xl font-bold text-white">{savedJobIds.length}</div>
@@ -314,7 +326,7 @@ const Jobs = () => {
                     🚀 Unlock AI-Powered Job Matching
                   </h3>
                   <p className="text-[#4B5563] mb-4 leading-relaxed">
-                    Get personalized match scores based on your skills and experience, discover why you're perfect for each role, 
+                    Get personalized match scores based on your skills and experience, discover why you're perfect for each role,
                     and receive tailored skill recommendations. Premium members get 3x more interviews!
                   </p>
                   <div className="flex flex-wrap gap-3 mb-4">
@@ -336,7 +348,7 @@ const Jobs = () => {
                     className="bg-gradient-to-r from-[#FF7000] to-[#FF9500] hover:from-[#FF7000]/90 hover:to-[#FF9500]/90 text-white shadow-md"
                   >
                     <Crown className="w-4 h-4 mr-2" />
-                    Upgrade Now - Starting at $9/month
+                    Upgrade Now - Starting at $50/month
                   </Button>
                 </div>
               </div>
@@ -442,12 +454,12 @@ const Jobs = () => {
             </div>
           ) : sortedJobs.length === 0 ? (
             <div className="py-12 text-center">
-              <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gray-100">
+              <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-gray-100 rounded-full">
                 <Search className="w-8 h-8 text-gray-400" />
               </div>
               <p className="text-[#4B5563]">
-                {showSavedOnly 
-                  ? 'No saved jobs yet. Start exploring and save opportunities you\'re interested in!' 
+                {showSavedOnly
+                  ? 'No saved jobs yet. Start exploring and save opportunities you\'re interested in!'
                   : 'No opportunities found matching your criteria'}
               </p>
               {showSavedOnly && (
@@ -491,7 +503,7 @@ const Jobs = () => {
                             <div className="flex items-center gap-2 mb-1">
                               <h3 className="text-xl font-semibold text-[#0F151D]">{job.title}</h3>
                               {hasApplied && (
-                                <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                                <Badge className="text-green-700 bg-green-100 hover:bg-green-100">
                                   Applied
                                 </Badge>
                               )}
@@ -570,148 +582,27 @@ const Jobs = () => {
         </div>
       </div>
 
-      {/* Job Details Sheet */}
-      <Sheet open={!!selectedJob} onOpenChange={(open) => { if (!open) setSelectedJobId(null); }}>
-        <SheetContent className="sm:max-w-2xl overflow-y-auto">
-          {selectedJob && (
-            <>
-              <SheetHeader>
-                <div className="flex items-start gap-4 mb-4">
-                  <img
-                    src={selectedJob.logo}
-                    alt={selectedJob.company}
-                    className="object-cover w-16 h-16 rounded-xl"
-                  />
-                  <div className="flex-1">
-                    <SheetTitle className="text-2xl">{selectedJob.title}</SheetTitle>
-                    <SheetDescription className="text-base">{selectedJob.company}</SheetDescription>
-                  </div>
-                  {isPremium && (
-                    <div className={`${getMatchBgColor(selectedJob.matchPercentage || 0)} ${getMatchColor(selectedJob.matchPercentage || 0)} px-4 py-2 rounded-xl text-lg font-semibold`}>
-                      {selectedJob.matchPercentage || 0}% Match
-                    </div>
-                  )}
-                </div>
-              </SheetHeader>
+      <JobDetailsSheet
+        job={selectedJob}
+        open={!!selectedJob}
+        onOpenChange={(open) => { if (!open) setSelectedJobId(null); }}
+        onApply={(applicationData) => {
+          // update jobsList so the card shows Applied
+          setJobsList(prev => prev.map(j => j.id === selectedJob?.id ? { ...j, applicationStatus: 'applied' } : j));
 
-              <div className="mt-6 space-y-6">
-                {/* Job Overview */}
-                <div>
-                  <h3 className="mb-3 text-lg font-semibold">Job Overview</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                      <MapPin className="w-5 h-5 text-[#FF7000]" />
-                      <div>
-                        <div className="text-xs text-gray-500">Location</div>
-                        <div className="font-medium">{selectedJob.location}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                      <Briefcase className="w-5 h-5 text-[#FF7000]" />
-                      <div>
-                        <div className="text-xs text-gray-500">Type</div>
-                        <div className="font-medium">{selectedJob.type}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                      <Building className="w-5 h-5 text-[#FF7000]" />
-                      <div>
-                        <div className="text-xs text-gray-500">Work Mode</div>
-                        <div className="font-medium">{selectedJob.mode}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
-                      <DollarSign className="w-5 h-5 text-[#FF7000]" />
-                      <div>
-                        <div className="text-xs text-gray-500">Salary</div>
-                        <div className="font-medium">{selectedJob.salary}</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+          // update local saved/applications state if you have one
+          setSavedJobIds(prev => prev); // optional
 
-                {/* Description */}
-                <div>
-                  <h3 className="mb-3 text-lg font-semibold">About the Role</h3>
-                  <p className="text-[#4B5563] leading-relaxed">{selectedJob.description}</p>
-                </div>
+          // show toast via sonner (sheet already shows one, this is optional)
+          // toast.success('Application submitted');
 
-                {/* Required Skills */}
-                <div>
-                  <h3 className="mb-3 text-lg font-semibold">Required Skills</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {(selectedJob.skills || []).map((skill, idx) => {
-                      const name = skill && (skill.skill_name || skill.name || skill);
-                      return (
-                        <Badge key={`${name}-${idx}`} variant="outline" className="text-sm bg-gray-50">
-                          {name}
-                        </Badge>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Premium Insights */}
-                {isPremium && selectedJob.matchPercentage && (
-                  <div className="p-4 border-2 border-[#FF7000] bg-gradient-to-r from-[#FFF7ED] to-[#FFEDD5] rounded-xl">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="p-2 bg-[#FF7000] rounded-lg">
-                        <Target className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-[#0F151D] mb-1">Why You're a Great Match</h4>
-                        <p className="text-sm text-[#4B5563]">Based on your profile analysis</p>
-                      </div>
-                    </div>
-                    <ul className="space-y-2 text-sm text-[#4B5563]">
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#FF7000] mt-1">✓</span>
-                        <span>Your skills align perfectly with {selectedJob.skills?.length || 0} key requirements</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#FF7000] mt-1">✓</span>
-                        <span>Your experience level matches the job requirements</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-[#FF7000] mt-1">✓</span>
-                        <span>Location and work mode preferences are compatible</span>
-                      </li>
-                    </ul>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-3 pt-4 border-t">
-                  <Button
-                    onClick={() => handleApply(selectedJob)}
-                    disabled={selectedJob.applicationStatus === 'applied'}
-                    className="flex-1 bg-gradient-to-r from-[#FF7000] to-[#FF9500] hover:from-[#FF7000]/90 hover:to-[#FF9500]/90 text-white"
-                  >
-                    {selectedJob.applicationStatus === 'applied' ? 'Already Applied' : 'Apply Now'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleSave(selectedJob.id);
-                    }}
-                    disabled={isSaving}
-                    className={savedJobIds.includes(selectedJob.id) ? 'text-[#FF7000] border-[#FF7000]' : ''}
-                  >
-                    <Bookmark className={`h-5 w-5 ${savedJobIds.includes(selectedJob.id) ? 'fill-[#FF7000]' : ''}`} />
-                  </Button>
-                </div>
-
-                {/* Posted Date */}
-                <div className="flex items-center gap-2 pt-4 text-sm text-gray-500 border-t">
-                  <Calendar className="w-4 h-4" />
-                  <span>Posted {formatDate(selectedJob.postedDate || selectedJob.posted_date)}</span>
-                </div>
-              </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+          // if you still want to redirect to applications page:
+          // navigate('/applications');
+        }}
+        onToggleSave={(jobId) => toggleSave(jobId)} // keep your toggleSave implementation
+        savedJobIds={savedJobIds}
+        isPremium={isPremium}
+      />
     </Layout>
   );
 };

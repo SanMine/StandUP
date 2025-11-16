@@ -94,7 +94,7 @@ candidateSchema.index({ job_id: 1, status: 1 });
 candidateSchema.index({ application_id: 1 }, { unique: true });
 candidateSchema.index({ match_score: -1 });
 
-candidateSchema.virtual('id').get(function() {
+candidateSchema.virtual('id').get(function () {
   return this._id;
 });
 
