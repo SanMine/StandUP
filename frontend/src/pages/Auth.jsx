@@ -19,8 +19,8 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const roleFromUrl = searchParams.get("role");
-  const [step, setStep] = useState(roleFromUrl ? "auth" : "role"); // role, auth, onboarding
-  const [authMode, setAuthMode] = useState(roleFromUrl ? "signup" : "signin"); // signin, signup
+  const [step, setStep] = useState(roleFromUrl ? "auth" : "role");
+  const [authMode, setAuthMode] = useState(roleFromUrl ? "signup" : "signin");
   const [selectedRole, setSelectedRole] = useState(roleFromUrl || "");
   const [onboardingStep, setOnboardingStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -83,35 +83,43 @@ const Auth = () => {
     "Product Manager",
   ];
 
-  const { signin, signup, fetchMe, setSignedIn } = useAuth();
+  const { signin, signup, fetchMe, setSignedIn, user, updateUser } = useAuth();
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAuth = async (e) => {
     e.preventDefault();
     setError("");
+    setIsSubmitting(true);
 
     if (!formData.email || !formData.password) {
       setError("Email and password are required");
+      setIsSubmitting(false);
       return;
     }
 
     try {
       if (authMode === "signin") {
-        console.log("SIGNIN");
         const res = await signin(formData.email, formData.password);
+
         if (!res?.success) {
           setError(res?.error?.message || "Invalid email or password");
+          setIsSubmitting(false);
           return;
         }
-        // redirect based on role
-        if (res.user?.role === "employer") navigate("/employer-dashboard");
-        else navigate("/dashboard");
+
+        // User data is now stored in context
+        console.log("Signed in user:", res.user);
+
+        // Redirect based on role
+        if (res.user?.role === "employer") {
+          navigate("/employer-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       }
 
       if (authMode === "signup") {
-        // console.log("SIGNUP");
-        console.log(authMode);
-        // 👇 if no role selected, default to 'student'
         const role = selectedRole || "student";
 
         const payload = {
@@ -122,28 +130,36 @@ const Auth = () => {
         };
 
         const res = await signup(payload);
+
         if (!res?.success) {
           setError(res?.error?.message || "Unable to create account");
+          setIsSubmitting(false);
           return;
         }
+
+        // User data is now stored in context
+        console.log("Signed up user:", res.user);
+
         setSelectedRole(role);
         setStep("onboarding");
-        //return;
+        setIsSubmitting(false);
+        return;
       }
     } catch (err) {
-      console.error(err);
+      console.error("Auth error:", err);
       setError(
         err?.response?.data?.error?.message ||
-          err.message ||
-          "An error occurred"
+        err.message ||
+        "An error occurred"
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const toggleAuthMode = () => {
     setAuthMode(authMode === "signin" ? "signup" : "signin");
     setError("");
-    // Keep email but clear password and name for security
     setFormData((prev) => ({
       ...prev,
       password: "",
@@ -154,7 +170,7 @@ const Auth = () => {
   const handleRoleSelection = (role) => {
     setSelectedRole(role);
     setStep("auth");
-    setAuthMode("signup"); // Default to signup after role selection
+    setAuthMode("signup");
   };
 
   const handlePrimaryGoalToggle = (goal) => {
@@ -213,63 +229,86 @@ const Auth = () => {
     }
   };
 
-  const handleComplete = () => {
-    // Submit onboarding data to backend then navigate
-    const submitOnboarding = async () => {
-      try {
-        const payload =
-          selectedRole === "student"
-            ? {
-                name: formData.name,
-                graduation: formData.graduation,
-                skills: formData.skills,
-                primary_goals: formData.primaryGoals,
-                desired_positions: formData.desiredPositions,
-              }
-            : {
-                company_name: formData.companyName,
-                company_size: formData.companySize,
-                industry: formData.industry,
-                website: formData.website,
-              };
+  const handleComplete = async () => {
+    setIsSubmitting(true);
 
-        const res = await api.put("/users/profile", payload);
-        if (res?.data?.success) {
-          // refresh auth context so App has updated user
-          try {
-            if (fetchMe) await fetchMe();
-          } catch (e) {
-            // ignore fetchMe errors
+    try {
+      const payload =
+        selectedRole === "student"
+          ? {
+            name: formData.name,
+            graduation: formData.graduation,
+            skills: formData.skills,
+            primary_goals: formData.primaryGoals,
+            desired_positions: formData.desiredPositions,
           }
-          setSignedIn(true);
-          if (selectedRole === "employer") navigate("/employer-dashboard");
-          else navigate("/dashboard");
-        } else {
-          // fallback navigation
-          setSignedIn(true);
-          if (selectedRole === "employer") navigate("/employer-dashboard");
-          else navigate("/dashboard");
-        }
-      } catch (err) {
-        console.error("Onboarding submit error", err);
-        // still navigate but you may want to surface error to user
-        if (selectedRole === "employer") navigate("/employer-dashboard");
-        else navigate("/dashboard");
-      }
-    };
+          : {
+            company_name: formData.companyName,
+            company_size: formData.companySize,
+            industry: formData.industry,
+            website: formData.website,
+          };
 
-    submitOnboarding();
+      const res = await api.put("/users/profile", payload);
+
+      if (res?.data?.success) {
+        // Update user in context with new profile data
+        if (res.data.user) {
+          updateUser(res.data.user);
+        } else {
+          // Fetch updated user data
+          await fetchMe();
+        }
+
+        setSignedIn(true);
+
+        // Navigate based on role
+        if (selectedRole === "employer") {
+          navigate("/employer-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      } else {
+        // Fallback: still navigate but log warning
+        console.warn("Profile update response was not successful, navigating anyway");
+        setSignedIn(true);
+
+        if (selectedRole === "employer") {
+          navigate("/employer-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      }
+    } catch (err) {
+      console.error("Onboarding submit error:", err);
+
+      // Show error but still allow navigation
+      setError("Profile update failed, but you can complete it later");
+      setSignedIn(true);
+
+      // Navigate after brief delay so user can see error
+      setTimeout(() => {
+        if (selectedRole === "employer") {
+          navigate("/employer-dashboard");
+        } else {
+          navigate("/dashboard");
+        }
+      }, 2000);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
+  // Role selection step
   if (step === "role") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
-        <div className="max-w-4xl w-full">
-          <div className="text-center mb-12">
+        <div className="w-full max-w-4xl">
+          <div className="mb-12 text-center">
             <img
               src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
               alt="Stand Up Logo"
-              className="h-12 w-auto mx-auto mb-6"
+              className="w-auto h-12 mx-auto mb-6"
             />
             <h1
               className="text-3xl font-bold text-[#0F151D] mb-2"
@@ -288,7 +327,7 @@ const Auth = () => {
               Already have an account? Sign In
             </button>
           </div>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid gap-6 md:grid-cols-2">
             <Card
               className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-[#FF7000]"
               onClick={() => handleRoleSelection("student")}
@@ -308,7 +347,7 @@ const Auth = () => {
                 </p>
                 <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white w-full">
                   Continue as Student
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
@@ -334,7 +373,7 @@ const Auth = () => {
                   className="border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white w-full"
                 >
                   Continue as Employer
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
@@ -344,21 +383,21 @@ const Auth = () => {
     );
   }
 
+  // Onboarding step (keeping your existing onboarding JSX)
   if (step === "onboarding") {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
-        <Card className="max-w-2xl w-full shadow-xl">
+        <Card className="w-full max-w-2xl shadow-xl">
           <CardHeader>
             <div className="flex items-center justify-between mb-4">
               <div className="flex gap-2">
                 {[1, 2, 3, 4].map((num) => (
                   <div
                     key={num}
-                    className={`h-2 rounded-full transition-all ${
-                      num === onboardingStep
+                    className={`h-2 rounded-full transition-all ${num === onboardingStep
                         ? "w-8 bg-[#FF7000]"
                         : "w-2 bg-gray-300"
-                    }`}
+                      }`}
                   />
                 ))}
               </div>
@@ -374,17 +413,17 @@ const Auth = () => {
                 ? onboardingStep === 1
                   ? "What are your goals?"
                   : onboardingStep === 2
-                  ? "Select your skills"
-                  : onboardingStep === 3
-                  ? "Desired roles"
-                  : "When do you graduate?"
+                    ? "Select your skills"
+                    : onboardingStep === 3
+                      ? "Desired roles"
+                      : "When do you graduate?"
                 : onboardingStep === 1
-                ? "Company Name"
-                : onboardingStep === 2
-                ? "Company Size"
-                : onboardingStep === 3
-                ? "Industry & Website"
-                : "All Set!"}
+                  ? "Company Name"
+                  : onboardingStep === 2
+                    ? "Company Size"
+                    : onboardingStep === 3
+                      ? "Industry & Website"
+                      : "All Set!"}
             </CardTitle>
             <CardDescription>
               {selectedRole === "student"
@@ -393,6 +432,13 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {error && (
+              <div className="p-3 mb-4 border border-red-200 rounded-lg bg-red-50">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            {/* Keep all your existing onboarding step JSX here */}
             {selectedRole === "student" ? (
               <div className="space-y-6">
                 {onboardingStep === 1 && (
@@ -413,11 +459,10 @@ const Auth = () => {
                             type="button"
                             variant="outline"
                             onClick={() => handlePrimaryGoalToggle(goal)}
-                            className={`justify-start transition-all ${
-                              formData.primaryGoals.includes(goal)
+                            className={`justify-start transition-all ${formData.primaryGoals.includes(goal)
                                 ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
                                 : "hover:border-[#FF7000]"
-                            }`}
+                              }`}
                           >
                             {goal}
                           </Button>
@@ -435,11 +480,10 @@ const Auth = () => {
                           <Badge
                             key={skill}
                             onClick={() => handleSkillToggle(skill)}
-                            className={`cursor-pointer transition-all ${
-                              formData.skills.includes(skill)
+                            className={`cursor-pointer transition-all ${formData.skills.includes(skill)
                                 ? "bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
                                 : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                            }`}
+                              }`}
                           >
                             {skill}
                           </Badge>
@@ -477,19 +521,19 @@ const Auth = () => {
                       {formData.skills.filter(
                         (s) => !availableSkills.includes(s)
                       ).length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {formData.skills
-                            .filter((s) => !availableSkills.includes(s))
-                            .map((skill) => (
-                              <Badge
-                                key={skill}
-                                className="bg-[#284688] text-white hover:bg-[#284688]/90"
-                              >
-                                {skill}
-                              </Badge>
-                            ))}
-                        </div>
-                      )}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {formData.skills
+                              .filter((s) => !availableSkills.includes(s))
+                              .map((skill) => (
+                                <Badge
+                                  key={skill}
+                                  className="bg-[#284688] text-white hover:bg-[#284688]/90"
+                                >
+                                  {skill}
+                                </Badge>
+                              ))}
+                          </div>
+                        )}
                     </div>
                   </div>
                 )}
@@ -499,18 +543,17 @@ const Auth = () => {
                       <Label>
                         What roles/positions interest you? (Select multiple)
                       </Label>
-                      <div className="space-y-2 mt-3">
+                      <div className="mt-3 space-y-2">
                         {availableRoles.map((role) => (
                           <Button
                             key={role}
                             type="button"
                             variant="outline"
                             onClick={() => handleDesiredPositionToggle(role)}
-                            className={`w-full justify-start transition-all ${
-                              formData.desiredPositions.includes(role)
+                            className={`w-full justify-start transition-all ${formData.desiredPositions.includes(role)
                                 ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
                                 : "hover:border-[#FF7000]"
-                            }`}
+                              }`}
                           >
                             {role}
                           </Button>
@@ -550,19 +593,19 @@ const Auth = () => {
                       {formData.desiredPositions.filter(
                         (p) => !availableRoles.includes(p)
                       ).length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {formData.desiredPositions
-                            .filter((p) => !availableRoles.includes(p))
-                            .map((position) => (
-                              <Badge
-                                key={position}
-                                className="bg-[#284688] text-white hover:bg-[#284688]/90"
-                              >
-                                {position}
-                              </Badge>
-                            ))}
-                        </div>
-                      )}
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {formData.desiredPositions
+                              .filter((p) => !availableRoles.includes(p))
+                              .map((position) => (
+                                <Badge
+                                  key={position}
+                                  className="bg-[#284688] text-white hover:bg-[#284688]/90"
+                                >
+                                  {position}
+                                </Badge>
+                              ))}
+                          </div>
+                        )}
                     </div>
                   </div>
                 )}
@@ -663,10 +706,10 @@ const Auth = () => {
                   </div>
                 )}
                 {onboardingStep === 4 && (
-                  <div className="text-center py-8">
-                    <div className="h-20 w-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <div className="py-8 text-center">
+                    <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 bg-green-100 rounded-full">
                       <svg
-                        className="h-10 w-10 text-green-600"
+                        className="w-10 h-10 text-green-600"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
@@ -689,12 +732,14 @@ const Auth = () => {
                 )}
               </div>
             )}
+
             <div className="flex gap-3 mt-8">
               {onboardingStep > 1 && (
                 <Button
                   variant="outline"
                   onClick={() => setOnboardingStep((prev) => prev - 1)}
                   className="flex-1"
+                  disabled={isSubmitting}
                 >
                   Back
                 </Button>
@@ -708,9 +753,16 @@ const Auth = () => {
                   }
                 }}
                 className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                disabled={isSubmitting}
               >
-                {onboardingStep === 4 ? "Complete" : "Continue"}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                {isSubmitting ? (
+                  "Loading..."
+                ) : onboardingStep === 4 ? (
+                  "Complete"
+                ) : (
+                  "Continue"
+                )}
+                {!isSubmitting && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             </div>
           </CardContent>
@@ -719,14 +771,15 @@ const Auth = () => {
     );
   }
 
+  // Auth step (signin/signup)
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
-      <Card className="max-w-md w-full shadow-xl" key={authMode}>
+      <Card className="w-full max-w-md shadow-xl" key={authMode}>
         <CardHeader className="text-center">
           <img
             src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
             alt="Stand Up Logo"
-            className="h-12 w-auto mx-auto mb-4"
+            className="w-auto h-12 mx-auto mb-4"
           />
           <CardTitle
             className="text-2xl"
@@ -742,7 +795,7 @@ const Auth = () => {
         </CardHeader>
         <CardContent>
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+            <div className="p-3 mb-4 border border-red-200 rounded-lg bg-red-50">
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
@@ -794,8 +847,9 @@ const Auth = () => {
             <Button
               type="submit"
               className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+              disabled={isSubmitting}
             >
-              {authMode === "signin" ? "Sign In" : "Sign Up"}
+              {isSubmitting ? "Loading..." : authMode === "signin" ? "Sign In" : "Sign Up"}
             </Button>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
@@ -840,7 +894,7 @@ const Auth = () => {
                 LinkedIn
               </Button>
             </div>
-            <div className="text-center text-sm">
+            <div className="text-sm text-center">
               <button
                 type="button"
                 onClick={toggleAuthMode}

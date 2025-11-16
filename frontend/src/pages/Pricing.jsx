@@ -4,14 +4,20 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { CheckCircle2, X, Zap, Crown, Rocket } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
 
 const Pricing = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const studentPlans = [
     {
+      id: 'student-free',
       name: 'Free',
       price: '0',
+      type: 'student',
+      planType: 'free',
       description: 'Perfect for getting started',
       icon: Zap,
       features: [
@@ -30,8 +36,11 @@ const Pricing = () => {
       highlighted: false
     },
     {
+      id: 'student-premium',
       name: 'Premium',
-      price: '250',
+      price: '50',
+      type: 'student',
+      planType: 'premium',
       description: 'Everything you need to succeed',
       icon: Crown,
       popular: true,
@@ -54,8 +63,11 @@ const Pricing = () => {
 
   const employerPlans = [
     {
-      name: 'Starter',
-      price: '2,500',
+      id: 'employer-free',
+      name: 'Free',
+      price: '0',
+      type: 'employer',
+      planType: 'free',
       description: 'For small teams hiring occasionally',
       icon: Zap,
       features: [
@@ -66,12 +78,15 @@ const Pricing = () => {
         { text: 'Advanced filters', included: false },
         { text: 'Dedicated account manager', included: false }
       ],
-      cta: 'Start Trial',
+      cta: 'Get Started',
       highlighted: false
     },
     {
+      id: 'employer-professional',
       name: 'Professional',
-      price: '5,000',
+      price: '120',
+      type: 'employer',
+      planType: 'premium',
       description: 'For growing companies',
       icon: Crown,
       popular: true,
@@ -85,12 +100,15 @@ const Pricing = () => {
         { text: 'Priority listing', included: true },
         { text: 'Priority support', included: true }
       ],
-      cta: 'Start Trial',
+      cta: 'Upgrade to Professional',
       highlighted: true
     },
     {
+      id: 'employer-enterprise',
       name: 'Enterprise',
       price: 'Custom',
+      type: 'employer',
+      planType: 'enterprise',
       description: 'For large organizations',
       icon: Rocket,
       features: [
@@ -108,19 +126,53 @@ const Pricing = () => {
     }
   ];
 
+  const handlePlanClick = (plan) => {
+    if (user && user.role !== plan.type) {
+      if (user.role === 'student' && plan.type === 'employer') {
+        toast.error("Wrong Plan Type", {
+          description: "This is an employer plan. Please select a student plan or switch to an employer account."
+        })
+        return;
+      }
+      if (user.role === 'employer' && plan.type === 'student') {
+        toast.error("Wrong Plan Type", {
+          description: "This is a student plan. Please select an employer plan or switch to a student account."
+        })
+        return;
+      }
+    }
+
+    if (plan.planType === 'free') {
+      if (user?.role === 'employer') {
+        navigate('/employer-dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    } else if (plan.id === 'employer-enterprise') {
+      window.location.href = 'mailto:sales@standup.com?subject=Enterprise Plan Inquiry';
+    } else {
+      navigate(`/payment?plan=${plan.id}`);
+    }
+  };
+
+  const isCurrentPlan = (plan) => {
+    if (!user) return false;
+    return user.role === plan.type && user.plan === plan.planType;
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
-        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img 
-              src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png" 
-              alt="Stand Up Logo" 
-              className="h-10 w-auto"
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
+        <div className="flex items-center justify-between h-16 px-6 mx-auto max-w-7xl">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+            <img
+              src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+              alt="Stand Up Logo"
+              className="w-auto h-10"
             />
           </div>
-          <Button 
+          <Button
             onClick={() => navigate('/')}
             variant="ghost"
             className="text-gray-700"
@@ -131,7 +183,7 @@ const Pricing = () => {
       </nav>
 
       {/* Hero */}
-      <section className="pt-32 pb-12 px-6">
+      <section className="px-6 pt-32 pb-12">
         <div className="max-w-4xl mx-auto text-center">
           <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] px-4 py-1.5 text-sm font-medium mb-6">
             Simple, Transparent Pricing
@@ -146,34 +198,41 @@ const Pricing = () => {
       </section>
 
       {/* Student Plans */}
-      <section className="py-12 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
+      <section className="px-6 py-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
               For Students & Job Seekers
             </h2>
             <p className="text-[#4B5563]">Everything you need to launch your career</p>
           </div>
-          <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="grid max-w-5xl gap-8 mx-auto md:grid-cols-2">
             {studentPlans.map((plan) => {
               const Icon = plan.icon;
+              const isCurrent = isCurrentPlan(plan);
               return (
-                <Card 
+                <Card
                   key={plan.name}
-                  className={`relative ${
-                    plan.highlighted 
-                      ? 'border-2 border-[#FF7000] shadow-2xl scale-105' 
-                      : 'border-2 border-gray-200 shadow-lg'
-                  }`}
+                  className={`relative ${plan.highlighted
+                    ? 'border-2 border-[#FF7000] shadow-2xl scale-105'
+                    : 'border-2 border-gray-200 shadow-lg'
+                    }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="absolute -translate-x-1/2 -top-4 left-1/2">
                       <Badge className="bg-[#FF7000] text-white hover:bg-[#FF7000] px-4 py-1">
                         MOST POPULAR
                       </Badge>
                     </div>
                   )}
-                  <CardHeader className="text-center pb-8">
+                  {isCurrent && (
+                    <div className="absolute -top-4 right-4">
+                      <Badge className="px-4 py-1 text-white bg-green-500 hover:bg-green-500">
+                        CURRENT PLAN
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className="pb-8 text-center">
                     <div className="h-16 w-16 bg-[#FFE4CC] rounded-full flex items-center justify-center mx-auto mb-4">
                       <Icon className="h-8 w-8 text-[#FF7000]" />
                     </div>
@@ -182,12 +241,12 @@ const Pricing = () => {
                     </CardTitle>
                     <CardDescription className="text-base">{plan.description}</CardDescription>
                     <div className="mt-6">
-                      <span className="text-5xl font-bold text-[#0F151D]">{plan.price}</span>
-                      {plan.price !== '0' && <span className="text-[#4B5563] ml-2">THB/month</span>}
+                      <span className="text-5xl font-bold text-[#0F151D]">${plan.price}</span>
+                      <span className="text-[#4B5563] ml-2">/month</span>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-4 mb-8">
+                    <ul className="mb-8 space-y-4">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-3">
                           {feature.included ? (
@@ -195,23 +254,24 @@ const Pricing = () => {
                           ) : (
                             <X className="h-5 w-5 text-gray-300 flex-shrink-0 mt-0.5" />
                           )}
-                          <span className={`text-sm ${
-                            feature.included ? 'text-[#0F151D]' : 'text-gray-400'
-                          }`}>
+                          <span className={`text-sm ${feature.included ? 'text-[#0F151D]' : 'text-gray-400'
+                            }`}>
                             {feature.text}
                           </span>
                         </li>
                       ))}
                     </ul>
-                    <Button 
-                      onClick={() => navigate('/auth')}
-                      className={`w-full h-12 text-base ${
-                        plan.highlighted
+                    <Button
+                      onClick={() => handlePlanClick(plan)}
+                      disabled={isCurrent}
+                      className={`w-full h-12 text-base ${isCurrent
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : plan.highlighted
                           ? 'bg-[#FF7000] hover:bg-[#FF7000]/90 text-white shadow-lg'
                           : 'bg-white border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white'
-                      }`}
+                        }`}
                     >
-                      {plan.cta}
+                      {isCurrent ? 'Current Plan' : plan.cta}
                     </Button>
                   </CardContent>
                 </Card>
@@ -223,33 +283,40 @@ const Pricing = () => {
 
       {/* Employer Plans */}
       <section className="py-20 px-6 bg-[#FFFDFA]">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-12 text-center">
             <h2 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
               For Employers
             </h2>
             <p className="text-[#4B5563]">Find job-ready talent faster</p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid gap-8 md:grid-cols-3">
             {employerPlans.map((plan) => {
               const Icon = plan.icon;
+              const isCurrent = isCurrentPlan(plan);
               return (
-                <Card 
+                <Card
                   key={plan.name}
-                  className={`relative ${
-                    plan.highlighted 
-                      ? 'border-2 border-[#FF7000] shadow-2xl scale-105' 
-                      : 'border-2 border-gray-200 shadow-lg'
-                  }`}
+                  className={`relative ${plan.highlighted
+                    ? 'border-2 border-[#FF7000] shadow-2xl scale-105'
+                    : 'border-2 border-gray-200 shadow-lg'
+                    }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="absolute -translate-x-1/2 -top-4 left-1/2">
                       <Badge className="bg-[#FF7000] text-white hover:bg-[#FF7000] px-4 py-1">
                         RECOMMENDED
                       </Badge>
                     </div>
                   )}
-                  <CardHeader className="text-center pb-8">
+                  {isCurrent && (
+                    <div className="absolute -top-4 right-4">
+                      <Badge className="px-3 py-1 text-xs text-white bg-green-500 hover:bg-green-500">
+                        CURRENT
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className="pb-8 text-center">
                     <div className="h-14 w-14 bg-[#E8F0FF] rounded-full flex items-center justify-center mx-auto mb-4">
                       <Icon className="h-7 w-7 text-[#284688]" />
                     </div>
@@ -258,12 +325,18 @@ const Pricing = () => {
                     </CardTitle>
                     <CardDescription className="text-sm">{plan.description}</CardDescription>
                     <div className="mt-6">
-                      <span className="text-4xl font-bold text-[#0F151D]">{plan.price}</span>
-                      {plan.price !== 'Custom' && <span className="text-[#4B5563] ml-2 text-sm">THB/month</span>}
+                      {plan.price === 'Custom' ? (
+                        <span className="text-4xl font-bold text-[#0F151D]">{plan.price}</span>
+                      ) : (
+                        <>
+                          <span className="text-4xl font-bold text-[#0F151D]">${plan.price}</span>
+                          <span className="text-[#4B5563] ml-2 text-sm">/month</span>
+                        </>
+                      )}
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <ul className="space-y-3 mb-8">
+                    <ul className="mb-8 space-y-3">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-2">
                           {feature.included ? (
@@ -271,23 +344,24 @@ const Pricing = () => {
                           ) : (
                             <X className="h-5 w-5 text-gray-300 flex-shrink-0 mt-0.5" />
                           )}
-                          <span className={`text-sm ${
-                            feature.included ? 'text-[#0F151D]' : 'text-gray-400'
-                          }`}>
+                          <span className={`text-sm ${feature.included ? 'text-[#0F151D]' : 'text-gray-400'
+                            }`}>
                             {feature.text}
                           </span>
                         </li>
                       ))}
                     </ul>
-                    <Button 
-                      onClick={() => navigate('/auth?role=employer')}
-                      className={`w-full h-12 text-base ${
-                        plan.highlighted
+                    <Button
+                      onClick={() => handlePlanClick(plan)}
+                      disabled={isCurrent}
+                      className={`w-full h-12 text-base ${isCurrent
+                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        : plan.highlighted
                           ? 'bg-[#FF7000] hover:bg-[#FF7000]/90 text-white shadow-lg'
                           : 'bg-white border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white'
-                      }`}
+                        }`}
                     >
-                      {plan.cta}
+                      {isCurrent ? 'Current Plan' : plan.cta}
                     </Button>
                   </CardContent>
                 </Card>
@@ -298,7 +372,7 @@ const Pricing = () => {
       </section>
 
       {/* FAQ Preview */}
-      <section className="py-20 px-6">
+      <section className="px-6 py-20">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-[#0F151D] mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Have Questions?
@@ -306,7 +380,7 @@ const Pricing = () => {
           <p className="text-lg text-[#4B5563] mb-8">
             Our team is here to help you choose the right plan and get started.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex justify-center gap-4">
             <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-8">
               Contact Sales
             </Button>
@@ -319,7 +393,7 @@ const Pricing = () => {
 
       {/* Footer */}
       <footer className="bg-[#0F151D] text-white py-12 px-6">
-        <div className="max-w-7xl mx-auto text-center">
+        <div className="mx-auto text-center max-w-7xl">
           <p className="text-sm text-gray-400">© 2025 Stand Up. All rights reserved.</p>
         </div>
       </footer>

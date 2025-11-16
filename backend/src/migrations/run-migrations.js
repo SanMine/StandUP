@@ -1,42 +1,45 @@
-const { sequelize } = require('../models');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-// Run migrations - sync all models
-const runMigrations = async () => {
+const User = require('../models/User');
+
+const addPaymentFieldsToUsers = async () => {
   try {
-    console.log('🔄 Starting database migrations...');
+    console.log('Starting payment fields migration...');
 
-    // Test connection
-    await sequelize.authenticate();
-    console.log('✅ Database connection established');
+    const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
+    if (!mongoURI) {
+      console.error('MongoDB URI not found in environment variables!');
+      process.exit(1);
+    }
 
-    // Sync all models
-    // Use force: true to drop and recreate tables (CAUTION: data loss)
-    // Use alter: true to update existing tables (safer)
-    await sequelize.sync({ alter: true });
-    
-    console.log('✅ All models synchronized successfully');
-    console.log('📋 Tables created:');
-    console.log('   - users');
-    console.log('   - jobs');
-    console.log('   - job_skills');
-    console.log('   - user_skills');
-    console.log('   - applications');
-    console.log('   - mentors');
-    console.log('   - mentor_sessions');
-    console.log('   - projects');
-    console.log('   - courses');
-    console.log('   - events');
-    console.log('   - saved_jobs');
-    console.log('   - career_roadmap');
-    console.log('   - sessions (express-session store)');
-    console.log('');
-    console.log('✅ Database migrations completed successfully!');
-    
+    await mongoose.connect(mongoURI);
+    console.log('Connected to MongoDB');
+
+    const result = await User.updateMany(
+      {
+        $or: [
+          { pending_payment: { $exists: false } },
+          { payment_history: { $exists: false } }
+        ]
+      },
+      {
+        $set: {
+          pending_payment: null,
+          payment_history: []
+        }
+      }
+    );
+
+    console.log(`Updated ${result.modifiedCount} users with payment fields`);
+    console.log('Migration completed successfully!');
+
+    await mongoose.connection.close();
     process.exit(0);
   } catch (error) {
-    console.error('❌ Migration failed:', error);
+    console.error('Migration failed:', error);
     process.exit(1);
   }
 };
 
-runMigrations();
+addPaymentFieldsToUsers();

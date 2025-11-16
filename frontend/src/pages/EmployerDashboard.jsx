@@ -17,7 +17,6 @@ import {
   Edit,
   Trash2
 } from 'lucide-react';
-import { users } from '../utils/mockData';
 import EmployerLayout from '../components/Layout/EmployerLayout';
 import JobModal from '../components/JobModal';
 import { jobsAPI } from '../services/api';
@@ -36,7 +35,6 @@ const EmployerDashboard = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingJobs, setIsFetchingJobs] = useState(true);
 
-  // Fetch jobs on component mount
   useEffect(() => {
     fetchJobs();
   }, []);
@@ -75,7 +73,7 @@ const EmployerDashboard = () => {
       setIsLoading(true);
       await api.delete(`/jobs/${jobId}`);
       toast.success('Job deleted successfully');
-      fetchJobs(); // Refresh the list
+      fetchJobs();
     } catch (error) {
       console.error('Error deleting job:', error);
       toast.error(error.response?.data?.error?.message || 'Failed to delete job');
@@ -102,7 +100,7 @@ const EmployerDashboard = () => {
       
       setIsModalOpen(false);
       setSelectedJob(null);
-      fetchJobs(); // Refresh the list
+      fetchJobs(); 
     } catch (error) {
       console.error('Error submitting job:', error);
       toast.error(error.response?.data?.error?.message || 'Failed to save job');
@@ -164,17 +162,17 @@ const EmployerDashboard = () => {
             onClick={handleCreateJob}
             data-testid="post-new-role-btn"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Post New Role
           </Button>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
             return (
-              <Card key={index} className="border-none shadow-md hover:shadow-lg transition-all">
+              <Card key={index} className="transition-all border-none shadow-md hover:shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -193,9 +191,9 @@ const EmployerDashboard = () => {
           })}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid gap-8 lg:grid-cols-3">
           {/* Open Roles */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             <Card className="border-none shadow-md">
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -213,13 +211,13 @@ const EmployerDashboard = () => {
                 {isFetchingJobs ? (
                   <div className="text-center py-8 text-[#4B5563]">Loading jobs...</div>
                 ) : jobs.length === 0 ? (
-                  <div className="text-center py-8">
+                  <div className="py-8 text-center">
                     <p className="text-[#4B5563] mb-4">No jobs posted yet</p>
                     <Button 
                       onClick={handleCreateJob}
                       className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                     >
-                      <Plus className="h-4 w-4 mr-2" />
+                      <Plus className="w-4 h-4 mr-2" />
                       Post Your First Job
                     </Button>
                   </div>
@@ -261,7 +259,7 @@ const EmployerDashboard = () => {
                           onClick={() => handleEditJob(job)}
                           data-testid="edit-job-btn"
                         >
-                          <Edit className="h-3 w-3 mr-1" />
+                          <Edit className="w-3 h-3 mr-1" />
                           Edit
                         </Button>
                         <Button 
@@ -272,7 +270,7 @@ const EmployerDashboard = () => {
                           disabled={isLoading}
                           data-testid="delete-job-btn"
                         >
-                          <Trash2 className="h-3 w-3 mr-1" />
+                          <Trash2 className="w-3 h-3 mr-1" />
                           Delete
                         </Button>
                       </div>
@@ -346,11 +344,11 @@ const EmployerDashboard = () => {
                     <p className="text-xs text-[#4B5563] mb-3">{candidate.location}</p>
                     <div className="flex gap-2">
                       <Button size="sm" className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-8 text-xs">
-                        <Eye className="h-3 w-3 mr-1" />
+                        <Eye className="w-3 h-3 mr-1" />
                         View Profile
                       </Button>
-                      <Button size="sm" variant="outline" className="h-8 w-8 p-0">
-                        <Mail className="h-3 w-3" />
+                      <Button size="sm" variant="outline" className="w-8 h-8 p-0">
+                        <Mail className="w-3 h-3" />
                       </Button>
                     </div>
                   </div>
@@ -365,18 +363,18 @@ const EmployerDashboard = () => {
                 <div className="space-y-2">
                   <Button 
                     variant="outline" 
-                    className="w-full justify-start bg-white"
+                    className="justify-start w-full bg-white"
                     onClick={handleCreateJob}
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="w-4 h-4 mr-2" />
                     Post New Job
                   </Button>
-                  <Button variant="outline" className="w-full justify-start bg-white">
-                    <Users className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="justify-start w-full bg-white">
+                    <Users className="w-4 h-4 mr-2" />
                     Search Candidates
                   </Button>
-                  <Button variant="outline" className="w-full justify-start bg-white">
-                    <TrendingUp className="h-4 w-4 mr-2" />
+                  <Button variant="outline" className="justify-start w-full bg-white">
+                    <TrendingUp className="w-4 h-4 mr-2" />
                     View Analytics
                   </Button>
                 </div>
