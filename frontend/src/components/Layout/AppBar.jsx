@@ -26,7 +26,7 @@ const AppBar = ({ user }) => {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
           <img
-            src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+            src="/src/image/icon.png"
             alt="Stand Up Logo"
             className="w-auto h-10"
           />
