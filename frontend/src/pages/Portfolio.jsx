@@ -853,6 +853,91 @@ const Portfolio = () => {
 
           {/* Personal Information Tab */}
           <TabsContent value="personal" className="space-y-6">
+            {/* ATS Analysis Card */}
+            {atsAnalysis && atsScore !== null && (
+              <Card className="border-none shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                <CardHeader className={`bg-gradient-to-r ${getATSScoreColor(atsScore).bg} border-b ${getATSScoreColor(atsScore).border}`}>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2 text-xl">
+                      <div className={`p-2 ${getATSScoreColor(atsScore).badge} rounded-lg`}>
+                        <TrendingUp className="w-5 h-5" />
+                      </div>
+                      ATS Resume Analysis
+                    </CardTitle>
+                    <div className={`px-4 py-2 ${getATSScoreColor(atsScore).badge} rounded-lg font-bold text-lg`}>
+                      {atsScore}%
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 space-y-4">
+                  {atsAnalysis.summary && (
+                    <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <p className="text-sm text-gray-700 leading-relaxed">{atsAnalysis.summary}</p>
+                    </div>
+                  )}
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Strengths */}
+                    {atsAnalysis.strengths && atsAnalysis.strengths.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-green-700 flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          Strengths
+                        </h4>
+                        <ul className="space-y-2">
+                          {atsAnalysis.strengths.map((strength, idx) => (
+                            <li key={idx} className="text-sm text-gray-700 flex items-start gap-2 bg-green-50 p-3 rounded-lg border border-green-100">
+                              <span className="text-green-600 font-bold mt-0.5">✓</span>
+                              <span>{strength}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Improvements */}
+                    {atsAnalysis.improvements && atsAnalysis.improvements.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-semibold text-orange-700 flex items-center gap-2 text-sm">
+                          <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                          Improvements
+                        </h4>
+                        <ul className="space-y-2">
+                          {atsAnalysis.improvements.map((improvement, idx) => (
+                            <li key={idx} className="text-sm text-gray-700 flex items-start gap-2 bg-orange-50 p-3 rounded-lg border border-orange-100">
+                              <span className="text-orange-600 font-bold mt-0.5">→</span>
+                              <span>{improvement}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <Button 
+                      onClick={fetchATSScore}
+                      disabled={isCalculatingATS}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isCalculatingATS ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Analyzing...
+                        </>
+                      ) : (
+                        <>
+                          <TrendingUp className="w-4 h-4 mr-2" />
+                          Re-analyze Resume
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="border-none shadow-lg hover:shadow-xl transition-shadow">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
                 <CardTitle className="flex items-center gap-2 text-xl">
