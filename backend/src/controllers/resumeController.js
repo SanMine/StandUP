@@ -1,5 +1,11 @@
 const { Resume } = require('../models');
 const { User } = require('../models');
+const { generateText } = require('ai');
+const { createGroq } = require('@ai-sdk/groq');
+
+const groq = createGroq({
+    apiKey: process.env.GROQ_API_KEY
+});
 
 // Get user's resume
 const getResume = async (req, res, next) => {
