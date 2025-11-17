@@ -5,6 +5,7 @@ import api from "../services/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import logo from "../assets/standup_logo.svg"
 import {
   Card,
   CardContent,
@@ -306,7 +307,7 @@ const Auth = () => {
         <div className="w-full max-w-4xl">
           <div className="mb-12 text-center">
             <img
-              src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+              src={logo}
               alt="Stand Up Logo"
               className="w-auto h-12 mx-auto mb-6"
             />
@@ -395,8 +396,8 @@ const Auth = () => {
                   <div
                     key={num}
                     className={`h-2 rounded-full transition-all ${num === onboardingStep
-                        ? "w-8 bg-[#FF7000]"
-                        : "w-2 bg-gray-300"
+                      ? "w-8 bg-[#FF7000]"
+                      : "w-2 bg-gray-300"
                       }`}
                   />
                 ))}
@@ -460,8 +461,8 @@ const Auth = () => {
                             variant="outline"
                             onClick={() => handlePrimaryGoalToggle(goal)}
                             className={`justify-start transition-all ${formData.primaryGoals.includes(goal)
-                                ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
-                                : "hover:border-[#FF7000]"
+                              ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
+                              : "hover:border-[#FF7000]"
                               }`}
                           >
                             {goal}
@@ -481,8 +482,8 @@ const Auth = () => {
                             key={skill}
                             onClick={() => handleSkillToggle(skill)}
                             className={`cursor-pointer transition-all ${formData.skills.includes(skill)
-                                ? "bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              ? "bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                               }`}
                           >
                             {skill}
@@ -551,8 +552,8 @@ const Auth = () => {
                             variant="outline"
                             onClick={() => handleDesiredPositionToggle(role)}
                             className={`w-full justify-start transition-all ${formData.desiredPositions.includes(role)
-                                ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
-                                : "hover:border-[#FF7000]"
+                              ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
+                              : "hover:border-[#FF7000]"
                               }`}
                           >
                             {role}
@@ -777,7 +778,7 @@ const Auth = () => {
       <Card className="w-full max-w-md shadow-xl" key={authMode}>
         <CardHeader className="text-center">
           <img
-            src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+            src={logo}
             alt="Stand Up Logo"
             className="w-auto h-12 mx-auto mb-4"
           />

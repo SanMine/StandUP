@@ -236,7 +236,7 @@ const Dashboard = () => {
         <div>
           <h1
             className="text-3xl font-bold text-[#0F151D] mb-2"
-            style={{ fontFamily: 'Poppins, sans-serif' }}
+
           >
             Welcome back, {authUser?.name?.split(' ')[0] || 'Student'}!
           </h1>
@@ -300,7 +300,7 @@ const Dashboard = () => {
                   <div>
                     <CardTitle
                       className="flex items-center gap-2 text-xl"
-                      style={{ fontFamily: 'Poppins, sans-serif' }}
+
                     >
                       AI-Matched Opportunities
                       {isPremium && (
@@ -479,7 +479,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle
                   className="text-lg"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
+
                 >
                   Upcoming Events
                 </CardTitle>
@@ -523,7 +523,7 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle
                   className="text-lg"
-                  style={{ fontFamily: 'Poppins, sans-serif' }}
+
                 >
                   Suggested Mentor
                 </CardTitle>

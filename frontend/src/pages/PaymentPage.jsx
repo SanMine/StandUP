@@ -160,7 +160,7 @@ const PaymentPage = () => {
                         <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] px-4 py-1.5 text-sm font-medium mb-4">
                             Secure Checkout
                         </Badge>
-                        <h1 className="text-4xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <h1 className="text-4xl font-bold text-[#0F151D] mb-2" >
                             Complete Your Upgrade
                         </h1>
                         <p className="text-lg text-[#4B5563]">
@@ -172,7 +172,7 @@ const PaymentPage = () => {
                         {/* Plan Details */}
                         <Card className="shadow-xl border-2 border-[#FF7000]">
                             <CardHeader className="bg-gradient-to-r from-[#FF7000] to-[#FF9040] text-white">
-                                <CardTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                <CardTitle className="text-2xl" >
                                     {selectedPlan.name} Plan
                                 </CardTitle>
                                 <CardDescription className="text-white/90">
@@ -213,7 +213,7 @@ const PaymentPage = () => {
                         {/* Payment Form */}
                         <Card className="shadow-xl">
                             <CardHeader className="px-8 pt-8 pb-0">
-                                <CardTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                <CardTitle className="text-2xl" >
                                     Payment Details
                                 </CardTitle>
                                 <CardDescription>

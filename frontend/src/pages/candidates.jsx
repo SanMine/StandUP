@@ -180,7 +180,7 @@ const Candidates = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" >
             Candidates
           </h1>
           <p className="text-[#4B5563]">Manage and review your applicants</p>

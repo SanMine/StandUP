@@ -168,7 +168,7 @@ const Events = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" >
               Events & Mentorship
             </h1>
             <p className="text-[#4B5563]">Create and manage events for students</p>

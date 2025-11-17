@@ -1,10 +1,10 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, MessageSquare, HelpCircle, User, LogOut } from 'lucide-react';
-import { Input } from '../ui/input';
+import Logo from '@/pages/landing/Logo';
+import { Bell, HelpCircle, LogOut, MessageSquare, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Button } from '../ui/button';
-import { useAuth } from '../../contexts/AuthContext';
+import { Input } from '../ui/input';
 
 const AppBar = ({ user }) => {
   const navigate = useNavigate();
@@ -15,7 +15,6 @@ const AppBar = ({ user }) => {
       await signout();
       navigate('/auth');
     } catch (err) {
-      // ignore - user will be redirected
       navigate('/auth');
     }
   };
@@ -24,13 +23,7 @@ const AppBar = ({ user }) => {
     <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-white border-b border-gray-200">
       <div className="flex items-center justify-between h-full px-6">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2">
-          <img
-            src="/src/image/icon.png"
-            alt="Stand Up Logo"
-            className="w-auto h-10"
-          />
-        </Link>
+        <Logo />
 
         {/* Search Bar */}
         <div className="flex-1 max-w-xl mx-8">

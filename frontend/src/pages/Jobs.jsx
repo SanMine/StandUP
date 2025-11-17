@@ -264,7 +264,7 @@ const Jobs = () => {
               <div>
                 <div className="flex items-center gap-3 mb-3">
                   <Sparkles className="w-8 h-8 text-white" />
-                  <h1 className="text-4xl font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <h1 className="text-4xl font-bold text-white" >
                     {isPremium ? 'Your Perfect Match Awaits' : 'Explore Opportunities'}
                   </h1>
                 </div>

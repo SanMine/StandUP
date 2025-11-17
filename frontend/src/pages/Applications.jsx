@@ -132,7 +132,7 @@ const Applications = () => {
     <DashboardLayout user={currentUser}>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" >
             Application Tracker
           </h1>
           <p className="text-[#4B5563]">Track all your job applications in one place</p>
@@ -277,7 +277,7 @@ const Applications = () => {
           {selectedApp && (
             <>
               <SheetHeader>
-                <SheetTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <SheetTitle className="text-2xl" >
                   {selectedApp.jobTitle || selectedApp.job?.title || 'Application'}
                 </SheetTitle>
                 <SheetDescription className="text-base">

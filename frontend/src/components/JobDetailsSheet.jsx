@@ -146,7 +146,7 @@ const JobDetailsSheet = ({
                                 className="object-cover w-16 h-16 rounded-lg"
                             />
                             <div className="flex-1">
-                                <SheetTitle className="mb-1 text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                <SheetTitle className="mb-1 text-2xl" >
                                     {title}
                                 </SheetTitle>
                                 <SheetDescription className="text-base">{companyName}</SheetDescription>

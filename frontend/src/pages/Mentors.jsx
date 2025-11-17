@@ -3,8 +3,8 @@ import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { 
-  Search, 
+import {
+  Search,
   MapPin,
   Calendar,
   Clock,
@@ -74,12 +74,12 @@ const Mentors = () => {
   };
 
   const filteredEvents = events.filter(event => {
-    const matchesSearch = searchQuery === '' || 
+    const matchesSearch = searchQuery === '' ||
       event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
       event.presenter.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (event.skills && event.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())));
-    
+
     const matchesFilter = selectedFilters.length === 0 ||
       selectedFilters.includes(event.type);
 
@@ -87,7 +87,7 @@ const Mentors = () => {
   });
 
   const toggleFilter = (filter) => {
-    setSelectedFilters(prev => 
+    setSelectedFilters(prev =>
       prev.includes(filter) ? prev.filter(f => f !== filter) : [...prev, filter]
     );
   };
@@ -150,7 +150,7 @@ const Mentors = () => {
                 <Sparkles className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent" >
                   Events & Mentorship
                 </h1>
                 <p className="text-gray-600 text-lg">Discover events and workshops to boost your career</p>
@@ -185,11 +185,10 @@ const Mentors = () => {
                       <Badge
                         key={filter}
                         onClick={() => toggleFilter(filter)}
-                        className={`cursor-pointer transition-all px-4 py-2 text-sm font-medium ${
-                          isSelected
+                        className={`cursor-pointer transition-all px-4 py-2 text-sm font-medium ${isSelected
                             ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg scale-105'
                             : `${getTypeColor(filter)} hover:shadow-md border`
-                        }`}
+                          }`}
                       >
                         {filter}
                       </Badge>
@@ -231,8 +230,8 @@ const Mentors = () => {
               const eventId = event._id || event.id;
               const enrolled = isEnrolled(eventId);
               return (
-                <Card 
-                  key={eventId} 
+                <Card
+                  key={eventId}
                   className="border-none shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden group cursor-pointer"
                   onClick={() => handleViewDetails(event)}
                 >
@@ -261,7 +260,7 @@ const Mentors = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <CardContent className="p-6">
                     {!event.image && (
                       <div className="flex items-center gap-2 mb-3">
@@ -276,7 +275,7 @@ const Mentors = () => {
                         )}
                       </div>
                     )}
-                    
+
                     <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors line-clamp-2">
                       {event.title}
                     </h3>
@@ -339,7 +338,7 @@ const Mentors = () => {
                         Details
                       </Button>
                       {!enrolled && (
-                        <Button 
+                        <Button
                           className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-md hover:shadow-lg transition-all"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -403,7 +402,7 @@ const Mentors = () => {
                 <DialogTitle className="text-3xl font-bold">{selectedEvent.title}</DialogTitle>
                 <DialogDescription className="text-base">by <span className="font-semibold text-gray-900">{selectedEvent.presenter}</span> from <span className="font-semibold text-gray-900">{selectedEvent.company}</span></DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-6">
                 {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-4">
@@ -501,7 +500,7 @@ const Mentors = () => {
 
                 {/* Enroll Button */}
                 {!isEnrolled(selectedEvent._id || selectedEvent.id) && (
-                  <Button 
+                  <Button
                     className="w-full h-14 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
                     onClick={() => handleEnroll(selectedEvent._id || selectedEvent.id)}
                   >

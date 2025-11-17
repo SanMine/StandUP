@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { 
+import {
   Plus,
   Trash,
   Save,
@@ -139,7 +139,7 @@ const Portfolio = () => {
 
   const [newHardSkill, setNewHardSkill] = useState('');
   const [newSoftSkill, setNewSoftSkill] = useState('');
-  
+
   const [newCertification, setNewCertification] = useState({
     name: '',
     issuing_organization: '',
@@ -147,9 +147,9 @@ const Portfolio = () => {
     expiry_date: '',
     credential_id: ''
   });
-  
+
   const [newAward, setNewAward] = useState('');
-  
+
   const [newReference, setNewReference] = useState({
     name: '',
     title: '',
@@ -446,7 +446,7 @@ const Portfolio = () => {
   const handleAddSkill = (type) => {
     const skill = type === 'hard' ? newHardSkill : newSoftSkill;
     if (!skill.trim()) return;
-    
+
     const field = type === 'hard' ? 'hard_skills' : 'soft_skills';
     if (!resume[field].includes(skill.trim())) {
       setResume(prev => ({
@@ -472,7 +472,7 @@ const Portfolio = () => {
   // Language handlers
   const handleAddLanguage = () => {
     if (!newLanguage.language.trim()) return;
-    
+
     const exists = resume.languages.find(l => l.language === newLanguage.language.trim());
     if (!exists) {
       setResume(prev => ({
@@ -496,7 +496,7 @@ const Portfolio = () => {
       toast.error('Certification name is required');
       return;
     }
-    
+
     setResume(prev => ({
       ...prev,
       certifications: [...(prev.certifications || []), newCertification]
@@ -521,7 +521,7 @@ const Portfolio = () => {
   // Award handlers
   const handleAddAward = () => {
     if (!newAward.trim()) return;
-    
+
     setResume(prev => ({
       ...prev,
       awards: [...(prev.awards || []), newAward.trim()]
@@ -542,7 +542,7 @@ const Portfolio = () => {
       toast.error('Reference name is required');
       return;
     }
-    
+
     setResume(prev => ({
       ...prev,
       references: [...(prev.references || []), newReference]
@@ -569,7 +569,7 @@ const Portfolio = () => {
     const newTypes = types.includes(type)
       ? types.filter(t => t !== type)
       : [...types, type];
-    
+
     setResume(prev => ({
       ...prev,
       looking_for: {
@@ -624,7 +624,7 @@ const Portfolio = () => {
       };
 
       const response = await portfolioAPI.createProject(projectData);
-      
+
       if (response.success) {
         toast.success('Project added successfully!');
         setAddProjectOpen(false);
@@ -672,7 +672,7 @@ const Portfolio = () => {
       };
 
       const response = await portfolioAPI.updateProject(currentProject._id, projectData);
-      
+
       if (response.success) {
         toast.success('Project updated successfully!');
         setEditProjectOpen(false);
@@ -727,7 +727,7 @@ const Portfolio = () => {
                   <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl">
                     <Sparkles className="w-6 h-6 text-white" />
                   </div>
-                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent" >
                     Resume & Portfolio
                   </h1>
                 </div>
@@ -744,8 +744,8 @@ const Portfolio = () => {
                   <Eye className="w-4 h-4 mr-2" />
                   Preview
                 </Button>
-                <Button 
-                  onClick={handleSaveResume} 
+                <Button
+                  onClick={handleSaveResume}
                   disabled={isSaving}
                   className="h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg hover:shadow-xl transition-all"
                 >
@@ -994,11 +994,10 @@ const Portfolio = () => {
                         type="button"
                         variant={resume.looking_for?.job_type?.includes(type) ? 'default' : 'outline'}
                         onClick={() => handleJobTypeToggle(type)}
-                        className={`capitalize transition-all ${
-                          resume.looking_for?.job_type?.includes(type) 
-                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md' 
+                        className={`capitalize transition-all ${resume.looking_for?.job_type?.includes(type)
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 shadow-md'
                             : 'hover:border-orange-500 hover:text-orange-600'
-                        }`}
+                          }`}
                       >
                         {type.replace('-', ' ')}
                       </Button>
@@ -1080,7 +1079,7 @@ const Portfolio = () => {
                       <Input
                         id="ref_name"
                         value={newReference.name}
-                        onChange={(e) => setNewReference({...newReference, name: e.target.value})}
+                        onChange={(e) => setNewReference({ ...newReference, name: e.target.value })}
                         placeholder="John Doe"
                         className="h-11"
                       />
@@ -1090,7 +1089,7 @@ const Portfolio = () => {
                       <Input
                         id="ref_title"
                         value={newReference.title}
-                        onChange={(e) => setNewReference({...newReference, title: e.target.value})}
+                        onChange={(e) => setNewReference({ ...newReference, title: e.target.value })}
                         placeholder="Senior Developer"
                         className="h-11"
                       />
@@ -1100,7 +1099,7 @@ const Portfolio = () => {
                       <Input
                         id="ref_company"
                         value={newReference.company}
-                        onChange={(e) => setNewReference({...newReference, company: e.target.value})}
+                        onChange={(e) => setNewReference({ ...newReference, company: e.target.value })}
                         placeholder="Tech Corp"
                         className="h-11"
                       />
@@ -1111,7 +1110,7 @@ const Portfolio = () => {
                         id="ref_email"
                         type="email"
                         value={newReference.email}
-                        onChange={(e) => setNewReference({...newReference, email: e.target.value})}
+                        onChange={(e) => setNewReference({ ...newReference, email: e.target.value })}
                         placeholder="john@example.com"
                         className="h-11"
                       />
@@ -1121,7 +1120,7 @@ const Portfolio = () => {
                       <Input
                         id="ref_phone"
                         value={newReference.phone}
-                        onChange={(e) => setNewReference({...newReference, phone: e.target.value})}
+                        onChange={(e) => setNewReference({ ...newReference, phone: e.target.value })}
                         placeholder="+1 234 567 8900"
                         className="h-11"
                       />
@@ -1203,7 +1202,7 @@ const Portfolio = () => {
                     <Input
                       id="institute"
                       value={newEducation.institute}
-                      onChange={(e) => setNewEducation({...newEducation, institute: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, institute: e.target.value })}
                       placeholder="Stanford University"
                       className="h-11"
                     />
@@ -1213,7 +1212,7 @@ const Portfolio = () => {
                     <Input
                       id="faculty"
                       value={newEducation.faculty}
-                      onChange={(e) => setNewEducation({...newEducation, faculty: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, faculty: e.target.value })}
                       placeholder="Engineering"
                       className="h-11"
                     />
@@ -1223,7 +1222,7 @@ const Portfolio = () => {
                     <Input
                       id="major"
                       value={newEducation.major}
-                      onChange={(e) => setNewEducation({...newEducation, major: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, major: e.target.value })}
                       placeholder="Computer Science"
                       className="h-11"
                     />
@@ -1233,7 +1232,7 @@ const Portfolio = () => {
                     <Input
                       id="degree"
                       value={newEducation.degree}
-                      onChange={(e) => setNewEducation({...newEducation, degree: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, degree: e.target.value })}
                       placeholder="Bachelor of Science"
                       className="h-11"
                     />
@@ -1243,7 +1242,7 @@ const Portfolio = () => {
                     <Input
                       id="gpa"
                       value={newEducation.gpa}
-                      onChange={(e) => setNewEducation({...newEducation, gpa: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, gpa: e.target.value })}
                       placeholder="3.8"
                       className="h-11"
                     />
@@ -1253,7 +1252,7 @@ const Portfolio = () => {
                     <Input
                       id="year_of_graduation"
                       value={newEducation.year_of_graduation}
-                      onChange={(e) => setNewEducation({...newEducation, year_of_graduation: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, year_of_graduation: e.target.value })}
                       placeholder="2024"
                       className="h-11"
                     />
@@ -1264,7 +1263,7 @@ const Portfolio = () => {
                       id="start_date"
                       type="date"
                       value={newEducation.start_date}
-                      onChange={(e) => setNewEducation({...newEducation, start_date: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, start_date: e.target.value })}
                       className="h-11"
                     />
                   </div>
@@ -1274,7 +1273,7 @@ const Portfolio = () => {
                       id="end_date"
                       type="date"
                       value={newEducation.end_date}
-                      onChange={(e) => setNewEducation({...newEducation, end_date: e.target.value})}
+                      onChange={(e) => setNewEducation({ ...newEducation, end_date: e.target.value })}
                       disabled={newEducation.current}
                       className="h-11"
                     />
@@ -1284,7 +1283,7 @@ const Portfolio = () => {
                       type="checkbox"
                       id="current_education"
                       checked={newEducation.current}
-                      onChange={(e) => setNewEducation({...newEducation, current: e.target.checked})}
+                      onChange={(e) => setNewEducation({ ...newEducation, current: e.target.checked })}
                       className="rounded"
                     />
                     <Label htmlFor="current_education" className="cursor-pointer">Currently studying here</Label>
@@ -1296,8 +1295,8 @@ const Portfolio = () => {
                       Cancel
                     </Button>
                   )}
-                  <Button 
-                    onClick={editEducationMode ? handleUpdateEducation : handleAddEducation} 
+                  <Button
+                    onClick={editEducationMode ? handleUpdateEducation : handleAddEducation}
                     className="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white"
                   >
                     {editEducationMode ? (
@@ -1364,7 +1363,7 @@ const Portfolio = () => {
                       <Input
                         id="cert_name"
                         value={newCertification.name}
-                        onChange={(e) => setNewCertification({...newCertification, name: e.target.value})}
+                        onChange={(e) => setNewCertification({ ...newCertification, name: e.target.value })}
                         placeholder="AWS Certified Solutions Architect"
                         className="h-11"
                       />
@@ -1374,7 +1373,7 @@ const Portfolio = () => {
                       <Input
                         id="cert_org"
                         value={newCertification.issuing_organization}
-                        onChange={(e) => setNewCertification({...newCertification, issuing_organization: e.target.value})}
+                        onChange={(e) => setNewCertification({ ...newCertification, issuing_organization: e.target.value })}
                         placeholder="Amazon Web Services"
                         className="h-11"
                       />
@@ -1385,7 +1384,7 @@ const Portfolio = () => {
                         id="cert_issue_date"
                         type="date"
                         value={newCertification.issue_date}
-                        onChange={(e) => setNewCertification({...newCertification, issue_date: e.target.value})}
+                        onChange={(e) => setNewCertification({ ...newCertification, issue_date: e.target.value })}
                         className="h-11"
                       />
                     </div>
@@ -1395,7 +1394,7 @@ const Portfolio = () => {
                         id="cert_expiry_date"
                         type="date"
                         value={newCertification.expiry_date}
-                        onChange={(e) => setNewCertification({...newCertification, expiry_date: e.target.value})}
+                        onChange={(e) => setNewCertification({ ...newCertification, expiry_date: e.target.value })}
                         className="h-11"
                       />
                     </div>
@@ -1404,7 +1403,7 @@ const Portfolio = () => {
                       <Input
                         id="cert_id"
                         value={newCertification.credential_id}
-                        onChange={(e) => setNewCertification({...newCertification, credential_id: e.target.value})}
+                        onChange={(e) => setNewCertification({ ...newCertification, credential_id: e.target.value })}
                         placeholder="ABC123XYZ"
                         className="h-11"
                       />
@@ -1490,7 +1489,7 @@ const Portfolio = () => {
                     <Input
                       id="company_name"
                       value={newExperience.company_name}
-                      onChange={(e) => setNewExperience({...newExperience, company_name: e.target.value})}
+                      onChange={(e) => setNewExperience({ ...newExperience, company_name: e.target.value })}
                       placeholder="Google Inc."
                       className="h-11"
                     />
@@ -1500,16 +1499,16 @@ const Portfolio = () => {
                     <Input
                       id="job_title"
                       value={newExperience.job_title}
-                      onChange={(e) => setNewExperience({...newExperience, job_title: e.target.value})}
+                      onChange={(e) => setNewExperience({ ...newExperience, job_title: e.target.value })}
                       placeholder="Software Engineer"
                       className="h-11"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="employment_type">Employment Type</Label>
-                    <Select 
-                      value={newExperience.employment_type} 
-                      onValueChange={(value) => setNewExperience({...newExperience, employment_type: value})}
+                    <Select
+                      value={newExperience.employment_type}
+                      onValueChange={(value) => setNewExperience({ ...newExperience, employment_type: value })}
                     >
                       <SelectTrigger className="h-11">
                         <SelectValue />
@@ -1528,7 +1527,7 @@ const Portfolio = () => {
                     <Input
                       id="type_of_work"
                       value={newExperience.type_of_work}
-                      onChange={(e) => setNewExperience({...newExperience, type_of_work: e.target.value})}
+                      onChange={(e) => setNewExperience({ ...newExperience, type_of_work: e.target.value })}
                       placeholder="Remote, Hybrid, On-site"
                       className="h-11"
                     />
@@ -1539,7 +1538,7 @@ const Portfolio = () => {
                       id="exp_start_date"
                       type="date"
                       value={newExperience.start_date}
-                      onChange={(e) => setNewExperience({...newExperience, start_date: e.target.value})}
+                      onChange={(e) => setNewExperience({ ...newExperience, start_date: e.target.value })}
                       className="h-11"
                     />
                   </div>
@@ -1549,7 +1548,7 @@ const Portfolio = () => {
                       id="exp_end_date"
                       type="date"
                       value={newExperience.end_date}
-                      onChange={(e) => setNewExperience({...newExperience, end_date: e.target.value})}
+                      onChange={(e) => setNewExperience({ ...newExperience, end_date: e.target.value })}
                       disabled={newExperience.current}
                       className="h-11"
                     />
@@ -1559,7 +1558,7 @@ const Portfolio = () => {
                       type="checkbox"
                       id="current_job"
                       checked={newExperience.current}
-                      onChange={(e) => setNewExperience({...newExperience, current: e.target.checked})}
+                      onChange={(e) => setNewExperience({ ...newExperience, current: e.target.checked })}
                       className="rounded"
                     />
                     <Label htmlFor="current_job" className="cursor-pointer">Currently working here</Label>
@@ -1569,7 +1568,7 @@ const Portfolio = () => {
                     <Textarea
                       id="description"
                       value={newExperience.description}
-                      onChange={(e) => setNewExperience({...newExperience, description: e.target.value})}
+                      onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
                       placeholder="Describe your responsibilities and achievements..."
                       rows={4}
                     />
@@ -1581,8 +1580,8 @@ const Portfolio = () => {
                       Cancel
                     </Button>
                   )}
-                  <Button 
-                    onClick={editExperienceMode ? handleUpdateExperience : handleAddExperience} 
+                  <Button
+                    onClick={editExperienceMode ? handleUpdateExperience : handleAddExperience}
                     className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
                   >
                     {editExperienceMode ? (
@@ -1724,13 +1723,13 @@ const Portfolio = () => {
                 <div className="flex gap-2">
                   <Input
                     value={newLanguage.language}
-                    onChange={(e) => setNewLanguage({...newLanguage, language: e.target.value})}
+                    onChange={(e) => setNewLanguage({ ...newLanguage, language: e.target.value })}
                     placeholder="Language name"
                     className="flex-1 h-11"
                   />
-                  <Select 
-                    value={newLanguage.proficiency} 
-                    onValueChange={(value) => setNewLanguage({...newLanguage, proficiency: value})}
+                  <Select
+                    value={newLanguage.proficiency}
+                    onValueChange={(value) => setNewLanguage({ ...newLanguage, proficiency: value })}
                   >
                     <SelectTrigger className="w-40 h-11">
                       <SelectValue />
@@ -1799,7 +1798,7 @@ const Portfolio = () => {
           <TabsContent value="projects" className="space-y-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Portfolio Projects</h2>
-              <Button 
+              <Button
                 onClick={() => setAddProjectOpen(true)}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
               >
@@ -1816,7 +1815,7 @@ const Portfolio = () => {
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No projects yet</h3>
                   <p className="text-gray-600 mb-6">Start building your portfolio by adding your first project</p>
-                  <Button 
+                  <Button
                     onClick={() => setAddProjectOpen(true)}
                     className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white"
                   >
@@ -1850,7 +1849,7 @@ const Portfolio = () => {
                     <CardContent className="p-6">
                       <h3 className="font-bold text-lg text-gray-900 mb-2 line-clamp-1">{project.title}</h3>
                       <p className="text-sm text-gray-600 mb-4 line-clamp-2">{project.description}</p>
-                      
+
                       {project.tags && project.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-4">
                           {project.tags.slice(0, 3).map((tag, idx) => (
@@ -1930,7 +1929,7 @@ const Portfolio = () => {
                 <Input
                   id="project_title"
                   value={projectForm.title}
-                  onChange={(e) => setProjectForm({...projectForm, title: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
                   placeholder="My Awesome Project"
                   className="h-11"
                 />
@@ -1940,7 +1939,7 @@ const Portfolio = () => {
                 <Textarea
                   id="project_description"
                   value={projectForm.description}
-                  onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
                   placeholder="Describe your project..."
                   rows={4}
                 />
@@ -1950,7 +1949,7 @@ const Portfolio = () => {
                 <Input
                   id="project_image"
                   value={projectForm.image}
-                  onChange={(e) => setProjectForm({...projectForm, image: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, image: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                   className="h-11"
                 />
@@ -1960,7 +1959,7 @@ const Portfolio = () => {
                 <Input
                   id="project_tags"
                   value={projectForm.tags}
-                  onChange={(e) => setProjectForm({...projectForm, tags: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, tags: e.target.value })}
                   placeholder="React, Node.js, MongoDB"
                   className="h-11"
                 />
@@ -1971,7 +1970,7 @@ const Portfolio = () => {
                   <Input
                     id="project_github"
                     value={projectForm.githubUrl}
-                    onChange={(e) => setProjectForm({...projectForm, githubUrl: e.target.value})}
+                    onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
                     placeholder="https://github.com/..."
                     className="h-11"
                   />
@@ -1981,7 +1980,7 @@ const Portfolio = () => {
                   <Input
                     id="project_live"
                     value={projectForm.liveUrl}
-                    onChange={(e) => setProjectForm({...projectForm, liveUrl: e.target.value})}
+                    onChange={(e) => setProjectForm({ ...projectForm, liveUrl: e.target.value })}
                     placeholder="https://example.com"
                     className="h-11"
                   />
@@ -1992,7 +1991,7 @@ const Portfolio = () => {
                   type="checkbox"
                   id="project_featured"
                   checked={projectForm.featured}
-                  onChange={(e) => setProjectForm({...projectForm, featured: e.target.checked})}
+                  onChange={(e) => setProjectForm({ ...projectForm, featured: e.target.checked })}
                   className="rounded"
                 />
                 <Label htmlFor="project_featured" className="cursor-pointer">Mark as featured project</Label>
@@ -2022,7 +2021,7 @@ const Portfolio = () => {
                 <Input
                   id="edit_project_title"
                   value={projectForm.title}
-                  onChange={(e) => setProjectForm({...projectForm, title: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, title: e.target.value })}
                   placeholder="My Awesome Project"
                   className="h-11"
                 />
@@ -2032,7 +2031,7 @@ const Portfolio = () => {
                 <Textarea
                   id="edit_project_description"
                   value={projectForm.description}
-                  onChange={(e) => setProjectForm({...projectForm, description: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, description: e.target.value })}
                   placeholder="Describe your project..."
                   rows={4}
                 />
@@ -2042,7 +2041,7 @@ const Portfolio = () => {
                 <Input
                   id="edit_project_image"
                   value={projectForm.image}
-                  onChange={(e) => setProjectForm({...projectForm, image: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, image: e.target.value })}
                   placeholder="https://example.com/image.jpg"
                   className="h-11"
                 />
@@ -2052,7 +2051,7 @@ const Portfolio = () => {
                 <Input
                   id="edit_project_tags"
                   value={projectForm.tags}
-                  onChange={(e) => setProjectForm({...projectForm, tags: e.target.value})}
+                  onChange={(e) => setProjectForm({ ...projectForm, tags: e.target.value })}
                   placeholder="React, Node.js, MongoDB"
                   className="h-11"
                 />
@@ -2063,7 +2062,7 @@ const Portfolio = () => {
                   <Input
                     id="edit_project_github"
                     value={projectForm.githubUrl}
-                    onChange={(e) => setProjectForm({...projectForm, githubUrl: e.target.value})}
+                    onChange={(e) => setProjectForm({ ...projectForm, githubUrl: e.target.value })}
                     placeholder="https://github.com/..."
                     className="h-11"
                   />
@@ -2073,7 +2072,7 @@ const Portfolio = () => {
                   <Input
                     id="edit_project_live"
                     value={projectForm.liveUrl}
-                    onChange={(e) => setProjectForm({...projectForm, liveUrl: e.target.value})}
+                    onChange={(e) => setProjectForm({ ...projectForm, liveUrl: e.target.value })}
                     placeholder="https://example.com"
                     className="h-11"
                   />
@@ -2084,7 +2083,7 @@ const Portfolio = () => {
                   type="checkbox"
                   id="edit_project_featured"
                   checked={projectForm.featured}
-                  onChange={(e) => setProjectForm({...projectForm, featured: e.target.checked})}
+                  onChange={(e) => setProjectForm({ ...projectForm, featured: e.target.checked })}
                   className="rounded"
                 />
                 <Label htmlFor="edit_project_featured" className="cursor-pointer">Mark as featured project</Label>
