@@ -763,10 +763,39 @@ const Portfolio = () => {
               </div>
               <div className="flex items-center gap-3">
                 {atsScore !== null && (
-                  <div className="px-6 py-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-200">
-                    <div className="text-xs font-medium text-green-600 mb-1">ATS Score</div>
-                    <div className="text-2xl font-bold text-green-700">{atsScore}%</div>
+                  <div 
+                    className={`px-6 py-3 bg-gradient-to-r ${getATSScoreColor(atsScore).bg} rounded-xl border ${getATSScoreColor(atsScore).border} cursor-pointer hover:shadow-md transition-all relative group`}
+                    onClick={fetchATSScore}
+                  >
+                    <div className={`text-xs font-medium ${getATSScoreColor(atsScore).text} mb-1 flex items-center gap-1`}>
+                      ATS Score
+                      {isCalculatingATS && <Loader2 className="w-3 h-3 animate-spin" />}
+                    </div>
+                    <div className={`text-2xl font-bold ${getATSScoreColor(atsScore).text}`}>{atsScore}%</div>
+                    <div className="absolute hidden group-hover:block bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap">
+                      Click to refresh score
+                    </div>
                   </div>
+                )}
+                {atsScore === null && (
+                  <Button 
+                    variant="outline" 
+                    onClick={fetchATSScore}
+                    disabled={isCalculatingATS}
+                    className="h-12 hover:shadow-md transition-shadow"
+                  >
+                    {isCalculatingATS ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Calculating...
+                      </>
+                    ) : (
+                      <>
+                        <TrendingUp className="w-4 h-4 mr-2" />
+                        Calculate ATS Score
+                      </>
+                    )}
+                  </Button>
                 )}
                 <Button variant="outline" onClick={() => setPreviewOpen(true)} className="h-12 hover:shadow-md transition-shadow">
                   <Eye className="w-4 h-4 mr-2" />
