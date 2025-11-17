@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Switch } from '../components/ui/switch';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { 
+import {
   Briefcase,
   Users,
   Clock,
@@ -99,7 +99,7 @@ const EmployerDashboard = () => {
   const handleJobSubmit = async (data) => {
     try {
       setIsLoading(true);
-      
+
       if (selectedJob) {
         // Update existing job
         await api.put(`/jobs/${selectedJob._id || selectedJob.id}`, data);
@@ -111,10 +111,10 @@ const EmployerDashboard = () => {
           toast.success('Job created successfully');
         }
       }
-      
+
       setIsModalOpen(false);
       setSelectedJob(null);
-      fetchJobs(); 
+      fetchJobs();
     } catch (error) {
       console.error('Error submitting job:', error);
       toast.error(error.response?.data?.error?.message || 'Failed to save job');
@@ -171,7 +171,7 @@ const EmployerDashboard = () => {
             </h1>
             <p className="text-[#4B5563]">Here's your hiring overview</p>
           </div>
-          <Button 
+          <Button
             className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
             onClick={handleCreateJob}
             data-testid="post-new-role-btn"
@@ -213,8 +213,8 @@ const EmployerDashboard = () => {
                 <div className="flex items-center justify-between">
                   <CardTitle>Posted Jobs</CardTitle>
                   {jobs.length > 5 && (
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="text-[#FF7000] hover:text-[#FF7000]/90"
                       onClick={() => setShowAllJobs(!showAllJobs)}
                     >
@@ -229,7 +229,7 @@ const EmployerDashboard = () => {
                 ) : jobs.length === 0 ? (
                   <div className="py-8 text-center">
                     <p className="text-[#4B5563] mb-4">No jobs posted yet</p>
-                    <Button 
+                    <Button
                       onClick={handleCreateJob}
                       className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                     >
@@ -239,7 +239,7 @@ const EmployerDashboard = () => {
                   </div>
                 ) : (
                   (showAllJobs ? jobs : jobs.slice(0, 5)).map((job) => (
-                    <div 
+                    <div
                       key={job._id || job.id}
                       className="border border-gray-200 rounded-xl p-4 hover:border-[#FF7000] hover:shadow-md transition-all"
                       data-testid="job-card"
@@ -255,13 +255,13 @@ const EmployerDashboard = () => {
                             <span>{job.location}</span>
                           </div>
                         </div>
-                        <Badge 
+                        <Badge
                           className={
-                            job.status === 'active' 
-                              ? 'bg-green-100 text-green-700 hover:bg-green-100' 
+                            job.status === 'active'
+                              ? 'bg-green-100 text-green-700 hover:bg-green-100'
                               : job.status === 'draft'
-                              ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-100'
+                                ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-100'
                           }
                         >
                           {job.status}
@@ -271,7 +271,7 @@ const EmployerDashboard = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="flex items-center gap-2">
-                            <Switch 
+                            <Switch
                               checked={job.status === 'active'}
                               onCheckedChange={() => handleToggleJobStatus(job._id || job.id, job.status)}
                               className="data-[state=checked]:bg-[#FF7000]"
@@ -282,8 +282,8 @@ const EmployerDashboard = () => {
                           </div>
                         </div>
                         <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             onClick={() => handleEditJob(job)}
                             data-testid="edit-job-btn"
@@ -291,8 +291,8 @@ const EmployerDashboard = () => {
                             <Edit className="w-3 h-3 mr-1" />
                             Edit
                           </Button>
-                          <Button 
-                            size="sm" 
+                          <Button
+                            size="sm"
                             variant="outline"
                             className="text-red-600 hover:text-red-700 hover:bg-red-50"
                             onClick={() => handleDeleteJob(job._id || job.id)}
@@ -344,45 +344,67 @@ const EmployerDashboard = () => {
               <CardHeader>
                 <CardTitle>Top Matched Candidates</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {topCandidates.map((candidate) => (
-                  <div 
-                    key={candidate.id}
-                    className="p-4 bg-[#FFFDFA] rounded-lg hover:bg-[#FFE4CC]/30 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-start gap-3 mb-3">
-                      <Avatar className="h-12 w-12 border-2 border-[#FFE4CC]">
-                        <AvatarImage src={candidate.avatar} alt={candidate.name} />
-                        <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-[#0F151D] text-sm">{candidate.name}</h4>
-                        <p className="text-xs text-[#4B5563]">{candidate.role}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold text-green-600">{candidate.matchScore}%</div>
-                        <p className="text-xs text-[#4B5563]">match</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {candidate.skills.map((skill) => (
-                        <Badge key={skill} variant="outline" className="text-xs">
-                          {skill}
-                        </Badge>
-                      ))}
-                    </div>
-                    <p className="text-xs text-[#4B5563] mb-3">{candidate.location}</p>
-                    <div className="flex gap-2">
-                      <Button size="sm" className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-8 text-xs">
-                        <Eye className="w-3 h-3 mr-1" />
-                        View Profile
-                      </Button>
-                      <Button size="sm" variant="outline" className="w-8 h-8 p-0">
-                        <Mail className="w-3 h-3" />
+              <CardContent className="relative space-y-4">
+                {currentUser?.plan !== 'premium' && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-white/80 backdrop-blur-[7px]">
+                    <div className="p-6 text-center">
+                      <Star className="w-12 h-12 text-[#FF7000] mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-[#0F151D] mb-2">
+                        Premium Feature
+                      </h3>
+                      <p className="text-sm text-[#4B5563] mb-4">
+                        Upgrade to Premium to access AI-powered candidate matching
+                      </p>
+                      <Button
+                        className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                        onClick={() => navigate('/pricing')}
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Upgrade to Premium
                       </Button>
                     </div>
                   </div>
-                ))}
+                )}
+                <div className={currentUser?.plan !== 'premium' ? 'blur-sm pointer-events-none' : ''}>
+                  {topCandidates.map((candidate) => (
+                    <div
+                      key={candidate.id}
+                      className="p-4 bg-[#FFFDFA] rounded-lg hover:bg-[#FFE4CC]/30 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start gap-3 mb-3">
+                        <Avatar className="h-12 w-12 border-2 border-[#FFE4CC]">
+                          <AvatarImage src={candidate.avatar} alt={candidate.name} />
+                          <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-[#0F151D] text-sm">{candidate.name}</h4>
+                          <p className="text-xs text-[#4B5563]">{candidate.role}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold text-green-600">{candidate.matchScore}%</div>
+                          <p className="text-xs text-[#4B5563]">match</p>
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {candidate.skills.map((skill) => (
+                          <Badge key={skill} variant="outline" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                      <p className="text-xs text-[#4B5563] mb-3">{candidate.location}</p>
+                      <div className="flex gap-2">
+                        <Button size="sm" className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-8 text-xs">
+                          <Eye className="w-3 h-3 mr-1" />
+                          View Profile
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-8 h-8 p-0">
+                          <Mail className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
 
@@ -391,8 +413,8 @@ const EmployerDashboard = () => {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-[#0F151D] mb-4">Quick Actions</h3>
                 <div className="space-y-2">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="justify-start w-full bg-white"
                     onClick={handleCreateJob}
                   >
