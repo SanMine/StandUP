@@ -242,7 +242,7 @@ const deleteExperience = async (req, res, next) => {
   }
 };
 
-// Calculate ATS score
+// Calculate ATS score with AI analysis
 const calculateATSScore = async (req, res, next) => {
   try {
     const resume = await Resume.findOne({ user_id: req.user.userId });
@@ -254,47 +254,141 @@ const calculateATSScore = async (req, res, next) => {
       });
     }
 
-    // Simple ATS score calculation
-    let score = 0;
-    
-    // Personal info (20 points)
-    if (resume.full_name) score += 5;
-    if (resume.email) score += 5;
-    if (resume.phone) score += 5;
-    if (resume.address?.city) score += 5;
-    
-    // Professional summary (15 points)
-    if (resume.professional_summary && resume.professional_summary.length > 50) score += 15;
-    
-    // Education (15 points)
-    if (resume.education && resume.education.length > 0) score += 15;
-    
-    // Experience (20 points)
-    if (resume.experience && resume.experience.length > 0) {
-      score += Math.min(resume.experience.length * 10, 20);
-    }
-    
-    // Skills (15 points)
-    const totalSkills = (resume.hard_skills?.length || 0) + (resume.soft_skills?.length || 0);
-    if (totalSkills > 0) {
-      score += Math.min(totalSkills * 3, 15);
-    }
-    
-    // Languages (10 points)
-    if (resume.languages && resume.languages.length > 0) {
-      score += Math.min(resume.languages.length * 5, 10);
-    }
-    
-    // Job preferences (5 points)
-    if (resume.looking_for?.positions && resume.looking_for.positions.length > 0) score += 5;
-    
-    resume.ats_score = Math.min(score, 100);
-    await resume.save();
+    // Try AI-powered analysis first
+    try {
+      const resumeAnalysisPrompt = `
+You are an expert ATS (Applicant Tracking System) analyzer. Analyze the following resume and provide a detailed ATS compatibility score.
 
-    res.status(200).json({
-      success: true,
-      data: { ats_score: resume.ats_score }
-    });
+RESUME DATA:
+Name: ${resume.full_name || 'Not provided'}
+Email: ${resume.email || 'Not provided'}
+Phone: ${resume.phone || 'Not provided'}
+Location: ${resume.address?.city || 'Not provided'}, ${resume.address?.country || ''}
+
+Professional Summary: ${resume.professional_summary || 'Not provided'}
+
+Education: ${resume.education?.length || 0} entries
+${resume.education?.map(edu => `- ${edu.degree || 'Degree'} in ${edu.major || 'N/A'} from ${edu.institute || 'N/A'} (GPA: ${edu.gpa || 'N/A'})`).join('\n') || 'None'}
+
+Work Experience: ${resume.experience?.length || 0} entries
+${resume.experience?.map(exp => `- ${exp.job_title || 'Position'} at ${exp.company_name || 'Company'} (${exp.start_date ? new Date(exp.start_date).getFullYear() : ''}-${exp.current ? 'Present' : exp.end_date ? new Date(exp.end_date).getFullYear() : ''})`).join('\n') || 'None'}
+
+Technical Skills: ${resume.hard_skills?.join(', ') || 'None'}
+Soft Skills: ${resume.soft_skills?.join(', ') || 'None'}
+
+Languages: ${resume.languages?.map(l => `${l.language} (${l.proficiency})`).join(', ') || 'None'}
+
+Certifications: ${resume.certifications?.length || 0} entries
+${resume.certifications?.map(cert => `- ${cert.name} by ${cert.issuing_organization || 'N/A'}`).join('\n') || 'None'}
+
+Job Preferences: ${resume.looking_for?.positions?.join(', ') || 'Not specified'}
+
+Analyze this resume and provide an ATS score (0-100) based on:
+1. Completeness of information (contact info, summary, experience, education)
+2. Keyword richness and relevance
+3. Professional formatting and structure
+4. Skills diversity and relevance
+5. Experience quality and descriptions
+6. Education credentials
+7. Additional qualifications (certifications, languages)
+
+Return ONLY a valid JSON object with this exact structure:
+{
+  "score": 85,
+  "strengths": [
+    "Specific strength point about the resume (one sentence)",
+    "Another strength highlighting what's good",
+    "Third strength showing resume advantages"
+  ],
+  "improvements": [
+    "Specific actionable improvement suggestion (one sentence)",
+    "Another concrete way to enhance ATS compatibility",
+    "Third improvement recommendation"
+  ],
+  "summary": "Brief 2-3 sentence overall assessment of resume ATS compatibility"
+}
+
+IMPORTANT:
+- Score should be realistic (0-100)
+- Each strength/improvement should be ONE informative sentence
+- Be specific and actionable
+- Return ONLY valid JSON, no markdown or code blocks
+- If resume is incomplete, score should reflect that (lower scores for missing sections)
+`.trim();
+
+      const { text } = await generateText({
+        model: groq('llama-3.3-70b-versatile'),
+        prompt: resumeAnalysisPrompt,
+        maxTokens: 1000,
+        temperature: 0.7
+      });
+
+      // Parse AI response
+      let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const aiAnalysis = JSON.parse(cleanText);
+
+      // Validate and ensure score is within range
+      const atsScore = Math.max(0, Math.min(100, parseInt(aiAnalysis.score)));
+
+      res.status(200).json({
+        success: true,
+        data: {
+          score: atsScore,
+          strengths: aiAnalysis.strengths?.slice(0, 3) || [],
+          improvements: aiAnalysis.improvements?.slice(0, 3) || [],
+          summary: aiAnalysis.summary || 'Resume analyzed successfully'
+        }
+      });
+
+    } catch (aiError) {
+      console.error('AI analysis failed, falling back to simple calculation:', aiError);
+      
+      // Fallback: Simple ATS score calculation
+      let score = 0;
+      
+      // Personal info (20 points)
+      if (resume.full_name) score += 5;
+      if (resume.email) score += 5;
+      if (resume.phone) score += 5;
+      if (resume.address?.city) score += 5;
+      
+      // Professional summary (15 points)
+      if (resume.professional_summary && resume.professional_summary.length > 50) score += 15;
+      
+      // Education (15 points)
+      if (resume.education && resume.education.length > 0) score += 15;
+      
+      // Experience (20 points)
+      if (resume.experience && resume.experience.length > 0) {
+        score += Math.min(resume.experience.length * 10, 20);
+      }
+      
+      // Skills (15 points)
+      const totalSkills = (resume.hard_skills?.length || 0) + (resume.soft_skills?.length || 0);
+      if (totalSkills > 0) {
+        score += Math.min(totalSkills * 3, 15);
+      }
+      
+      // Languages (10 points)
+      if (resume.languages && resume.languages.length > 0) {
+        score += Math.min(resume.languages.length * 5, 10);
+      }
+      
+      // Job preferences (5 points)
+      if (resume.looking_for?.positions && resume.looking_for.positions.length > 0) score += 5;
+      
+      const finalScore = Math.min(score, 100);
+
+      res.status(200).json({
+        success: true,
+        data: {
+          score: finalScore,
+          strengths: ['Resume contains essential contact information'],
+          improvements: ['Add more details to strengthen your profile'],
+          summary: 'Basic ATS analysis completed'
+        }
+      });
+    }
   } catch (error) {
     next(error);
   }
