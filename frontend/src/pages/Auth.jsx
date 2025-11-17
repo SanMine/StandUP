@@ -303,17 +303,17 @@ const Auth = () => {
   // Role selection step
   if (step === "role") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
+      <div className="flex items-center justify-center min-h-screen p-6">
         <div className="w-full max-w-4xl">
           <div className="mb-12 text-center">
             <img
+              onClick={() => navigate("/")}
               src={logo}
               alt="Stand Up Logo"
-              className="w-auto h-12 mx-auto mb-6"
+              className="w-auto h-12 mx-auto mb-6 cursor-pointer"
             />
             <h1
               className="text-3xl font-bold text-[#0F151D] mb-2"
-              style={{ fontFamily: "Poppins, sans-serif" }}
             >
               I am a...
             </h1>
@@ -330,30 +330,29 @@ const Auth = () => {
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <Card
-              className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-[#FF7000]"
+              className="cursor-pointer border-2 border-[#E5E7EB] bg-white"
               onClick={() => handleRoleSelection("student")}
             >
-              <CardContent className="p-12 text-center">
+              <CardContent className="p-12 text-center ">
                 <div className="h-20 w-20 bg-[#FFE4CC] rounded-full flex items-center justify-center mx-auto mb-6">
                   <GraduationCap className="h-10 w-10 text-[#FF7000]" />
                 </div>
                 <h2
                   className="text-2xl font-bold text-[#0F151D] mb-3"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                   Student
                 </h2>
                 <p className="text-[#4B5563] mb-6">
                   Find internships, build skills, and launch your career
                 </p>
-                <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white w-full">
+                <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 min-h-[44px] transition-colors duration-200 text-white w-full">
                   Continue as Student
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
             <Card
-              className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-[#284688]"
+              className="cursor-pointer border-2 border-[#E5E7EB] bg-white"
               onClick={() => handleRoleSelection("employer")}
             >
               <CardContent className="p-12 text-center">
@@ -362,7 +361,6 @@ const Auth = () => {
                 </div>
                 <h2
                   className="text-2xl font-bold text-[#0F151D] mb-3"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                   Employer
                 </h2>
@@ -371,7 +369,7 @@ const Auth = () => {
                 </p>
                 <Button
                   variant="outline"
-                  className="border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white w-full"
+                  className="border-2 border-[#284688] text-[#284688] min-h-[44px] transition-colors duration-200f hover:bg-[#284688] hover:text-white w-full"
                 >
                   Continue as Employer
                   <ArrowRight className="w-4 h-4 ml-2" />

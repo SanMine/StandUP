@@ -6,10 +6,28 @@ import { Badge } from '../components/ui/badge';
 import { CheckCircle2, X, Zap, Crown, Rocket } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import Logo from '../pages/landing/Logo';
+import Footer from './landing/Footer';
 
 const Pricing = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const goToFAQ = () => {
+    // navigate to home (so URL becomes "/"), then scroll to #faq
+    navigate('/');
+    // small delay to allow route mount & layout to stabilize; 50-120ms works well
+    setTimeout(() => {
+      const el = document.getElementById('faq');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // also update URL to include hash
+        if (history && history.pushState) {
+          history.pushState(null, '', '/#faq');
+        }
+      }
+    }, 80);
+  };
 
   const studentPlans = [
     {
@@ -131,13 +149,13 @@ const Pricing = () => {
       if (user.role === 'student' && plan.type === 'employer') {
         toast.error("Wrong Plan Type", {
           description: "This is an employer plan. Please select a student plan or switch to an employer account."
-        })
+        });
         return;
       }
       if (user.role === 'employer' && plan.type === 'student') {
         toast.error("Wrong Plan Type", {
           description: "This is a student plan. Please select an employer plan or switch to a student account."
-        })
+        });
         return;
       }
     }
@@ -163,14 +181,10 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
-        <div className="flex items-center justify-between h-16 px-6 mx-auto max-w-7xl">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
-            <img
-              src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
-              alt="Stand Up Logo"
-              className="w-auto h-10"
-            />
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-100 bg-white/75 backdrop-blur-sm">
+        <div className="flex items-center justify-between h-16 px-4 mx-auto lg:px-0 max-w-7xl">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <Logo className="w-auto h-10" />
           </div>
           <Button
             onClick={() => navigate('/')}
@@ -185,12 +199,14 @@ const Pricing = () => {
       {/* Hero */}
       <section className="px-6 pt-32 pb-12">
         <div className="max-w-4xl mx-auto text-center">
-          <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] px-4 py-1.5 text-sm font-medium mb-6">
-            Simple, Transparent Pricing
+          <Badge className="bg-[#FFE4CC] text-[#FF7000] px-4 py-1.5 text-sm font-medium mb-6">
+            Simple, transparent pricing
           </Badge>
-          <h1 className="text-5xl font-bold text-[#0F151D] mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+
+          <h1 className="text-5xl font-bold text-[#0F151D] mb-6"  >
             Choose the Right Plan for You
           </h1>
+
           <p className="text-xl text-[#4B5563]">
             Start free and upgrade when you're ready. No credit card required.
           </p>
@@ -201,52 +217,58 @@ const Pricing = () => {
       <section className="px-6 py-12">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-3xl font-bold text-[#0F151D] mb-2"  >
               For Students & Job Seekers
             </h2>
             <p className="text-[#4B5563]">Everything you need to launch your career</p>
           </div>
+
           <div className="grid max-w-5xl gap-8 mx-auto md:grid-cols-2">
             {studentPlans.map((plan) => {
               const Icon = plan.icon;
               const isCurrent = isCurrentPlan(plan);
+
               return (
                 <Card
-                  key={plan.name}
-                  className={`relative ${plan.highlighted
-                    ? 'border-2 border-[#FF7000] shadow-2xl scale-105'
-                    : 'border-2 border-gray-200 shadow-lg'
+                  key={plan.id}
+                  className={`relative overflow-visible rounded-2xl p-0 ${plan.highlighted
+                    ? 'border-none bg-gradient-to-b from-[#FFF8F0] to-white'
+                    : 'border border-[#EFE9E0] bg-white'
                     }`}
                 >
+                  {/* Popular badge - top-right */}
                   {plan.popular && (
-                    <div className="absolute -translate-x-1/2 -top-4 left-1/2">
-                      <Badge className="bg-[#FF7000] text-white hover:bg-[#FF7000] px-4 py-1">
-                        MOST POPULAR
-                      </Badge>
+                    <div className="absolute z-50 -top-3 right-4 px-3 py-1 text-[10px] font-semibold bg-[#FFEEE0] text-[#D45F00] border border-[#FFD5B8] rounded-full tracking-wide">
+                      MOST POPULAR
                     </div>
                   )}
+
+                  {/* Current plan badge */}
                   {isCurrent && (
-                    <div className="absolute -top-4 right-4">
-                      <Badge className="px-4 py-1 text-white bg-green-500 hover:bg-green-500">
-                        CURRENT PLAN
-                      </Badge>
+                    <div className="absolute z-40 -top-3 left-4">
+                      <Badge className="px-3 py-1 text-xs text-white bg-green-500">CURRENT PLAN</Badge>
                     </div>
                   )}
-                  <CardHeader className="pb-8 text-center">
+
+                  <CardHeader className="p-8 pb-6 text-center">
                     <div className="h-16 w-16 bg-[#FFE4CC] rounded-full flex items-center justify-center mx-auto mb-4">
                       <Icon className="h-8 w-8 text-[#FF7000]" />
                     </div>
-                    <CardTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+
+                    <CardTitle className="text-2xl"  >
                       {plan.name}
                     </CardTitle>
-                    <CardDescription className="text-base">{plan.description}</CardDescription>
+
+                    <CardDescription className="text-base text-[#6B7280]">{plan.description}</CardDescription>
+
                     <div className="mt-6">
-                      <span className="text-5xl font-bold text-[#0F151D]">${plan.price}</span>
+                      <span className="text-4xl font-bold text-[#0F151D]">${plan.price}</span>
                       <span className="text-[#4B5563] ml-2">/month</span>
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <ul className="mb-8 space-y-4">
+
+                  <CardContent className="p-8 pt-0">
+                    <ul className="grid gap-3 mb-6">
                       {plan.features.map((feature, index) => (
                         <li key={index} className="flex items-start gap-3">
                           {feature.included ? (
@@ -254,20 +276,20 @@ const Pricing = () => {
                           ) : (
                             <X className="h-5 w-5 text-gray-300 flex-shrink-0 mt-0.5" />
                           )}
-                          <span className={`text-sm ${feature.included ? 'text-[#0F151D]' : 'text-gray-400'
-                            }`}>
+                          <span className={`text-sm ${feature.included ? 'text-[#0F151D]' : 'text-gray-400'}`}>
                             {feature.text}
                           </span>
                         </li>
                       ))}
                     </ul>
+
                     <Button
                       onClick={() => handlePlanClick(plan)}
                       disabled={isCurrent}
-                      className={`w-full h-12 text-base ${isCurrent
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      className={`w-full h-12 text-base rounded-md ${isCurrent
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                         : plan.highlighted
-                          ? 'bg-[#FF7000] hover:bg-[#FF7000]/90 text-white shadow-lg'
+                          ? 'bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white'
                           : 'bg-white border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white'
                         }`}
                     >
@@ -285,45 +307,48 @@ const Pricing = () => {
       <section className="py-20 px-6 bg-[#FFFDFA]">
         <div className="mx-auto max-w-7xl">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h2 className="text-3xl font-bold text-[#0F151D] mb-2"  >
               For Employers
             </h2>
             <p className="text-[#4B5563]">Find job-ready talent faster</p>
           </div>
+
           <div className="grid gap-8 md:grid-cols-3">
             {employerPlans.map((plan) => {
               const Icon = plan.icon;
               const isCurrent = isCurrentPlan(plan);
+
               return (
                 <Card
-                  key={plan.name}
-                  className={`relative ${plan.highlighted
-                    ? 'border-2 border-[#FF7000] shadow-2xl scale-105'
-                    : 'border-2 border-gray-200 shadow-lg'
+                  key={plan.id}
+                  className={`relative overflow-visible rounded-2xl p-0 ${plan.highlighted
+                    ? 'border-none bg-gradient-to-b from-[#FFF8F0] to-white'
+                    : 'border border-[#EFE9E0] bg-white'
                     }`}
                 >
                   {plan.popular && (
-                    <div className="absolute -translate-x-1/2 -top-4 left-1/2">
-                      <Badge className="bg-[#FF7000] text-white hover:bg-[#FF7000] px-4 py-1">
-                        RECOMMENDED
-                      </Badge>
+                    <div className="absolute z-50 -top-3 right-4 px-3 py-1 text-[10px] font-semibold bg-[#FFEEE0] text-[#D45F00] border border-[#FFD5B8] rounded-full tracking-wide">
+                      RECOMMENDED
                     </div>
                   )}
+
                   {isCurrent && (
-                    <div className="absolute -top-4 right-4">
-                      <Badge className="px-3 py-1 text-xs text-white bg-green-500 hover:bg-green-500">
-                        CURRENT
-                      </Badge>
+                    <div className="absolute z-40 -top-3 left-4">
+                      <Badge className="px-3 py-1 text-xs text-white bg-green-500">CURRENT</Badge>
                     </div>
                   )}
-                  <CardHeader className="pb-8 text-center">
+
+                  <CardHeader className="p-8 pb-6 text-center">
                     <div className="h-14 w-14 bg-[#E8F0FF] rounded-full flex items-center justify-center mx-auto mb-4">
                       <Icon className="h-7 w-7 text-[#284688]" />
                     </div>
-                    <CardTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+
+                    <CardTitle className="text-2xl"  >
                       {plan.name}
                     </CardTitle>
-                    <CardDescription className="text-sm">{plan.description}</CardDescription>
+
+                    <CardDescription className="text-sm text-[#6B7280]">{plan.description}</CardDescription>
+
                     <div className="mt-6">
                       {plan.price === 'Custom' ? (
                         <span className="text-4xl font-bold text-[#0F151D]">{plan.price}</span>
@@ -335,29 +360,30 @@ const Pricing = () => {
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <ul className="mb-8 space-y-3">
+
+                  <CardContent className="p-8 pt-0">
+                    <ul className="grid gap-3 mb-6">
                       {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-start gap-2">
+                        <li key={index} className="flex items-start gap-3">
                           {feature.included ? (
                             <CheckCircle2 className="h-5 w-5 text-green-600 flex-shrink-0 mt-0.5" />
                           ) : (
                             <X className="h-5 w-5 text-gray-300 flex-shrink-0 mt-0.5" />
                           )}
-                          <span className={`text-sm ${feature.included ? 'text-[#0F151D]' : 'text-gray-400'
-                            }`}>
+                          <span className={`text-sm ${feature.included ? 'text-[#0F151D]' : 'text-gray-400'}`}>
                             {feature.text}
                           </span>
                         </li>
                       ))}
                     </ul>
+
                     <Button
                       onClick={() => handlePlanClick(plan)}
                       disabled={isCurrent}
-                      className={`w-full h-12 text-base ${isCurrent
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      className={`w-full h-12 text-base rounded-md ${isCurrent
+                        ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
                         : plan.highlighted
-                          ? 'bg-[#FF7000] hover:bg-[#FF7000]/90 text-white shadow-lg'
+                          ? 'bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white'
                           : 'bg-white border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white'
                         }`}
                     >
@@ -374,17 +400,17 @@ const Pricing = () => {
       {/* FAQ Preview */}
       <section className="px-6 py-20">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="text-3xl font-bold text-[#0F151D] mb-6" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h2 className="text-3xl font-bold text-[#0F151D] mb-6">
             Have Questions?
           </h2>
           <p className="text-lg text-[#4B5563] mb-8">
             Our team is here to help you choose the right plan and get started.
           </p>
           <div className="flex justify-center gap-4">
-            <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-8">
+            <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-8" onClick={goToFAQ}>
               Contact Sales
             </Button>
-            <Button variant="outline" className="border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white px-8">
+            <Button variant="outline" className="border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white px-8" onClick={goToFAQ}>
               View FAQ
             </Button>
           </div>
@@ -392,11 +418,7 @@ const Pricing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-[#0F151D] text-white py-12 px-6">
-        <div className="mx-auto text-center max-w-7xl">
-          <p className="text-sm text-gray-400">© 2025 Stand Up. All rights reserved.</p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

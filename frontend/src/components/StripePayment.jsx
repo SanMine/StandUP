@@ -53,7 +53,7 @@ function _InnerStripeForm({ orderOrPlanId, amount }) {
         <form onSubmit={handleSubmit} className="space-y-4">
             {err && <div className="text-sm text-red-600">{err}</div>}
             <PaymentElement />
-            <Button type="submit" disabled={submitting || !stripe || !elements} className="w-full">
+            <Button type="submit" disabled={submitting || !stripe || !elements} className="w-full min-h-[44px] bg-[#FF7000] hover:bg-[#FF7000]/85 transition duration-200">
                 {submitting ? 'Processing...' : `Pay $${Number(amount).toFixed(2)}`}
             </Button>
         </form>
@@ -92,7 +92,10 @@ export default function StripePayment({ planId, amount }) {
         return () => { mounted = false; };
     }, [planId, amount]);
 
-    if (loading) return <div>Loading payment form...</div>;
+    if (loading) return <div className="flex items-center justify-center p-4">
+        <div className="w-6 h-6 border-2 border-[#FF7000] rounded-full border-t-transparent animate-spin"></div>
+        <span className="ml-2 text-sm text-[#4B5563]">Loading Payment Form...</span>
+    </div>;
     if (!clientSecret) return <div>Unable to initialize payment.</div>;
 
     const options = {

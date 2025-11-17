@@ -30,7 +30,7 @@ export default function FAQ() {
     const [openFAQ, setOpenFAQ] = useState(null);
 
     return (
-        <section className="py-32 px-6 bg-[#FFFDFA]">
+        <section id='faq' className="py-32 px-6 bg-[#FFFDFA]">
             <div className="max-w-3xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -54,10 +54,10 @@ export default function FAQ() {
                             viewport={{ once: true }}
                             transition={{ duration: 0.5, delay: index * 0.1 }}
                         >
-                            <Card className="overflow-hidden border-none shadow-md">
+                            <Card className="overflow-hidden border-none">
                                 <button
                                     onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
-                                    className="flex items-center justify-between w-full p-6 text-left transition-colors hover:bg-gray-50"
+                                    className="flex items-center justify-between w-full p-6 text-left transition-colors bg-gray-50"
                                 >
                                     <h3 className="text-lg font-semibold text-[#0F151D] pr-4">
                                         {faq.question}
