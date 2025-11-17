@@ -64,6 +64,8 @@ const Portfolio = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [atsScore, setAtsScore] = useState(null);
+  const [atsAnalysis, setAtsAnalysis] = useState(null);
+  const [isCalculatingATS, setIsCalculatingATS] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [editEducationMode, setEditEducationMode] = useState(false);
   const [editEducationId, setEditEducationId] = useState(null);
