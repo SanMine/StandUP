@@ -2125,17 +2125,16 @@ const Portfolio = () => {
                     margin: 0.5,
                     filename: `${resume.full_name || 'Resume'}_Resume.pdf`,
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                    html2canvas: { 
+                      scale: 2, 
+                      useCORS: true, 
+                      letterRendering: true,
+                      logging: false
+                    },
                     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
                   };
                   
-                  // Using html2pdf library (needs to be added)
-                  if (window.html2pdf) {
-                    window.html2pdf().set(opt).from(element).save();
-                  } else {
-                    // Fallback: print dialog
-                    window.print();
-                  }
+                  html2pdf().set(opt).from(element).save();
                 }}
                 className="bg-slate-700 hover:bg-slate-800 text-white"
               >
