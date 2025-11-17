@@ -34,7 +34,8 @@ import {
   Eye,
   Download,
   Sparkles,
-  TrendingUp
+  TrendingUp,
+  Linkedin
 } from 'lucide-react';
 import DashboardLayout from '../components/Layout/DashboardLayout';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
@@ -45,6 +46,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '../components/ui/sheet';
 import { useAuth } from '../contexts/AuthContext';
 import { resumeAPI, portfolioAPI } from '../services/api';
 import { toast } from 'sonner';
@@ -2100,6 +2108,250 @@ const Portfolio = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Resume Preview Sheet */}
+        <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
+          <SheetContent className="sm:max-w-2xl overflow-y-auto">
+            <SheetHeader>
+              <SheetTitle>Resume Preview</SheetTitle>
+              <SheetDescription>Preview your professional resume</SheetDescription>
+            </SheetHeader>
+            <div className="mt-6 space-y-6 bg-white p-8 rounded-lg border">
+              {/* Personal Info */}
+              <div className="text-center border-b pb-6">
+                <h1 className="text-3xl font-bold text-gray-900">{resume.full_name || 'Your Name'}</h1>
+                <p className="text-lg text-gray-600 mt-2">{resume.professional_summary || 'Professional Summary'}</p>
+                <div className="flex justify-center gap-4 mt-4 text-sm text-gray-600 flex-wrap">
+                  {resume.email && (
+                    <span className="flex items-center gap-1">
+                      <Mail className="w-4 h-4" />
+                      {resume.email}
+                    </span>
+                  )}
+                  {resume.phone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="w-4 h-4" />
+                      {resume.phone}
+                    </span>
+                  )}
+                  {resume.address?.city && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-4 h-4" />
+                      {resume.address.city}{resume.address.country ? `, ${resume.address.country}` : ''}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Professional Summary */}
+              {resume.professional_summary && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Professional Summary
+                  </h2>
+                  <p className="text-gray-700 leading-relaxed">{resume.professional_summary}</p>
+                </div>
+              )}
+
+              {/* Experience */}
+              {resume.experience && resume.experience.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Briefcase className="w-5 h-5" />
+                    Work Experience
+                  </h2>
+                  <div className="space-y-4">
+                    {resume.experience.map((exp, idx) => (
+                      <div key={idx} className="border-l-2 border-orange-500 pl-4">
+                        <h3 className="font-semibold text-gray-900">{exp.job_title}</h3>
+                        <p className="text-gray-600">{exp.company_name}</p>
+                        <p className="text-sm text-gray-500">
+                          {exp.start_date ? new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : ''} - {exp.current ? 'Present' : (exp.end_date ? new Date(exp.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '')}
+                        </p>
+                        {exp.description && <p className="text-gray-700 mt-2">{exp.description}</p>}
+                        {exp.achievements && exp.achievements.length > 0 && (
+                          <ul className="mt-2 space-y-1">
+                            {exp.achievements.map((achievement, i) => (
+                              <li key={i} className="text-sm text-gray-600">• {achievement}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {resume.education && resume.education.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5" />
+                    Education
+                  </h2>
+                  <div className="space-y-4">
+                    {resume.education.map((edu, idx) => (
+                      <div key={idx} className="border-l-2 border-blue-500 pl-4">
+                        <h3 className="font-semibold text-gray-900">{edu.degree || edu.major}</h3>
+                        <p className="text-gray-600">{edu.institute}</p>
+                        {edu.faculty && <p className="text-sm text-gray-500">{edu.faculty}</p>}
+                        <p className="text-sm text-gray-500">
+                          {edu.year_of_graduation ? `Class of ${edu.year_of_graduation}` : 
+                           (edu.start_date ? new Date(edu.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '')}
+                          {edu.current && ' - Present'}
+                        </p>
+                        {edu.gpa && <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Skills */}
+              {((resume.hard_skills && resume.hard_skills.length > 0) || (resume.soft_skills && resume.soft_skills.length > 0)) && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Award className="w-5 h-5" />
+                    Skills
+                  </h2>
+                  <div className="space-y-3">
+                    {resume.hard_skills && resume.hard_skills.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Technical Skills</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {resume.hard_skills.map((skill, idx) => (
+                            <Badge key={idx} variant="outline" className="px-3 py-1 bg-blue-50">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {resume.soft_skills && resume.soft_skills.length > 0 && (
+                      <div>
+                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Soft Skills</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {resume.soft_skills.map((skill, idx) => (
+                            <Badge key={idx} variant="outline" className="px-3 py-1 bg-green-50">
+                              {skill}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Languages */}
+              {resume.languages && resume.languages.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Languages className="w-5 h-5" />
+                    Languages
+                  </h2>
+                  <div className="flex flex-wrap gap-2">
+                    {resume.languages.map((lang, idx) => (
+                      <Badge key={idx} className="px-3 py-1">
+                        {lang.language} - {lang.proficiency}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Certifications */}
+              {resume.certifications && resume.certifications.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <Award className="w-5 h-5" />
+                    Certifications
+                  </h2>
+                  <div className="space-y-3">
+                    {resume.certifications.map((cert, idx) => (
+                      <div key={idx} className="border-l-2 border-green-500 pl-4">
+                        <h3 className="font-semibold text-gray-900">{cert.name}</h3>
+                        {cert.issuing_organization && <p className="text-gray-600">{cert.issuing_organization}</p>}
+                        {cert.issue_date && (
+                          <p className="text-sm text-gray-500">
+                            Issued: {new Date(cert.issue_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            {cert.expiry_date && ` - Expires: ${new Date(cert.expiry_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`}
+                          </p>
+                        )}
+                        {cert.credential_id && <p className="text-xs text-gray-500 mt-1">ID: {cert.credential_id}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Projects */}
+              {resume.projects && resume.projects.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <FileText className="w-5 h-5" />
+                    Projects
+                  </h2>
+                  <div className="space-y-4">
+                    {resume.projects.map((project, idx) => (
+                      <div key={idx} className="border-l-2 border-purple-500 pl-4">
+                        <h3 className="font-semibold text-gray-900">{project.title}</h3>
+                        <p className="text-gray-700 mt-1">{project.description}</p>
+                        {project.tags && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {project.tags.split(',').map((tag, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">
+                                {tag.trim()}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {(project.githubUrl || project.liveUrl) && (
+                          <div className="flex gap-3 mt-2 text-sm">
+                            {project.githubUrl && (
+                              <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                <Github className="w-4 h-4 inline mr-1" />
+                                GitHub
+                              </a>
+                            )}
+                            {project.liveUrl && (
+                              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                                <ExternalLink className="w-4 h-4 inline mr-1" />
+                                Live Demo
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* References */}
+              {resume.references && resume.references.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    References
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {resume.references.map((ref, idx) => (
+                      <div key={idx} className="p-4 bg-gray-50 rounded-lg">
+                        <h3 className="font-semibold text-gray-900">{ref.name}</h3>
+                        {ref.title && <p className="text-sm text-gray-600">{ref.title}</p>}
+                        {ref.company && <p className="text-sm text-gray-600">{ref.company}</p>}
+                        {ref.email && <p className="text-xs text-gray-500 mt-1">{ref.email}</p>}
+                        {ref.phone && <p className="text-xs text-gray-500">{ref.phone}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
     </DashboardLayout>
   );
