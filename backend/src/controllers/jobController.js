@@ -1,5 +1,5 @@
 const { Job, JobSkill, Application, SavedJob, User, UserSkill } = require('../models');
-const { calculateJobMatchWithAI } = require('../utils/jobMatchingAI');
+const { calculateMatchPercentageOnly, calculateFullJobMatch } = require('../utils/jobMatchingAI');
 
 const getAllJobs = async (req, res, next) => {
   try {
@@ -68,52 +68,43 @@ const getAllJobs = async (req, res, next) => {
       })
     );
 
-    // If user is authenticated and is a student, calculate AI-powered match scores
+    // If user is authenticated and is a student, calculate AI-powered match percentages only
     let jobsWithAIMatching = jobsWithDetails;
-    let userPlan = 'free'; // Default to free
+    let userPlan = 'free';
 
     if (req.user && req.user.role === 'student') {
       try {
-        // Fetch user and their skills
         const user = await User.findById(req.user.userId).lean();
         const userSkills = await UserSkill.find({ user_id: req.user.userId }).lean();
 
         if (user) {
           userPlan = user.plan || 'free';
 
-          // Check if user has premium plan for AI matching
-          if (user.plan === 'premium' && userSkills && userSkills.length > 0) {
-            console.log('✓ Premium user - enabling AI matching');
+          if (user.plan === 'premium') {
+            console.log('✓ Premium user - enabling AI match percentage calculation');
 
-            // Calculate AI match for each job
+            // Calculate ONLY match percentage for each job (fast operation)
             jobsWithAIMatching = await Promise.all(
               jobsWithDetails.map(async (job) => {
                 try {
-                  // Call AI to calculate match
-                  const matchResult = await calculateJobMatchWithAI(userSkills, {
+                  const matchResult = await calculateMatchPercentageOnly(userSkills, {
                     title: job.title,
                     company: job.company,
                     type: job.type,
                     mode: job.mode,
                     location: job.location,
-                    skills: job.skills,
-                    requirements: job.requirements || []
+                    skills: job.skills
                   });
 
                   return {
                     ...job,
-                    matchPercentage: matchResult.matchPercentage,
-                    strongMatchFacts: matchResult.strongMatchFacts,
-                    areasToImprove: matchResult.areasToImprove
+                    matchPercentage: matchResult.matchPercentage
                   };
                 } catch (error) {
-                  console.error(`Error calculating AI match for job ${job._id}:`, error.message);
-                  // Return job without match data if AI fails
+                  console.error(`Error calculating match percentage for job ${job._id}:`, error.message);
                   return {
                     ...job,
-                    matchPercentage: null,
-                    strongMatchFacts: [],
-                    areasToImprove: []
+                    matchPercentage: null
                   };
                 }
               })
@@ -131,14 +122,13 @@ const getAllJobs = async (req, res, next) => {
         }
       } catch (error) {
         console.error('Error in AI matching process:', error);
-        // Continue without AI matching if there's an error
       }
     }
 
     res.status(200).json({
       success: true,
       data: jobsWithAIMatching,
-      userPlan, // Send user plan to frontend
+      userPlan,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -150,96 +140,6 @@ const getAllJobs = async (req, res, next) => {
     next(error);
   }
 };
-
-// const getAllJobs = async (req, res, next) => {
-//   try {
-//     const {
-//       search,
-//       roles,
-//       locations,
-//       modes,
-//       types,
-//       page = 1,
-//       limit = 10
-//     } = req.query;
-
-//     const skip = (page - 1) * limit;
-//     const query = { status: 'active' };
-
-//     // Search filter
-//     if (search) {
-//       query.$or = [
-//         { title: { $regex: search, $options: 'i' } },
-//         { company: { $regex: search, $options: 'i' } },
-//         { location: { $regex: search, $options: 'i' } }
-//       ];
-//     }
-
-//     // Role filter
-//     if (roles) {
-//       const roleArray = roles.split(',');
-//       query.title = { $in: roleArray.map(role => new RegExp(role, 'i')) };
-//     }
-
-//     // Location filter
-//     if (locations) {
-//       const locationArray = locations.split(',');
-//       query.location = { $in: locationArray.map(loc => new RegExp(loc, 'i')) };
-//     }
-
-//     // Mode filter
-//     if (modes) {
-//       query.mode = { $in: modes.split(',') };
-//     }
-
-//     // Type filter
-//     if (types) {
-//       query.type = { $in: types.split(',') };
-//     }
-
-//     const count = await Job.countDocuments(query);
-//     const jobs = await Job.find(query)
-//       .limit(parseInt(limit))
-//       .skip(parseInt(skip))
-//       .sort({ posted_date: -1 })
-//       .lean();
-
-//     // Fetch job skills + employer
-//     const jobsWithDetails = await Promise.all(
-//       jobs.map(async (job) => {
-//         const skills = await JobSkill.find({ job_id: job._id }).lean();
-//         const employer = await User.findById(job.employer_id)
-//           .select('_id company_name industry')
-//           .lean();
-
-//         return {
-//           ...job,
-//           id: job._id,
-//           skills,
-//           employer: employer ? { ...employer, id: employer._id } : null
-//         };
-//       })
-//     );
-
-//     // ✔️ DISABLE ALL AI MATCHING FOR NOW
-//     const jobsWithAIMatching = jobsWithDetails;
-
-//     res.status(200).json({
-//       success: true,
-//       data: jobsWithAIMatching,
-//       userPlan: 'free',   // Temporary (no AI)
-//       pagination: {
-//         page: parseInt(page),
-//         limit: parseInt(limit),
-//         total: count,
-//         totalPages: Math.ceil(count / limit)
-//       }
-//     });
-
-//   } catch (error) {
-//     next(error);
-//   }
-// };
 
 const getJobById = async (req, res, next) => {
   try {
@@ -270,17 +170,20 @@ const getJobById = async (req, res, next) => {
 
     let userPlan = 'free';
 
-    // Calculate AI-powered match score if user is authenticated, is a student, and has premium plan
+    // Calculate FULL AI-powered match analysis if user is authenticated, is a student, and has premium plan
     if (req.user && req.user.role === 'student') {
       try {
         const user = await User.findById(req.user.userId).lean();
+        console.log(user)
         const userSkills = await UserSkill.find({ user_id: req.user.userId }).lean();
 
         if (user) {
           userPlan = user.plan || 'free';
 
-          if (user.plan === 'premium' && userSkills && userSkills.length > 0) {
-            const matchResult = await calculateJobMatchWithAI(userSkills, {
+          if (user.plan === 'premium') {
+            console.log('✓ Premium user - calculating full AI match analysis');
+
+            const matchResult = await calculateFullJobMatch(userSkills, {
               title: job.title,
               company: job.company,
               type: job.type,
@@ -299,8 +202,7 @@ const getJobById = async (req, res, next) => {
           }
         }
       } catch (error) {
-        console.error('Error calculating AI match:', error);
-        // Continue without match data if AI fails
+        console.error('Error calculating full AI match:', error);
       }
     }
 

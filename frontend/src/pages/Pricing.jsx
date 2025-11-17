@@ -145,6 +145,11 @@ const Pricing = () => {
   ];
 
   const handlePlanClick = (plan) => {
+    if (!user) {
+      navigate("/auth")
+      return
+    }
+
     if (user && user.role !== plan.type) {
       if (user.role === 'student' && plan.type === 'employer') {
         toast.error("Wrong Plan Type", {

@@ -1,14 +1,84 @@
 const { generateText } = require('ai');
-const { createGroq } = require('@ai-sdk/groq');
-
-const groq = createGroq({
-    apiKey: process.env.GROQ_API_KEY
-});
+const { groq } = require('@ai-sdk/groq');
 
 /**
- * Creates the system prompt for job matching AI
+ * Creates the system prompt for job matching AI (match percentage only)
  */
-const createJobMatchSystemPrompt = () => {
+const createMatchPercentageSystemPrompt = () => {
+    return `You are a precise, data-driven job matching algorithm that calculates compatibility scores between candidates and job positions.
+
+Your role is to:
+- Analyze skill overlap between candidate and job requirements
+- Apply consistent scoring methodology across all evaluations
+- Use deterministic calculation rules to ensure reproducibility
+- Provide objective, unbiased percentage scores
+
+You are NOT a career counselor or advisor in this context - you are a mathematical scoring system that applies the same rules every time.`.trim();
+};
+
+/**
+ * Creates the prompt for calculating match percentage only
+ */
+const createMatchPercentagePrompt = (userSkills, jobData) => {
+    const userSkillsList = userSkills.map(s => s.skill_name).join(', ');
+    const jobSkillsList = jobData.skills.map(s => s.skill_name).join(', ');
+
+    return `
+Calculate the job match percentage between a candidate and job using the following STRICT RULES:
+
+CANDIDATE SKILLS:
+${userSkillsList || 'No skills listed'}
+
+REQUIRED JOB SKILLS:
+${jobSkillsList || 'Not specified'}
+
+JOB TYPE: ${jobData.type}
+JOB MODE: ${jobData.mode}
+
+CALCULATION METHODOLOGY (apply consistently):
+
+1. EXACT SKILL MATCH (70% weight):
+   - Count exact matches between candidate skills and required job skills (case-insensitive)
+   - Calculate: (matching_skills / total_required_skills) * 70
+   - Examples:
+     * 5 matches out of 5 required = 70 points
+     * 3 matches out of 5 required = 42 points
+     * 0 matches out of 5 required = 0 points
+
+2. RELATED SKILL BONUS (20% weight):
+   - Award points for related/transferable skills even if not exact matches
+   - Frontend skills (React, Vue, Angular) are interchangeable: +15 points
+   - Backend skills (Node.js, Python, Java) are interchangeable: +15 points
+   - Database skills (MongoDB, PostgreSQL, MySQL) are interchangeable: +10 points
+   - DevOps skills (Docker, Kubernetes, AWS, CI/CD) are interchangeable: +10 points
+   - Design skills (Figma, Adobe XD, Sketch) are interchangeable: +10 points
+   - Maximum 20 points from this category
+
+3. JOB TYPE MODIFIER (10% weight):
+   - Internship: More lenient, +10 points if candidate has ANY relevant skills
+   - Full-time: Standard calculation, +5 points if well-matched
+   - Part-time: Standard calculation, +5 points if well-matched
+   - Contract: Requires stronger match, +10 points only if 60%+ skill match
+
+FINAL SCORE = Exact Match Points + Related Skill Bonus + Job Type Modifier
+- Round to nearest integer
+- Cap at 100 maximum
+- Minimum of 0
+
+Respond with ONLY a JSON object in this exact format:
+{
+  "matchPercentage": 75
+}
+
+DO NOT include any explanation, markdown formatting, or additional text.
+Apply the same calculation rules consistently for identical inputs.
+`.trim();
+};
+
+/**
+ * Creates the system prompt for full job matching AI analysis
+ */
+const createFullAnalysisSystemPrompt = () => {
     return `You are an expert career counselor and job matching specialist with deep knowledge in:
 - Skills assessment and gap analysis
 - Career development and growth pathways
@@ -20,13 +90,16 @@ You provide precise, actionable job matching analysis based on candidate skills 
 - Data-driven and objective
 - Encouraging yet realistic
 - Focused on growth opportunities
-- Culturally sensitive and professional`.trim();
+- Culturally sensitive and professional
+- Consistent in scoring methodology
+
+When calculating match percentages, you apply the same deterministic rules every time to ensure consistency.`.trim();
 };
 
 /**
- * Creates the prompt for analyzing job match
+ * Creates the prompt for full job match analysis
  */
-const createJobMatchPrompt = (userSkills, jobData) => {
+const createFullAnalysisPrompt = (userSkills, jobData, matchPercentage) => {
     const userSkillsList = userSkills.map(s => s.skill_name).join(', ');
     const jobSkillsList = jobData.skills.map(s => s.skill_name).join(', ');
     const requirements = jobData.requirements && jobData.requirements.length > 0
@@ -34,7 +107,7 @@ const createJobMatchPrompt = (userSkills, jobData) => {
         : 'No specific requirements listed';
 
     return `
-Analyze the job match between a candidate and the following job opportunity:
+Provide a detailed job matching analysis for a candidate with a ${matchPercentage}% match score.
 
 JOB DETAILS:
 - Position: ${jobData.title}
@@ -52,79 +125,102 @@ JOB REQUIREMENTS:
 CANDIDATE SKILLS:
 ${userSkillsList || 'No skills listed'}
 
-Based on this information, provide a comprehensive job matching analysis in the following JSON format:
+CALCULATED MATCH PERCENTAGE: ${matchPercentage}%
+
+Based on the ${matchPercentage}% match score, provide analysis in the following JSON format:
 
 {
-  "matchPercentage": 85,
   "strongMatchFacts": [
-    "Specific skill match explaining how your expertise aligns with job needs (e.g., 'React.js proficiency directly matches the frontend development requirements')",
+    "Specific skill match explaining how candidate expertise aligns with job needs",
     "Another concrete match highlighting relevant experience or skills",
-    "Third alignment showing why you're qualified for this role"
+    "Third alignment showing why candidate is qualified for this role"
   ],
   "areasToImprove": [
-    "Actionable skill gap with learning suggestion (e.g., 'Docker experience would enhance your deployment capabilities')",
-    "Another improvement area with specific technology or skill to develop",
-    "Third growth opportunity that would strengthen your candidacy"
+    "Actionable skill gap with specific technology to learn",
+    "Another improvement area with concrete development suggestion",
+    "Third growth opportunity that would strengthen candidacy"
   ]
 }
 
-IMPORTANT: Each point should be ONE complete sentence (15-20 words) that is informative yet concise.
+IMPORTANT GUIDELINES:
 
-CALCULATION RULES FOR MATCH PERCENTAGE:
-- Calculate based on skill overlap between candidate and job requirements
-- Consider both technical skills and job requirements alignment
-- Range: 0-100%, where:
-  * 90-100%: Excellent match, candidate has all or nearly all required skills
-  * 70-89%: Good match, candidate has most required skills with minor gaps
-  * 50-69%: Moderate match, candidate has some skills but significant gaps exist
-  * 30-49%: Weak match, candidate lacks many required skills
-  * 0-29%: Poor match, candidate has few relevant skills
+For strongMatchFacts:
+- Each point must be ONE complete sentence (15-25 words)
+- Reference ACTUAL skills the candidate has that match job requirements
+- Be specific about WHY the skill is relevant
+- If match is below 50%, provide only 1-2 facts (or encouraging general statements)
+- If match is 50-74%, provide 2 facts
+- If match is 75%+, provide 3 facts
+- Examples:
+  * "Your React.js expertise directly addresses the frontend framework requirement for building user interfaces"
+  * "Experience with Node.js aligns perfectly with the backend development responsibilities listed"
+  * "MongoDB knowledge matches the database technology stack used in this role"
 
-IMPORTANT INSTRUCTIONS:
-- Analyze the ACTUAL skills and requirements provided
-- Each point should be ONE complete, informative sentence (15-20 words)
-- Provide 2-3 strong match facts (only include if there are actual matches)
-- Provide 2-3 areas to improve (be constructive and specific)
-- If candidate has very few matching skills, be honest but encouraging
-- Include actual skill names and explain WHY they match or what's missing
-- Make recommendations actionable and realistic with specific technologies
-- Return ONLY valid JSON, no markdown formatting or code blocks
-- Ensure match percentage is realistic based on actual skill overlap
-- Balance being informative with being concise - avoid fluff but provide context
+For areasToImprove:
+- Each point must be ONE complete sentence (15-25 words)
+- Suggest SPECIFIC technologies, tools, or skills to develop
+- Make recommendations actionable and realistic
+- Focus on skills mentioned in job requirements that candidate lacks
+- Always provide 2-3 improvement areas regardless of match score
+- Examples:
+  * "Learning Docker would enhance your deployment capabilities and match the DevOps requirements"
+  * "Gaining TypeScript experience would strengthen your frontend development skills for this position"
+  * "Developing AWS cloud platform knowledge would align with the infrastructure technologies used"
+
+TONE GUIDELINES:
+- Match 0-39%: Be encouraging but honest about significant gaps, focus on foundational skills to build
+- Match 40-59%: Balanced tone, highlight existing strengths and clear paths to improvement
+- Match 60-79%: Positive and encouraging, minor gaps to address for stronger candidacy
+- Match 80-100%: Very positive, emphasize strong alignment with minor polish areas
+
+Return ONLY valid JSON, no markdown formatting or code blocks.
+Ensure facts and improvements are specific, actionable, and directly tied to the job requirements.
 `.trim();
 };
 
 /**
- * Parse and validate the AI response
+ * Parse match percentage response
  */
-const parseJobMatchResponse = (text) => {
+const parseMatchPercentageResponse = (text) => {
     try {
-        // Remove markdown code blocks if present
         let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
         const parsed = JSON.parse(cleanText);
 
-        // Validate structure
-        if (!parsed.matchPercentage || !Array.isArray(parsed.strongMatchFacts) || !Array.isArray(parsed.areasToImprove)) {
+        if (typeof parsed.matchPercentage !== 'number') {
+            throw new Error('Invalid match percentage format');
+        }
+
+        parsed.matchPercentage = Math.max(0, Math.min(100, Math.round(parsed.matchPercentage)));
+
+        return parsed;
+    } catch (error) {
+        console.error('Error parsing match percentage response:', error);
+        return { matchPercentage: 50 };
+    }
+};
+
+/**
+ * Parse full analysis response
+ */
+const parseFullAnalysisResponse = (text) => {
+    try {
+        let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+        const parsed = JSON.parse(cleanText);
+
+        if (!Array.isArray(parsed.strongMatchFacts) || !Array.isArray(parsed.areasToImprove)) {
             throw new Error('Invalid response structure');
         }
 
-        // Ensure match percentage is within valid range
-        parsed.matchPercentage = Math.max(0, Math.min(100, parseInt(parsed.matchPercentage)));
-
-        // Trim and limit strongMatchFacts (max 3 items, max 120 chars each)
         parsed.strongMatchFacts = parsed.strongMatchFacts
             .slice(0, 3)
-            .map(fact => fact.length > 120 ? fact.substring(0, 117) + '...' : fact);
+            .map(fact => fact.length > 150 ? fact.substring(0, 147) + '...' : fact);
 
-        // Trim and limit areasToImprove (max 3 items, max 120 chars each)
         parsed.areasToImprove = parsed.areasToImprove
             .slice(0, 3)
-            .map(area => area.length > 120 ? area.substring(0, 117) + '...' : area);
+            .map(area => area.length > 150 ? area.substring(0, 147) + '...' : area);
 
-        // Ensure arrays have content
         if (parsed.strongMatchFacts.length === 0) {
-            parsed.strongMatchFacts = ['Review your profile to highlight relevant experience'];
+            parsed.strongMatchFacts = ['Review your profile to highlight relevant experience for this position'];
         }
 
         if (parsed.areasToImprove.length === 0) {
@@ -133,10 +229,8 @@ const parseJobMatchResponse = (text) => {
 
         return parsed;
     } catch (error) {
-        console.error('Error parsing job match response:', error);
-        // Return default structure if parsing fails
+        console.error('Error parsing full analysis response:', error);
         return {
-            matchPercentage: 50,
             strongMatchFacts: ['Unable to analyze match - please review job requirements manually'],
             areasToImprove: ['Consider updating your skills profile for better matching']
         };
@@ -144,11 +238,46 @@ const parseJobMatchResponse = (text) => {
 };
 
 /**
- * Calculate job match score using AI
+ * Calculate ONLY match percentage (fast, for job listings)
  */
-const calculateJobMatchWithAI = async (userSkills, jobData) => {
+const calculateMatchPercentageOnly = async (userSkills, jobData) => {
     try {
-        // If user has no skills, return low match immediately
+        if (!userSkills || userSkills.length === 0) {
+            return { matchPercentage: 0 };
+        }
+
+        if (!jobData.skills || jobData.skills.length === 0) {
+            return { matchPercentage: 60 };
+        }
+
+        const { text } = await generateText({
+            model: groq('llama-3.3-70b-versatile'),
+            prompt: createMatchPercentagePrompt(userSkills, jobData),
+            system: createMatchPercentageSystemPrompt(),
+            maxTokens: 50,
+            temperature: 0.1
+        });
+
+        return parseMatchPercentageResponse(text);
+    } catch (error) {
+        console.error('Error calculating match percentage:', error);
+
+        const userSkillNames = new Set(userSkills.map(s => s.skill_name.toLowerCase()));
+        const jobSkillNames = jobData.skills.map(s => s.skill_name.toLowerCase());
+        const matchingSkills = jobSkillNames.filter(skill => userSkillNames.has(skill));
+        const matchPercentage = jobSkillNames.length > 0
+            ? Math.round((matchingSkills.length / jobSkillNames.length) * 100)
+            : 50;
+
+        return { matchPercentage };
+    }
+};
+
+/**
+ * Calculate full job match analysis (detailed, for job details page)
+ */
+const calculateFullJobMatch = async (userSkills, jobData) => {
+    try {
         if (!userSkills || userSkills.length === 0) {
             return {
                 matchPercentage: 0,
@@ -157,7 +286,6 @@ const calculateJobMatchWithAI = async (userSkills, jobData) => {
             };
         }
 
-        // If job has no required skills, return moderate match
         if (!jobData.skills || jobData.skills.length === 0) {
             return {
                 matchPercentage: 60,
@@ -166,19 +294,27 @@ const calculateJobMatchWithAI = async (userSkills, jobData) => {
             };
         }
 
+        const matchPercentageResult = await calculateMatchPercentageOnly(userSkills, jobData);
+        const matchPercentage = matchPercentageResult.matchPercentage;
+
         const { text } = await generateText({
             model: groq('llama-3.3-70b-versatile'),
-            prompt: createJobMatchPrompt(userSkills, jobData),
-            system: createJobMatchSystemPrompt(),
-            maxTokens: 1000,
-            temperature: 0.7
+            prompt: createFullAnalysisPrompt(userSkills, jobData, matchPercentage),
+            system: createFullAnalysisSystemPrompt(),
+            maxTokens: 800,
+            temperature: 0.3
         });
 
-        return parseJobMatchResponse(text);
-    } catch (error) {
-        console.error('Error calculating job match with AI:', error);
+        const analysis = parseFullAnalysisResponse(text);
 
-        // Fallback: Calculate simple percentage match
+        return {
+            matchPercentage,
+            strongMatchFacts: analysis.strongMatchFacts,
+            areasToImprove: analysis.areasToImprove
+        };
+    } catch (error) {
+        console.error('Error calculating full job match:', error);
+
         const userSkillNames = new Set(userSkills.map(s => s.skill_name.toLowerCase()));
         const jobSkillNames = jobData.skills.map(s => s.skill_name.toLowerCase());
         const matchingSkills = jobSkillNames.filter(skill => userSkillNames.has(skill));
@@ -197,8 +333,12 @@ const calculateJobMatchWithAI = async (userSkills, jobData) => {
 };
 
 module.exports = {
-    calculateJobMatchWithAI,
-    createJobMatchSystemPrompt,
-    createJobMatchPrompt,
-    parseJobMatchResponse
+    calculateMatchPercentageOnly,
+    calculateFullJobMatch,
+    createMatchPercentageSystemPrompt,
+    createMatchPercentagePrompt,
+    createFullAnalysisSystemPrompt,
+    createFullAnalysisPrompt,
+    parseMatchPercentageResponse,
+    parseFullAnalysisResponse
 };

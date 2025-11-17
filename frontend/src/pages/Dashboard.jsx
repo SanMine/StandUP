@@ -64,8 +64,6 @@ const normalizeJob = (job) => {
     requirements: job.requirements || [],
     culture: job.culture || [],
     matchPercentage: job.matchPercentage ?? job.matchScore ?? job.match_score ?? null,
-    strongMatchFacts: job.strongMatchFacts || job.strong_match_facts || [],
-    areasToImprove: job.areasToImprove || job.areas_to_improve || [],
   };
 };
 
@@ -74,7 +72,7 @@ const Dashboard = () => {
   const { user: authUser } = useAuth();
 
   const [matchedJobs, setMatchedJobs] = useState([]);
-  const [selectedJob, setSelectedJob] = useState(null);
+  const [selectedJobId, setSelectedJobId] = useState(null);
 
   const [suggestedMentor, setSuggestedMentor] = useState(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
@@ -142,7 +140,7 @@ const Dashboard = () => {
     if (authUser) fetchData();
   }, [authUser]);
 
-  // Jobs for AI-Matched Opportunities
+  // Jobs for AI-Matched Opportunities (only fetches match percentages, no detailed analysis)
   useEffect(() => {
     let mounted = true;
 
@@ -163,12 +161,14 @@ const Dashboard = () => {
           : [];
 
         if (premium) {
+          // Filter jobs with 75%+ match (only match percentage is available at this point)
           const filtered = jobsArray.filter((job) => {
             const matchScore =
               job.matchPercentage ?? job.matchScore ?? job.match_score ?? -1;
             return typeof matchScore === 'number' && matchScore >= 75;
           });
 
+          // Sort by match percentage (highest first)
           filtered.sort(
             (a, b) =>
               (b.matchPercentage ?? 0) - (a.matchPercentage ?? 0)
@@ -236,7 +236,6 @@ const Dashboard = () => {
         <div>
           <h1
             className="text-3xl font-bold text-[#0F151D] mb-2"
-
           >
             Welcome back, {authUser?.name?.split(' ')[0] || 'Student'}!
           </h1>
@@ -300,7 +299,6 @@ const Dashboard = () => {
                   <div>
                     <CardTitle
                       className="flex items-center gap-2 text-xl"
-
                     >
                       AI-Matched Opportunities
                       {isPremium && (
@@ -387,7 +385,7 @@ const Dashboard = () => {
                         <div
                           key={job.id}
                           className="border border-gray-200 rounded-xl p-4 hover:border-[#FF7000] hover:shadow-md transition-all cursor-pointer"
-                          onClick={() => setSelectedJob(job)}
+                          onClick={() => setSelectedJobId(job.id)}
                         >
                           <div className="flex items-start gap-4">
                             <img
@@ -437,13 +435,12 @@ const Dashboard = () => {
                                   ))}
                               </div>
 
-                              {/* This is what you asked: clicking "Why you match" opens the Sheet, NOT navigate */}
                               <button
                                 type="button"
                                 className="text-sm text-[#FF7000] cursor-pointer hover:underline flex items-center gap-1"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  setSelectedJob(job);
+                                  setSelectedJobId(job.id);
                                 }}
                               >
                                 <span>Why you match</span>
@@ -479,7 +476,6 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle
                   className="text-lg"
-
                 >
                   Upcoming Events
                 </CardTitle>
@@ -523,7 +519,6 @@ const Dashboard = () => {
               <CardHeader>
                 <CardTitle
                   className="text-lg"
-
                 >
                   Suggested Mentor
                 </CardTitle>
@@ -589,44 +584,39 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Job Details Sheet (like Jobs page) */}
+      {/* Job Details Sheet - fetches full details with AI analysis when opened */}
       <JobDetailsSheet
-        job={selectedJob}
-        open={!!selectedJob}
+        jobId={selectedJobId}
+        open={!!selectedJobId}
         onOpenChange={(open) => {
-          if (!open) setSelectedJob(null);
+          if (!open) setSelectedJobId(null);
         }}
         onApply={(applicationData) => {
-          // applicationData is the API response (data) returned from backend in controller
-          // 1) show toast
           toast.success(applicationData?.message || 'Application submitted');
 
-          // 2) update matchedJobs state (so job card shows applied / button disabled)
+          // Update matchedJobs state to reflect applied status
           setMatchedJobs(prev =>
             prev.map(j => {
               if (!j) return j;
-              // compare ids robustly
               const jid = j.id || j._id || j.jobId;
               const appliedJobId =
-                applicationData?.job?.id || applicationData?.job?._id || applicationData?.job_id || applicationData?.jobId || applicationData?.job?.jobId;
-              if (String(jid) === String(appliedJobId || selectedJob?.id)) {
+                applicationData?.job?.id ||
+                applicationData?.job?._id ||
+                applicationData?.job_id ||
+                applicationData?.jobId ||
+                applicationData?.job?.jobId ||
+                selectedJobId;
+
+              if (String(jid) === String(appliedJobId)) {
                 return { ...j, applicationStatus: 'applied' };
               }
               return j;
             })
           );
-
-          // 3) optionally update selectedJob local sheet state so its button shows "Applied"
-          setSelectedJob(prev => (prev ? { ...prev, applicationStatus: 'applied' } : prev));
-
-          // 4) optional: navigate to applications page if you want:
-          // navigate('/applications');
         }}
         onToggleSave={(jobId) => {
-          // keep your existing toggleSave behavior
-          console.log('toggle save', jobId);
-          // if you have toggleSave function available in Dashboard scope, call it:
-          // toggleSave(jobId);
+          console.log('Toggle save for job:', jobId);
+          // Implement save/unsave logic if needed
         }}
         savedJobIds={[]}
         isPremium={isPremium}

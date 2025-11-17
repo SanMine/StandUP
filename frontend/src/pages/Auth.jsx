@@ -300,7 +300,6 @@ const Auth = () => {
     }
   };
 
-  // Role selection step
   if (step === "role") {
     return (
       <div className="flex items-center justify-center min-h-screen p-6">
@@ -406,7 +405,7 @@ const Auth = () => {
             </div>
             <CardTitle
               className="text-2xl"
-              style={{ fontFamily: "Poppins, sans-serif" }}
+
             >
               {selectedRole === "student"
                 ? onboardingStep === 1
@@ -772,17 +771,18 @@ const Auth = () => {
 
   // Auth step (signin/signup)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
+    <div className="flex items-center justify-center min-h-screen p-6">
       <Card className="w-full max-w-md shadow-xl" key={authMode}>
         <CardHeader className="text-center">
           <img
             src={logo}
             alt="Stand Up Logo"
-            className="w-auto h-12 mx-auto mb-4"
+            onClick={() => navigate("/")}
+            className="w-auto h-12 mx-auto mb-4 cursor-pointer"
           />
           <CardTitle
             className="text-2xl"
-            style={{ fontFamily: "Poppins, sans-serif" }}
+
           >
             {authMode === "signin" ? "Welcome Back!" : "Create Account"}
           </CardTitle>
