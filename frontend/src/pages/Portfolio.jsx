@@ -192,13 +192,30 @@ const Portfolio = () => {
 
   const fetchATSScore = async () => {
     try {
+      setIsCalculatingATS(true);
       const response = await resumeAPI.calculateATSScore();
       if (response.success) {
         setAtsScore(response.data.score);
+        setAtsAnalysis({
+          strengths: response.data.strengths || [],
+          improvements: response.data.improvements || [],
+          summary: response.data.summary || ''
+        });
       }
     } catch (error) {
       console.error('Error calculating ATS score:', error);
+      toast.error('Failed to calculate ATS score');
+    } finally {
+      setIsCalculatingATS(false);
     }
+  };
+
+  // Get color based on ATS score
+  const getATSScoreColor = (score) => {
+    if (score >= 80) return { bg: 'from-green-50 to-emerald-50', text: 'text-green-700', border: 'border-green-200', badge: 'bg-green-100 text-green-700' };
+    if (score >= 60) return { bg: 'from-yellow-50 to-amber-50', text: 'text-yellow-700', border: 'border-yellow-200', badge: 'bg-yellow-100 text-yellow-700' };
+    if (score >= 40) return { bg: 'from-orange-50 to-orange-100', text: 'text-orange-700', border: 'border-orange-200', badge: 'bg-orange-100 text-orange-700' };
+    return { bg: 'from-red-50 to-red-100', text: 'text-red-700', border: 'border-red-200', badge: 'bg-red-100 text-red-700' };
   };
 
   const handleInputChange = (field, value) => {
