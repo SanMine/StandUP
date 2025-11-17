@@ -2109,35 +2109,78 @@ const Portfolio = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Resume Preview Sheet */}
-        <Sheet open={previewOpen} onOpenChange={setPreviewOpen}>
-          <SheetContent className="sm:max-w-2xl overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Resume Preview</SheetTitle>
-              <SheetDescription>Preview your professional resume</SheetDescription>
-            </SheetHeader>
-            <div className="mt-6 space-y-6 bg-white p-8 rounded-lg border">
-              {/* Personal Info */}
-              <div className="text-center border-b pb-6">
-                <h1 className="text-3xl font-bold text-gray-900">{resume.full_name || 'Your Name'}</h1>
-                <p className="text-lg text-gray-600 mt-2">{resume.professional_summary || 'Professional Summary'}</p>
-                <div className="flex justify-center gap-4 mt-4 text-sm text-gray-600 flex-wrap">
+        {/* Professional Resume Preview Dialog */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0">
+            <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-xl font-semibold">Professional Resume</DialogTitle>
+                <DialogDescription>Preview and download your resume</DialogDescription>
+              </div>
+              <Button
+                onClick={() => {
+                  const element = document.getElementById('resume-content');
+                  const opt = {
+                    margin: 0.5,
+                    filename: `${resume.full_name || 'Resume'}_Resume.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+                    jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                  };
+                  
+                  // Using html2pdf library (needs to be added)
+                  if (window.html2pdf) {
+                    window.html2pdf().set(opt).from(element).save();
+                  } else {
+                    // Fallback: print dialog
+                    window.print();
+                  }
+                }}
+                className="bg-slate-700 hover:bg-slate-800 text-white"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download PDF
+              </Button>
+            </div>
+
+            {/* Professional Resume Document */}
+            <div id="resume-content" className="bg-white p-12" style={{ fontFamily: 'Georgia, serif' }}>
+              {/* Header - Name and Contact */}
+              <div className="text-center mb-8 pb-6 border-b-2 border-slate-800">
+                <h1 className="text-4xl font-bold text-slate-900 mb-3" style={{ fontFamily: 'Georgia, serif', letterSpacing: '0.5px' }}>
+                  {resume.full_name || 'YOUR NAME'}
+                </h1>
+                
+                {/* Contact Information */}
+                <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-slate-600" style={{ fontFamily: 'Arial, sans-serif' }}>
                   {resume.email && (
                     <span className="flex items-center gap-1">
-                      <Mail className="w-4 h-4" />
+                      <Mail className="w-3.5 h-3.5" />
                       {resume.email}
                     </span>
                   )}
                   {resume.phone && (
                     <span className="flex items-center gap-1">
-                      <Phone className="w-4 h-4" />
+                      <Phone className="w-3.5 h-3.5" />
                       {resume.phone}
                     </span>
                   )}
-                  {resume.address?.city && (
+                  {resume.address?.city && resume.address?.country && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      {resume.address.city}{resume.address.country ? `, ${resume.address.country}` : ''}
+                      <MapPin className="w-3.5 h-3.5" />
+                      {resume.address.city}, {resume.address.country}
+                    </span>
+                  )}
+                  {resume.linkedin && (
+                    <span className="flex items-center gap-1">
+                      <Linkedin className="w-3.5 h-3.5" />
+                      LinkedIn
+                    </span>
+                  )}
+                  {resume.github && (
+                    <span className="flex items-center gap-1">
+                      <Github className="w-3.5 h-3.5" />
+                      GitHub
                     </span>
                   )}
                 </div>
@@ -2145,35 +2188,125 @@ const Portfolio = () => {
 
               {/* Professional Summary */}
               {resume.professional_summary && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <User className="w-5 h-5" />
-                    Professional Summary
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    PROFESSIONAL SUMMARY
                   </h2>
-                  <p className="text-gray-700 leading-relaxed">{resume.professional_summary}</p>
+                  <p className="text-slate-700 leading-relaxed text-sm" style={{ fontFamily: 'Arial, sans-serif', textAlign: 'justify' }}>
+                    {resume.professional_summary}
+                  </p>
                 </div>
               )}
 
-              {/* Experience */}
-              {resume.experience && resume.experience.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Briefcase className="w-5 h-5" />
-                    Work Experience
+              {/* Skills Section */}
+              {((resume.hard_skills && resume.hard_skills.length > 0) || (resume.soft_skills && resume.soft_skills.length > 0)) && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    SKILLS
                   </h2>
-                  <div className="space-y-4">
+                  <div className="space-y-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    {resume.hard_skills && resume.hard_skills.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-slate-700 text-sm">Technical Skills: </span>
+                        <span className="text-slate-600 text-sm">{resume.hard_skills.join(' • ')}</span>
+                      </div>
+                    )}
+                    {resume.soft_skills && resume.soft_skills.length > 0 && (
+                      <div>
+                        <span className="font-semibold text-slate-700 text-sm">Soft Skills: </span>
+                        <span className="text-slate-600 text-sm">{resume.soft_skills.join(' • ')}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {resume.education && resume.education.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    EDUCATION
+                  </h2>
+                  <div className="space-y-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    {resume.education.map((edu, idx) => (
+                      <div key={idx}>
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 text-sm">{edu.degree || 'Degree'}</h3>
+                            <p className="text-slate-700 text-sm font-medium">{edu.institute}</p>
+                            {edu.faculty && <p className="text-slate-600 text-sm italic">{edu.faculty} {edu.major && `— ${edu.major}`}</p>}
+                          </div>
+                          <div className="text-right">
+                            <p className="text-slate-600 text-sm">
+                              {edu.year_of_graduation ? `Class of ${edu.year_of_graduation}` : 
+                               (edu.start_date ? new Date(edu.start_date).getFullYear() : '')}
+                              {edu.current && ' - Present'}
+                            </p>
+                          </div>
+                        </div>
+                        {edu.gpa && <p className="text-slate-600 text-sm">GPA: {edu.gpa}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Certifications */}
+              {resume.certifications && resume.certifications.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    CERTIFICATIONS
+                  </h2>
+                  <div className="space-y-3" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    {resume.certifications.map((cert, idx) => (
+                      <div key={idx}>
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 text-sm">{cert.name}</h3>
+                            {cert.issuing_organization && <p className="text-slate-700 text-sm">{cert.issuing_organization}</p>}
+                          </div>
+                          {cert.issue_date && (
+                            <p className="text-slate-600 text-sm">
+                              {new Date(cert.issue_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                            </p>
+                          )}
+                        </div>
+                        {cert.credential_id && <p className="text-slate-500 text-xs mt-1">Credential ID: {cert.credential_id}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Work Experience */}
+              {resume.experience && resume.experience.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    WORK EXPERIENCE
+                  </h2>
+                  <div className="space-y-4" style={{ fontFamily: 'Arial, sans-serif' }}>
                     {resume.experience.map((exp, idx) => (
-                      <div key={idx} className="border-l-2 border-orange-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">{exp.job_title}</h3>
-                        <p className="text-gray-600">{exp.company_name}</p>
-                        <p className="text-sm text-gray-500">
-                          {exp.start_date ? new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : ''} - {exp.current ? 'Present' : (exp.end_date ? new Date(exp.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '')}
-                        </p>
-                        {exp.description && <p className="text-gray-700 mt-2">{exp.description}</p>}
+                      <div key={idx}>
+                        <div className="flex justify-between items-start mb-1">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-slate-900 text-sm">{exp.job_title}</h3>
+                            <p className="text-slate-700 text-sm font-medium">{exp.company_name}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-slate-600 text-sm whitespace-nowrap">
+                              {exp.start_date ? new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : ''} 
+                              {' - '}
+                              {exp.current ? 'Present' : (exp.end_date ? new Date(exp.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A')}
+                            </p>
+                          </div>
+                        </div>
+                        {exp.description && (
+                          <p className="text-slate-600 text-sm mt-2 leading-relaxed">{exp.description}</p>
+                        )}
                         {exp.achievements && exp.achievements.length > 0 && (
-                          <ul className="mt-2 space-y-1">
+                          <ul className="mt-2 space-y-1 ml-4">
                             {exp.achievements.map((achievement, i) => (
-                              <li key={i} className="text-sm text-gray-600">• {achievement}</li>
+                              <li key={i} className="text-slate-600 text-sm list-disc">{achievement}</li>
                             ))}
                           </ul>
                         )}
@@ -2183,146 +2316,39 @@ const Portfolio = () => {
                 </div>
               )}
 
-              {/* Education */}
-              {resume.education && resume.education.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <GraduationCap className="w-5 h-5" />
-                    Education
-                  </h2>
-                  <div className="space-y-4">
-                    {resume.education.map((edu, idx) => (
-                      <div key={idx} className="border-l-2 border-blue-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">{edu.degree || edu.major}</h3>
-                        <p className="text-gray-600">{edu.institute}</p>
-                        {edu.faculty && <p className="text-sm text-gray-500">{edu.faculty}</p>}
-                        <p className="text-sm text-gray-500">
-                          {edu.year_of_graduation ? `Class of ${edu.year_of_graduation}` : 
-                           (edu.start_date ? new Date(edu.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '')}
-                          {edu.current && ' - Present'}
-                        </p>
-                        {edu.gpa && <p className="text-sm text-gray-600">GPA: {edu.gpa}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Skills */}
-              {((resume.hard_skills && resume.hard_skills.length > 0) || (resume.soft_skills && resume.soft_skills.length > 0)) && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Award className="w-5 h-5" />
-                    Skills
-                  </h2>
-                  <div className="space-y-3">
-                    {resume.hard_skills && resume.hard_skills.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Technical Skills</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {resume.hard_skills.map((skill, idx) => (
-                            <Badge key={idx} variant="outline" className="px-3 py-1 bg-blue-50">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {resume.soft_skills && resume.soft_skills.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-700 mb-2">Soft Skills</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {resume.soft_skills.map((skill, idx) => (
-                            <Badge key={idx} variant="outline" className="px-3 py-1 bg-green-50">
-                              {skill}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {/* Languages */}
               {resume.languages && resume.languages.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Languages className="w-5 h-5" />
-                    Languages
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    LANGUAGES
                   </h2>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="text-slate-600 text-sm" style={{ fontFamily: 'Arial, sans-serif' }}>
                     {resume.languages.map((lang, idx) => (
-                      <Badge key={idx} className="px-3 py-1">
-                        {lang.language} - {lang.proficiency}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Certifications */}
-              {resume.certifications && resume.certifications.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <Award className="w-5 h-5" />
-                    Certifications
-                  </h2>
-                  <div className="space-y-3">
-                    {resume.certifications.map((cert, idx) => (
-                      <div key={idx} className="border-l-2 border-green-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">{cert.name}</h3>
-                        {cert.issuing_organization && <p className="text-gray-600">{cert.issuing_organization}</p>}
-                        {cert.issue_date && (
-                          <p className="text-sm text-gray-500">
-                            Issued: {new Date(cert.issue_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-                            {cert.expiry_date && ` - Expires: ${new Date(cert.expiry_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`}
-                          </p>
-                        )}
-                        {cert.credential_id && <p className="text-xs text-gray-500 mt-1">ID: {cert.credential_id}</p>}
-                      </div>
+                      <span key={idx}>
+                        {lang.language} — <span className="capitalize">{lang.proficiency}</span>
+                        {idx < resume.languages.length - 1 && ' • '}
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
 
               {/* Projects */}
-              {resume.projects && resume.projects.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <FileText className="w-5 h-5" />
-                    Projects
+              {projects && projects.length > 0 && (
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    PROJECTS
                   </h2>
-                  <div className="space-y-4">
-                    {resume.projects.map((project, idx) => (
-                      <div key={idx} className="border-l-2 border-purple-500 pl-4">
-                        <h3 className="font-semibold text-gray-900">{project.title}</h3>
-                        <p className="text-gray-700 mt-1">{project.description}</p>
-                        {project.tags && (
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {project.tags.split(',').map((tag, i) => (
-                              <Badge key={i} variant="secondary" className="text-xs">
-                                {tag.trim()}
-                              </Badge>
-                            ))}
-                          </div>
-                        )}
-                        {(project.githubUrl || project.liveUrl) && (
-                          <div className="flex gap-3 mt-2 text-sm">
-                            {project.githubUrl && (
-                              <a href={project.githubUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                <Github className="w-4 h-4 inline mr-1" />
-                                GitHub
-                              </a>
-                            )}
-                            {project.liveUrl && (
-                              <a href={project.liveUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                                <ExternalLink className="w-4 h-4 inline mr-1" />
-                                Live Demo
-                              </a>
-                            )}
-                          </div>
-                        )}
+                  <div className="space-y-3" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    {projects.slice(0, 3).map((project, idx) => (
+                      <div key={idx}>
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-semibold text-slate-900 text-sm flex-1">{project.title}</h3>
+                          {project.tags && project.tags.length > 0 && (
+                            <span className="text-slate-500 text-xs ml-2">{project.tags.slice(0, 2).join(', ')}</span>
+                          )}
+                        </div>
+                        <p className="text-slate-600 text-sm mt-1">{project.description}</p>
                       </div>
                     ))}
                   </div>
@@ -2331,27 +2357,26 @@ const Portfolio = () => {
 
               {/* References */}
               {resume.references && resume.references.length > 0 && (
-                <div>
-                  <h2 className="text-xl font-bold text-gray-900 mb-3 flex items-center gap-2">
-                    <User className="w-5 h-5" />
-                    References
+                <div className="mb-6">
+                  <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    REFERENCES
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4" style={{ fontFamily: 'Arial, sans-serif' }}>
                     {resume.references.map((ref, idx) => (
-                      <div key={idx} className="p-4 bg-gray-50 rounded-lg">
-                        <h3 className="font-semibold text-gray-900">{ref.name}</h3>
-                        {ref.title && <p className="text-sm text-gray-600">{ref.title}</p>}
-                        {ref.company && <p className="text-sm text-gray-600">{ref.company}</p>}
-                        {ref.email && <p className="text-xs text-gray-500 mt-1">{ref.email}</p>}
-                        {ref.phone && <p className="text-xs text-gray-500">{ref.phone}</p>}
+                      <div key={idx}>
+                        <h3 className="font-semibold text-slate-900 text-sm">{ref.name}</h3>
+                        {ref.title && <p className="text-slate-700 text-sm">{ref.title}</p>}
+                        {ref.company && <p className="text-slate-600 text-sm">{ref.company}</p>}
+                        {ref.email && <p className="text-slate-500 text-xs mt-1">{ref.email}</p>}
+                        {ref.phone && <p className="text-slate-500 text-xs">{ref.phone}</p>}
                       </div>
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </SheetContent>
-        </Sheet>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
