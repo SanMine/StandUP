@@ -140,7 +140,7 @@ const Landing = () => {
         <div className="flex items-center justify-between h-16 px-6 mx-auto max-w-7xl">
           <div className="flex items-center gap-2">
             <img
-              src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+              src="/src/image/icon.png"
               alt="Stand Up Logo"
               className="w-auto h-10"
             />
@@ -206,7 +206,7 @@ const Landing = () => {
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="space-y-8">
               <div className="inline-block">
-                <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] px-4 py-1.5 text-sm font-medium">
+                <Badge className="rounded-full bg-orange-100 text-orange-600 px-4 py-1.5 text-sm font-semibold shadow-sm hover:bg-orange-100">
                   Career Development Platform
                 </Badge>
               </div>
@@ -573,7 +573,7 @@ const Landing = () => {
           <div className="grid gap-8 mb-8 md:grid-cols-4">
             <div>
               <img
-                src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+                src="/src/image/footer.png"
                 alt="Stand Up Logo"
                 className="w-auto h-10 mb-4"
               />

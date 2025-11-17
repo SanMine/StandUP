@@ -2371,9 +2371,13 @@ const Portfolio = () => {
                           </div>
                           <div className="text-right">
                             <p className="text-slate-600 text-sm">
-                              {edu.year_of_graduation ? `Class of ${edu.year_of_graduation}` : 
-                               (edu.start_date ? new Date(edu.start_date).getFullYear() : '')}
-                              {edu.current && ' - Present'}
+                              {edu.current ? 
+                                `Expected Completion: ${edu.year_of_graduation || (edu.end_date ? new Date(edu.end_date).getFullYear() : 'TBD')}` : 
+                                (edu.start_date && (edu.year_of_graduation || edu.end_date) ? 
+                                  `${new Date(edu.start_date).getFullYear()} - ${edu.year_of_graduation || new Date(edu.end_date).getFullYear()}` : 
+                                  (edu.year_of_graduation || (edu.end_date ? new Date(edu.end_date).getFullYear() : ''))
+                                )
+                              }
                             </p>
                           </div>
                         </div>
