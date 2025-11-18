@@ -300,6 +300,7 @@ const Dashboard = () => {
                     <Progress
                       value={kpisState.profileStrength}
                       className="h-2 mt-4"
+                      indicatorClassName={kpi.progressBarColor}
                     />
                   )}
                 </CardContent>
