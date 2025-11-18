@@ -139,6 +139,18 @@ const Dashboard = () => {
     };
 
     if (authUser) fetchData();
+  }, [authUser, refreshTrigger]);
+
+  // Refresh dashboard data when page becomes visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && authUser) {
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [authUser]);
 
   // Jobs for AI-Matched Opportunities (only fetches match percentages, no detailed analysis)
