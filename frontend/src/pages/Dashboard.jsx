@@ -208,13 +208,19 @@ const Dashboard = () => {
     };
   }, [authUser]);
 
+  // Dynamic color for Profile Strength based on score
+  const profileStrengthColor = getProfileStrengthTextColor(kpisState.profileStrength);
+  const profileStrengthBgColor = getProfileStrengthBgColor(kpisState.profileStrength);
+  const profileStrengthBarColor = getProfileStrengthColor(kpisState.profileStrength);
+
   const kpis = [
     {
       label: 'Profile Strength',
       value: `${kpisState.profileStrength}%`,
       icon: Target,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: profileStrengthColor,
+      bgColor: profileStrengthBgColor,
+      progressBarColor: profileStrengthBarColor,
     },
     {
       label: 'Applications',
