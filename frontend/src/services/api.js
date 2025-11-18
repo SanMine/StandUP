@@ -270,6 +270,8 @@ export const aiAPI = {
 };
 
 // Candidate API calls (Employer only)
+// Updated candidateAPI section for your api.js file
+
 export const candidateAPI = {
   // Get all candidates
   getCandidates: async (params = {}) => {
@@ -280,6 +282,12 @@ export const candidateAPI = {
   // Get single candidate
   getCandidateById: async (id) => {
     const response = await api.get(`/candidates/${id}`);
+    return response.data;
+  },
+
+  // Get top matched candidates (Premium only)
+  getTopMatches: async (params = {}) => {
+    const response = await api.get('/candidates/top-matches', { params });
     return response.data;
   },
 

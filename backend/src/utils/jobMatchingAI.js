@@ -2,6 +2,130 @@ const { generateText } = require('ai');
 const { groq } = require('@ai-sdk/groq');
 
 /**
+ * Calculate AI match analysis for a student against employer's jobs
+ * @param {Object} student - Student user data with skills
+ * @param {Array} jobs - Array of employer's job postings with requirements
+ * @returns {Promise<Object>} - Match analysis with reasons and matched jobs
+ */
+const calculateStudentJobMatch = async (student, jobs) => {
+    try {
+        const systemPrompt = `You are an expert HR analyst and recruitment AI. Analyze candidate profiles against job openings and provide comprehensive qualitative match analysis.
+
+Your assessments are:
+- Data-driven and objective
+- Encouraging yet realistic
+- Focused on growth opportunities
+- Culturally sensitive and professional`;
+
+        const userPrompt = `Analyze this candidate's profile against the employer's job openings and provide a comprehensive match analysis.
+
+CANDIDATE PROFILE:
+Name: ${student.name}
+Email: ${student.email}
+Bio: ${student.bio || 'Not provided'}
+Profile Strength: ${student.profile_strength}%
+Graduation: ${student.graduation ? new Date(student.graduation).toLocaleDateString() : 'Not provided'}
+Primary Goals: ${student.primary_goals?.join(', ') || 'Not provided'}
+Desired Positions: ${student.desired_positions?.join(', ') || 'Not provided'}
+Skills: ${student.skills?.map(s => s.skill_name).join(', ') || 'No skills listed'}
+
+EMPLOYER'S JOB OPENINGS:
+${jobs.map((job, index) => `
+Job ${index + 1}: ${job.title}
+- Company: ${job.company}
+- Type: ${job.type}
+- Mode: ${job.mode}
+- Location: ${job.location}
+- Salary: ${job.salary || 'Not specified'}
+- Description: ${job.description}
+- Requirements: ${job.requirements?.join('; ') || 'Not specified'}
+- Required Skills: ${job.skills?.map(s => s.skill_name).join(', ') || 'Not specified'}
+- Culture: ${job.culture?.join(', ') || 'Not specified'}
+`).join('\n')}
+
+ANALYSIS INSTRUCTIONS:
+1. Identify which specific job(s) the candidate matches with
+2. Provide 3-5 strong reasons why the candidate is a good fit
+3. Provide 3-5 areas where the candidate could improve or develop
+4. Suggest 3-5 key considerations for the employer when evaluating this candidate
+
+Consider these factors:
+- Skills alignment (technical and soft skills)
+- Experience relevance
+- Career goals alignment
+- Location compatibility
+- Job type preferences
+- Culture fit
+- Profile completeness and professionalism
+
+RESPONSE FORMAT (JSON only):
+{
+  "matched_jobs": ["Job 1: Senior Frontend Developer", "Job 2: Full Stack Engineer"],
+  "strong_match_reasons": [
+    "Strong proficiency in React and TypeScript matches job requirements perfectly",
+    "Career goals align with frontend development positions",
+    "Profile demonstrates commitment to continuous learning"
+  ],
+  "areas_to_improve": [
+    "Limited experience with Docker and Kubernetes mentioned in job requirements",
+    "No formal certifications in cloud technologies",
+    "Could benefit from more experience in team leadership roles"
+  ],
+  "key_considerations": [
+    "Candidate shows strong technical foundation but may need mentorship in DevOps practices",
+    "High culture fit based on emphasis on collaboration and innovation",
+    "Location flexibility makes candidate suitable for remote position"
+  ]
+}
+
+Respond with ONLY valid JSON. No additional text or markdown formatting.`;
+
+        const { text } = await generateText({
+            model: groq('llama-3.3-70b-versatile'),
+            prompt: userPrompt,
+            system: systemPrompt,
+            maxTokens: 2000,
+            temperature: 0.5
+        });
+
+        // Parse JSON response
+        let matchData;
+        try {
+            // Clean up any markdown formatting
+            let cleanText = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+            matchData = JSON.parse(cleanText);
+        } catch (parseError) {
+            console.error('Failed to parse AI response:', text);
+            throw new Error('Invalid AI response format');
+        }
+
+        // Validate response structure
+        if (!Array.isArray(matchData.matched_jobs)) {
+            console.error('Invalid match data structure:', matchData);
+            throw new Error('Invalid match data structure');
+        }
+
+        return {
+            matched_jobs: matchData.matched_jobs || [],
+            strong_match_reasons: matchData.strong_match_reasons || [],
+            areas_to_improve: matchData.areas_to_improve || [],
+            key_considerations: matchData.key_considerations || []
+        };
+
+    } catch (error) {
+        console.error('Error calculating student job match:', error);
+
+        // Return default structure on error
+        return {
+            matched_jobs: [],
+            strong_match_reasons: ['Unable to calculate match at this time'],
+            areas_to_improve: ['Analysis unavailable'],
+            key_considerations: ['Please try again later']
+        };
+    }
+};
+
+/**
  * Creates the system prompt for job matching AI (match percentage only)
  */
 const createMatchPercentageSystemPrompt = () => {
@@ -340,5 +464,6 @@ module.exports = {
     createFullAnalysisSystemPrompt,
     createFullAnalysisPrompt,
     parseMatchPercentageResponse,
-    parseFullAnalysisResponse
+    parseFullAnalysisResponse,
+    calculateStudentJobMatch
 };

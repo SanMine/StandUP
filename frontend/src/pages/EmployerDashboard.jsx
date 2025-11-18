@@ -16,14 +16,17 @@ import {
   Star,
   CheckCircle2,
   Edit,
-  Trash2
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import EmployerLayout from '../components/Layout/EmployerLayout';
 import JobModal from '../components/JobModal';
-import { jobsAPI } from '../services/api';
+import CandidateDetailsModal from '../components/CandidateDetailsModal';
+import { jobsAPI, candidateAPI } from '../services/api';
 import { toast } from 'sonner';
 import api from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { getMatchColor, getMatchBgColor } from '../lib/utils';
 
 const EmployerDashboard = () => {
   const navigate = useNavigate();
@@ -37,9 +40,18 @@ const EmployerDashboard = () => {
   const [isFetchingJobs, setIsFetchingJobs] = useState(true);
   const [showAllJobs, setShowAllJobs] = useState(false);
 
+  // Top Candidates State
+  const [topCandidates, setTopCandidates] = useState([]);
+  const [isFetchingCandidates, setIsFetchingCandidates] = useState(false);
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [isCandidateModalOpen, setIsCandidateModalOpen] = useState(false);
+
   useEffect(() => {
     fetchJobs();
-  }, []);
+    if (currentUser?.plan === 'premium') {
+      fetchTopCandidates();
+    }
+  }, [currentUser?.plan]);
 
   const fetchJobs = async () => {
     try {
@@ -53,6 +65,23 @@ const EmployerDashboard = () => {
       toast.error('Failed to fetch jobs');
     } finally {
       setIsFetchingJobs(false);
+    }
+  };
+
+  const fetchTopCandidates = async () => {
+    try {
+      setIsFetchingCandidates(true);
+      const response = await candidateAPI.getTopMatches({ limit: 3 });
+      if (response.success) {
+        setTopCandidates(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching top candidates:', error);
+      if (error.response?.status !== 403) {
+        toast.error('Failed to fetch top matched candidates');
+      }
+    } finally {
+      setIsFetchingCandidates(false);
     }
   };
 
@@ -115,12 +144,22 @@ const EmployerDashboard = () => {
       setIsModalOpen(false);
       setSelectedJob(null);
       fetchJobs();
+
+      // Refresh candidates if premium
+      if (currentUser?.plan === 'premium') {
+        fetchTopCandidates();
+      }
     } catch (error) {
       console.error('Error submitting job:', error);
       toast.error(error.response?.data?.error?.message || 'Failed to save job');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleViewCandidate = (candidate) => {
+    setSelectedCandidate(candidate);
+    setIsCandidateModalOpen(true);
   };
 
   const kpis = [
@@ -130,35 +169,38 @@ const EmployerDashboard = () => {
     { label: 'Closed Jobs', value: jobs.filter(j => j.status === 'closed').length.toString(), icon: TrendingUp, color: 'text-purple-600', bgColor: 'bg-purple-100' }
   ];
 
-  const topCandidates = [
+  // Dummy data for non-premium users
+  const dummyCandidates = [
     {
-      id: 'cand-1',
+      id: 'dummy-1',
       name: 'Sarah Johnson',
       avatar: 'https://images.unsplash.com/photo-1580894732444-8ecded7900cd',
       role: 'Frontend Developer',
-      matchScore: 95,
+      match_percentage: 95,
       skills: ['React', 'TypeScript', 'Node.js'],
       location: 'Bangkok'
     },
     {
-      id: 'cand-2',
+      id: 'dummy-2',
       name: 'Michael Chen',
       avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7',
       role: 'Backend Engineer',
-      matchScore: 92,
+      match_percentage: 92,
       skills: ['Python', 'PostgreSQL', 'Docker'],
       location: 'Remote'
     },
     {
-      id: 'cand-3',
+      id: 'dummy-3',
       name: 'Emily Rodriguez',
       avatar: 'https://images.unsplash.com/photo-1571260899304-425eee4c7efc',
       role: 'Product Designer',
-      matchScore: 88,
+      match_percentage: 88,
       skills: ['Figma', 'UI/UX', 'Prototyping'],
       location: 'Chiang Mai'
     }
   ];
+
+  const displayCandidates = currentUser?.plan === 'premium' ? topCandidates : dummyCandidates;
 
   return (
     <EmployerLayout user={currentUser}>
@@ -366,44 +408,75 @@ const EmployerDashboard = () => {
                   </div>
                 )}
                 <div className={currentUser?.plan !== 'premium' ? 'blur-sm pointer-events-none' : ''}>
-                  {topCandidates.map((candidate) => (
-                    <div
-                      key={candidate.id}
-                      className="p-4 bg-[#FFFDFA] rounded-lg hover:bg-[#FFE4CC]/30 transition-colors cursor-pointer"
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        <Avatar className="h-12 w-12 border-2 border-[#FFE4CC]">
-                          <AvatarImage src={candidate.avatar} alt={candidate.name} />
-                          <AvatarFallback>{candidate.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-[#0F151D] text-sm">{candidate.name}</h4>
-                          <p className="text-xs text-[#4B5563]">{candidate.role}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold text-green-600">{candidate.matchScore}%</div>
-                          <p className="text-xs text-[#4B5563]">match</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {candidate.skills.map((skill) => (
-                          <Badge key={skill} variant="outline" className="text-xs">
-                            {skill}
-                          </Badge>
-                        ))}
-                      </div>
-                      <p className="text-xs text-[#4B5563] mb-3">{candidate.location}</p>
-                      <div className="flex gap-2">
-                        <Button size="sm" className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-8 text-xs">
-                          <Eye className="w-3 h-3 mr-1" />
-                          View Profile
-                        </Button>
-                        <Button size="sm" variant="outline" className="w-8 h-8 p-0">
-                          <Mail className="w-3 h-3" />
-                        </Button>
-                      </div>
+                  {isFetchingCandidates ? (
+                    <div className="flex flex-col items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-[#FF7000] mb-2" />
+                      <p className="text-sm text-[#4B5563]">Analyzing candidates...</p>
                     </div>
-                  ))}
+                  ) : displayCandidates.length === 0 ? (
+                    <div className="py-8 text-center">
+                      <Users className="w-12 h-12 text-[#4B5563] mx-auto mb-3" />
+                      <p className="text-sm text-[#4B5563]">
+                        No matched candidates yet. Post active jobs to get AI recommendations.
+                      </p>
+                    </div>
+                  ) : (
+                    displayCandidates.map((candidate) => {
+                      const matchScore = candidate.match_percentage || 0;
+                      return (
+                        <div
+                          key={candidate.id}
+                          className="p-4 bg-[#FFFDFA] rounded-lg hover:bg-[#FFE4CC]/30 transition-colors"
+                        >
+                          <div className="flex items-start gap-3 mb-3">
+                            <Avatar className="h-12 w-12 border-2 border-[#FFE4CC]">
+                              <AvatarImage src={candidate.avatar} alt={candidate.name} />
+                              <AvatarFallback className="bg-[#E8F0FF] text-[#284688]">
+                                {candidate.name?.charAt(0) || 'C'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-[#0F151D] text-sm">{candidate.name}</h4>
+                              <p className="text-xs text-[#4B5563]">
+                                {candidate.desired_positions?.[0] || candidate.role || 'Candidate'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {(candidate.skills || []).slice(0, 3).map((skill, idx) => (
+                              <Badge key={idx} variant="outline" className="text-xs">
+                                {skill}
+                              </Badge>
+                            ))}
+                            {candidate.skills?.length > 3 && (
+                              <Badge variant="outline" className="text-xs">
+                                +{candidate.skills.length - 3}
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-8 text-xs"
+                              onClick={() => handleViewCandidate(candidate)}
+                              disabled={currentUser?.plan !== 'premium'}
+                            >
+                              <Eye className="w-3 h-3 mr-1" />
+                              See Details
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-8 h-8 p-0"
+                              disabled={currentUser?.plan !== 'premium'}
+                            >
+                              <Mail className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -421,9 +494,13 @@ const EmployerDashboard = () => {
                     <Plus className="w-4 h-4 mr-2" />
                     Post New Job
                   </Button>
-                  <Button variant="outline" className="justify-start w-full bg-white">
+                  <Button
+                    variant="outline"
+                    className="justify-start w-full bg-white"
+                    onClick={() => navigate('/employer/candidates')}
+                  >
                     <Users className="w-4 h-4 mr-2" />
-                    Search Candidates
+                    View All Candidates
                   </Button>
                   <Button variant="outline" className="justify-start w-full bg-white">
                     <TrendingUp className="w-4 h-4 mr-2" />
@@ -446,6 +523,16 @@ const EmployerDashboard = () => {
         onSubmit={handleJobSubmit}
         initialData={selectedJob}
         isLoading={isLoading}
+      />
+
+      {/* Candidate Details Modal */}
+      <CandidateDetailsModal
+        open={isCandidateModalOpen}
+        onClose={() => {
+          setIsCandidateModalOpen(false);
+          setSelectedCandidate(null);
+        }}
+        candidate={selectedCandidate}
       />
     </EmployerLayout>
   );

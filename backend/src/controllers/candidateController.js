@@ -1,4 +1,6 @@
-const { Candidate, Application, User, Job, Resume } = require('../models');
+const { Candidate, Application, User, Job, Resume, UserSkill, JobSkill } = require('../models');
+const { calculateStudentJobMatch } = require('../utils/jobMatchingAI');
+
 /**
  * Get all candidates for employer
  * @route GET /api/candidates
@@ -122,101 +124,14 @@ const getCandidateById = async (req, res, next) => {
 };
 
 /**
- * Calculate match score using AI
- * @param {Object} studentData - Student profile and resume data
- * @param {Array} jobs - Employer's job postings
- * @returns {Promise<number>} - Match score percentage (0-100)
- */
-const calculateAIMatchScore = async (studentData, jobs) => {
-  try {
-    const prompt = `You are an expert HR analyst and recruitment AI. Analyze the candidate's profile and calculate their overall match percentage with the given job openings.
-
-CANDIDATE PROFILE:
-Name: ${studentData.name}
-Bio: ${studentData.bio || 'Not provided'}
-Profile Strength: ${studentData.profile_strength}%
-Graduation: ${studentData.graduation || 'Not provided'}
-Primary Goals: ${studentData.primary_goals?.join(', ') || 'Not provided'}
-Desired Positions: ${studentData.desired_positions?.join(', ') || 'Not provided'}
-
-RESUME DATA:
-${studentData.resume ? `
-Skills: ${studentData.resume.skills?.join(', ') || 'Not provided'}
-Education: ${studentData.resume.education?.map(edu => `${edu.degree} in ${edu.field_of_study} from ${edu.institution}`).join('; ') || 'Not provided'}
-Experience: ${studentData.resume.experience?.map(exp => `${exp.title} at ${exp.company} (${exp.duration || 'Duration not specified'})`).join('; ') || 'Not provided'}
-Projects: ${studentData.resume.projects?.map(proj => proj.name).join(', ') || 'Not provided'}
-Certifications: ${studentData.resume.certifications?.join(', ') || 'Not provided'}
-` : 'No resume uploaded'}
-
-AVAILABLE JOB OPENINGS:
-${jobs.map((job, index) => `
-Job ${index + 1}:
-- Title: ${job.title}
-- Type: ${job.type}
-- Mode: ${job.mode}
-- Location: ${job.location}
-- Description: ${job.description}
-- Requirements: ${job.requirements || 'Not specified'}
-- Skills Required: ${job.skills_required?.join(', ') || 'Not specified'}
-`).join('\n')}
-
-INSTRUCTIONS:
-1. Analyze how well the candidate's skills, experience, education, and goals match with ALL the job openings
-2. Consider factors like:
-   - Skills alignment
-   - Experience relevance
-   - Education fit
-   - Career goals alignment
-   - Location compatibility
-   - Job type preferences
-3. Calculate an overall match score considering the BEST matching job among all openings
-4. Return ONLY a single number between 0 and 100 representing the match percentage
-5. Be realistic and fair in your assessment
-
-RESPONSE FORMAT:
-Return ONLY the numeric match score (0-100). No explanations, no text, just the number.
-
-Example valid responses: 85, 72, 91, 45
-
-Match Score:`;
-
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      model: 'llama-3.3-70b-versatile',
-      temperature: 0.3,
-      max_tokens: 10,
-    });
-
-    const responseText = completion.choices[0]?.message?.content?.trim();
-    const matchScore = parseInt(responseText);
-
-    // Validate the score
-    if (isNaN(matchScore) || matchScore < 0 || matchScore > 100) {
-      console.warn(`Invalid match score received: ${responseText}. Defaulting to 0`);
-      return 0;
-    }
-
-    return matchScore;
-  } catch (error) {
-    console.error('Error calculating AI match score:', error);
-    return 0; // Default to 0 if AI fails
-  }
-};
-
-/**
  * Get top matched candidates using AI
  * @route GET /api/candidates/top-matches
- * @access Private (Employer only)
+ * @access Private (Employer only - Premium required)
  */
 const getTopMatchedCandidates = async (req, res, next) => {
   try {
     const employerId = req.user.userId;
-    const { limit = 10 } = req.query;
+    const { limit = 3 } = req.query;
 
     // Check if employer has premium plan
     const employer = await User.findById(employerId);
@@ -230,11 +145,11 @@ const getTopMatchedCandidates = async (req, res, next) => {
       });
     }
 
-    // Get all employer's active jobs
+    // Get all employer's active jobs with skills
     const jobs = await Job.find({
       employer_id: employerId,
       status: 'active'
-    });
+    }).lean();
 
     if (jobs.length === 0) {
       return res.status(200).json({
@@ -244,6 +159,17 @@ const getTopMatchedCandidates = async (req, res, next) => {
         message: 'No active jobs found. Please post jobs to get matched candidates.'
       });
     }
+
+    // Fetch skills for each job
+    const jobsWithSkills = await Promise.all(
+      jobs.map(async (job) => {
+        const skills = await JobSkill.find({ job_id: job._id }).lean();
+        return {
+          ...job,
+          skills
+        };
+      })
+    );
 
     // Get all student users
     const students = await User.find({ role: 'student' })
@@ -259,21 +185,46 @@ const getTopMatchedCandidates = async (req, res, next) => {
       });
     }
 
-    // Fetch resumes for all students and calculate match scores
-    const candidatesWithScores = await Promise.all(
+    console.log(`Analyzing ${students.length} students against ${jobsWithSkills.length} jobs...`);
+
+    // Fetch skills and calculate AI match for each student
+    const candidatesWithAnalysis = await Promise.all(
       students.map(async (student) => {
         try {
-          // Fetch resume
-          const resume = await Resume.findOne({ user_id: student._id }).lean();
+          // Fetch student's skills
+          const userSkills = await UserSkill.find({ user_id: student._id }).lean();
 
-          // Prepare student data with resume
+          // Calculate simple skill-based match percentage
+          let matchPercentage = 0;
+          if (userSkills.length > 0 && jobsWithSkills.length > 0) {
+            // Find best matching job based on skills
+            const userSkillNames = new Set(userSkills.map(s => s.skill_name.toLowerCase()));
+
+            let bestMatch = 0;
+            for (const job of jobsWithSkills) {
+              if (job.skills && job.skills.length > 0) {
+                const jobSkillNames = job.skills.map(s => s.skill_name.toLowerCase());
+                const matchingSkills = jobSkillNames.filter(skill => userSkillNames.has(skill));
+                const currentMatch = Math.round((matchingSkills.length / jobSkillNames.length) * 100);
+                bestMatch = Math.max(bestMatch, currentMatch);
+              }
+            }
+            matchPercentage = bestMatch;
+          }
+
+          // Skip candidates with 0 match
+          if (matchPercentage === 0) {
+            return null;
+          }
+
+          // Prepare student data with skills
           const studentData = {
             ...student,
-            resume
+            skills: userSkills
           };
 
-          // Calculate AI match score
-          const matchScore = await calculateAIMatchScore(studentData, jobs);
+          // Get AI analysis (reasons, improvements, considerations)
+          const matchAnalysis = await calculateStudentJobMatch(studentData, jobsWithSkills);
 
           return {
             id: student._id,
@@ -285,10 +236,12 @@ const getTopMatchedCandidates = async (req, res, next) => {
             graduation: student.graduation,
             primary_goals: student.primary_goals,
             desired_positions: student.desired_positions,
-            skills: resume?.skills || [],
-            location: resume?.personal_info?.location || 'Not specified',
-            match_score: matchScore,
-            resume: resume
+            skills: userSkills.map(s => s.skill_name),
+            match_percentage: matchPercentage, // From skill matching calculation
+            matched_jobs: matchAnalysis.matched_jobs,
+            strong_match_reasons: matchAnalysis.strong_match_reasons,
+            areas_to_improve: matchAnalysis.areas_to_improve,
+            key_considerations: matchAnalysis.key_considerations
           };
         } catch (error) {
           console.error(`Error processing student ${student._id}:`, error);
@@ -297,15 +250,16 @@ const getTopMatchedCandidates = async (req, res, next) => {
       })
     );
 
-    // Filter out nulls and candidates with 0 match score
-    const validCandidates = candidatesWithScores
-      .filter(candidate => candidate !== null && candidate.match_score > 0);
+    // Filter out nulls
+    const validCandidates = candidatesWithAnalysis.filter(candidate => candidate !== null);
 
-    // Sort by match score descending
-    validCandidates.sort((a, b) => b.match_score - a.match_score);
+    // Sort by match percentage descending
+    validCandidates.sort((a, b) => b.match_percentage - a.match_percentage);
 
     // Limit results
     const topCandidates = validCandidates.slice(0, parseInt(limit));
+
+    console.log(`Returning top ${topCandidates.length} matched candidates`);
 
     return res.status(200).json({
       success: true,
