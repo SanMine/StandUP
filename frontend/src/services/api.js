@@ -313,9 +313,21 @@ export const candidateAPI = {
     return response.data;
   },
 
+  // Update interview link
+  updateInterviewLink: async (id, interview_link, interview_date) => {
+    const response = await api.put(`/candidates/${id}/interview-link`, { interview_link, interview_date });
+    return response.data;
+  },
+
   // Get statistics
   getStats: async () => {
     const response = await api.get('/candidates/stats');
+    return response.data;
+  },
+
+  // Delete candidate
+  deleteCandidate: async (id) => {
+    const response = await api.delete(`/candidates/${id}`);
     return response.data;
   }
 };

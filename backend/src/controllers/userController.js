@@ -125,8 +125,8 @@ const updateProfile = async (req, res, next) => {
 // Get dashboard stats
 const getDashboardStats = async (req, res, next) => {
   try {
-    const userId = req.session.userId;
-    const userRole = req.session.userRole;
+    const userId = req.user.userId;
+    const userRole = req.user.role;
 
     if (userRole === 'student') {
       // Student dashboard stats
@@ -186,7 +186,7 @@ const onboarding = async (req, res, next) => {
   session.startTransaction();
   
   try {
-    const user = await User.findById(req.session.userId).session(session);
+    const user = await User.findById(req.user.userId).session(session);
     if (!user) {
       await session.abortTransaction();
       session.endSession();

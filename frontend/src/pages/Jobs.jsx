@@ -4,7 +4,6 @@ import {
   Briefcase,
   Building,
   Crown,
-  DollarSign,
   Filter,
   Lock,
   MapPin,
@@ -325,7 +324,7 @@ const Jobs = () => {
                                 {job.mode}
                               </span>
                               <span className="flex items-center gap-1">
-                                <DollarSign className="w-4 h-4" />
+                                <span className="text-base font-semibold">฿</span>
                                 {job.salary}
                               </span>
                             </div>

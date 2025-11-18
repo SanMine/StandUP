@@ -37,7 +37,17 @@ import {
   Clock,
   XCircle,
   Award,
-  GraduationCap
+  GraduationCap,
+  FileText,
+  Code,
+  Globe,
+  Github,
+  Languages,
+  Building2,
+  BookOpen,
+  Trash2,
+  Paperclip,
+  Download
 } from 'lucide-react';
 import { candidateAPI } from '../services/api';
 import { toast } from 'sonner';
@@ -59,6 +69,9 @@ const Candidates = () => {
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [notes, setNotes] = useState('');
   const [stats, setStats] = useState(null);
+  const [candidateInterviewLinks, setCandidateInterviewLinks] = useState({});
+  const [candidateInterviewDates, setCandidateInterviewDates] = useState({});
+  const [candidateInterviewTimes, setCandidateInterviewTimes] = useState({});
 
   // Status configurations with colors
   const statusConfig = {
@@ -70,6 +83,15 @@ const Candidates = () => {
     offer_extended: { label: 'Offer Extended', color: 'bg-green-100 text-green-700', icon: Award },
     hired: { label: 'Hired', color: 'bg-green-200 text-green-800', icon: CheckCircle2 },
     rejected: { label: 'Rejected', color: 'bg-red-100 text-red-700', icon: XCircle }
+  };
+
+  // Statuses available for manual selection (excludes auto-managed statuses)
+  const manualStatusConfig = {
+    interview_scheduled: statusConfig.interview_scheduled,
+    interviewed: statusConfig.interviewed,
+    offer_extended: statusConfig.offer_extended,
+    hired: statusConfig.hired,
+    rejected: statusConfig.rejected
   };
 
   useEffect(() => {
@@ -149,11 +171,68 @@ const Candidates = () => {
     }
   };
 
+  const handleSaveInterviewLink = async (candidateId) => {
+    // Get the current candidate to check for existing values
+    const candidate = candidates.find(c => c._id === candidateId);
+    const interviewLink = candidateInterviewLinks[candidateId] || candidate?.interview_link || '';
+    const interviewDate = candidateInterviewDates[candidateId] || (candidate?.interview_date ? new Date(candidate.interview_date).toISOString().split('T')[0] : '');
+    const interviewTime = candidateInterviewTimes[candidateId] || (candidate?.interview_date ? new Date(candidate.interview_date).toTimeString().slice(0, 5) : '');
+
+    if (!interviewLink || !interviewLink.trim()) {
+      toast.error('Please enter an interview link');
+      return;
+    }
+
+    if (!interviewDate || !interviewTime) {
+      toast.error('Please enter interview date and time');
+      return;
+    }
+
+    try {
+      // Combine date and time into ISO string
+      const dateTimeString = `${interviewDate}T${interviewTime}`;
+      await candidateAPI.updateInterviewLink(candidateId, interviewLink, dateTimeString);
+      toast.success('Interview details saved successfully');
+      fetchCandidates();
+      // Clear the input fields
+      setCandidateInterviewLinks(prev => ({ ...prev, [candidateId]: '' }));
+      setCandidateInterviewDates(prev => ({ ...prev, [candidateId]: '' }));
+      setCandidateInterviewTimes(prev => ({ ...prev, [candidateId]: '' }));
+    } catch (error) {
+      console.error('Error saving interview details:', error);
+      toast.error('Failed to save interview details');
+    }
+  };
+
+  const handleDeleteCandidate = async (candidateId, candidateName) => {
+    if (!window.confirm(`Are you sure you want to delete ${candidateName}? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await candidateAPI.deleteCandidate(candidateId);
+      toast.success('Candidate deleted successfully');
+      fetchCandidates();
+      if (selectedCandidate?._id === candidateId) {
+        setDetailsOpen(false);
+        setSelectedCandidate(null);
+      }
+    } catch (error) {
+      console.error('Error deleting candidate:', error);
+      toast.error('Failed to delete candidate');
+    }
+  };
+
   const openCandidateDetails = async (candidate) => {
     try {
       const response = await candidateAPI.getCandidateById(candidate._id);
       setSelectedCandidate(response.data);
       setDetailsOpen(true);
+      
+      // Auto-update status to 'reviewing' if currently 'new'
+      if (candidate.status === 'new') {
+        await handleStatusChange(candidate._id, 'reviewing');
+      }
     } catch (error) {
       console.error('Error fetching candidate details:', error);
       toast.error('Failed to load candidate details');
@@ -207,11 +286,11 @@ const Candidates = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-[#4B5563] mb-1">Shortlisted</p>
-                    <p className="text-2xl font-bold text-[#0F151D]">{stats.byStatus?.shortlisted || 0}</p>
+                    <p className="text-sm text-[#4B5563] mb-1">Reviewing</p>
+                    <p className="text-2xl font-bold text-[#0F151D]">{stats.byStatus?.reviewing || 0}</p>
                   </div>
-                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg">
-                    <Star className="w-6 h-6 text-purple-600" />
+                  <div className="flex items-center justify-center w-12 h-12 bg-yellow-100 rounded-lg">
+                    <Eye className="w-6 h-6 text-yellow-600" />
                   </div>
                 </div>
               </CardContent>
@@ -272,7 +351,6 @@ const Candidates = () => {
                   <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="new">New</SelectItem>
                   <SelectItem value="reviewing">Reviewing</SelectItem>
-                  <SelectItem value="shortlisted">Shortlisted</SelectItem>
                   <SelectItem value="interview_scheduled">Interview Scheduled</SelectItem>
                   <SelectItem value="interviewed">Interviewed</SelectItem>
                   <SelectItem value="offer_extended">Offer Extended</SelectItem>
@@ -384,16 +462,65 @@ const Candidates = () => {
                             onValueChange={(value) => handleStatusChange(candidate._id, value)}
                           >
                             <SelectTrigger className="w-[180px] h-8 text-xs">
-                              <SelectValue />
+                              <SelectValue placeholder="Update status" />
                             </SelectTrigger>
                             <SelectContent>
-                              {Object.entries(statusConfig).map(([key, config]) => (
+                              {Object.entries(manualStatusConfig).map(([key, config]) => (
                                 <SelectItem key={key} value={key}>
                                   {config.label}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+
+                          {candidate.status === 'interview_scheduled' && (
+                            <div className="flex flex-col gap-2 w-full">
+                              {/* Date and Time - Stacked Vertically */}
+                              <div className="flex gap-2">
+                                <Input
+                                  type="date"
+                                  placeholder="Date"
+                                  value={candidateInterviewDates[candidate._id] || (candidate.interview_date ? new Date(candidate.interview_date).toISOString().split('T')[0] : '')}
+                                  onChange={(e) => setCandidateInterviewDates({
+                                    ...candidateInterviewDates,
+                                    [candidate._id]: e.target.value
+                                  })}
+                                  className="h-8 text-xs flex-1"
+                                />
+                                <Input
+                                  type="time"
+                                  placeholder="Time"
+                                  value={candidateInterviewTimes[candidate._id] || (candidate.interview_date ? new Date(candidate.interview_date).toTimeString().slice(0, 5) : '')}
+                                  onChange={(e) => setCandidateInterviewTimes({
+                                    ...candidateInterviewTimes,
+                                    [candidate._id]: e.target.value
+                                  })}
+                                  className="h-8 text-xs flex-1"
+                                />
+                              </div>
+                              
+                              {/* Link and Save Button - Horizontal */}
+                              <div className="flex gap-2">
+                                <Input
+                                  placeholder="Meeting link (e.g., Google Meet)"
+                                  value={candidateInterviewLinks[candidate._id] || candidate.interview_link || ''}
+                                  onChange={(e) => setCandidateInterviewLinks({
+                                    ...candidateInterviewLinks,
+                                    [candidate._id]: e.target.value
+                                  })}
+                                  className="h-8 text-xs flex-1"
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleSaveInterviewLink(candidate._id)}
+                                  className="h-8 whitespace-nowrap bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
+                                >
+                                  Save
+                                </Button>
+                              </div>
+                            </div>
+                          )}
 
                           <Button
                             size="sm"
@@ -402,6 +529,15 @@ const Candidates = () => {
                           >
                             <MessageSquare className="w-3 h-3 mr-1" />
                             Notes
+                          </Button>
+
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteCandidate(candidate._id, candidate.user_id?.name)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-3 h-3" />
                           </Button>
 
                           <div className="flex gap-1">
@@ -509,6 +645,339 @@ const Candidates = () => {
                       </p>
                     </div>
                   </div>
+
+                  {/* Interview Link */}
+                  {selectedCandidate.status === 'interview_scheduled' && selectedCandidate.interview_link && (
+                    <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                      <div className="flex items-start gap-2 mb-3">
+                        <Calendar className="w-5 h-5 text-indigo-600 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-[#0F151D] mb-1">Interview Scheduled</p>
+                          {selectedCandidate.interview_date && (
+                            <p className="text-sm text-[#4B5563] mb-2">
+                              {new Date(selectedCandidate.interview_date).toLocaleString('en-US', {
+                                weekday: 'long',
+                                year: 'numeric',
+                                month: 'long',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          )}
+                          <a
+                            href={selectedCandidate.interview_link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-sm text-[#FF7000] hover:underline break-all"
+                          >
+                            <Globe className="w-4 h-4" />
+                            Join Meeting
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resume Information */}
+                  {selectedCandidate.resume && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <h4 className="font-semibold text-[#0F151D] flex items-center gap-2">
+                        <FileText className="w-5 h-5" />
+                        Resume Details
+                      </h4>
+
+                      {/* Contact Information */}
+                      {(selectedCandidate.resume.phone || selectedCandidate.resume.email || selectedCandidate.resume.address?.city) && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2">Contact Information</h5>
+                          <div className="space-y-2 text-sm text-[#4B5563]">
+                            {selectedCandidate.resume.phone && (
+                              <p className="flex items-center gap-2">
+                                <Phone className="w-4 h-4" />
+                                {selectedCandidate.resume.phone}
+                              </p>
+                            )}
+                            {selectedCandidate.resume.email && (
+                              <p className="flex items-center gap-2">
+                                <Mail className="w-4 h-4" />
+                                {selectedCandidate.resume.email}
+                              </p>
+                            )}
+                            {selectedCandidate.resume.address?.city && (
+                              <p className="flex items-center gap-2">
+                                <MapPin className="w-4 h-4" />
+                                {[
+                                  selectedCandidate.resume.address.city,
+                                  selectedCandidate.resume.address.state,
+                                  selectedCandidate.resume.address.country
+                                ].filter(Boolean).join(', ')}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Professional Summary */}
+                      {selectedCandidate.resume.professional_summary && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2">Professional Summary</h5>
+                          <p className="text-sm text-[#4B5563] whitespace-pre-wrap">
+                            {selectedCandidate.resume.professional_summary}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Education */}
+                      {selectedCandidate.resume.education && selectedCandidate.resume.education.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2 flex items-center gap-2">
+                            <GraduationCap className="w-4 h-4" />
+                            Education
+                          </h5>
+                          <div className="space-y-3">
+                            {selectedCandidate.resume.education.map((edu, idx) => (
+                              <div key={idx} className="bg-[#F9FAFB] p-3 rounded-lg">
+                                <p className="font-semibold text-[#0F151D]">{edu.degree} {edu.major && `in ${edu.major}`}</p>
+                                <p className="text-sm text-[#4B5563]">{edu.institute}</p>
+                                {edu.gpa && <p className="text-sm text-[#4B5563]">GPA: {edu.gpa}</p>}
+                                {edu.year_of_graduation && (
+                                  <p className="text-sm text-[#4B5563]">Graduated: {edu.year_of_graduation}</p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Skills */}
+                      {((selectedCandidate.resume.hard_skills && selectedCandidate.resume.hard_skills.length > 0) ||
+                        (selectedCandidate.resume.soft_skills && selectedCandidate.resume.soft_skills.length > 0)) && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2 flex items-center gap-2">
+                            <Award className="w-4 h-4" />
+                            Skills
+                          </h5>
+                          <div className="space-y-2">
+                            {selectedCandidate.resume.hard_skills && selectedCandidate.resume.hard_skills.length > 0 && (
+                              <div>
+                                <p className="text-xs font-semibold text-[#4B5563] mb-1">Technical Skills</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedCandidate.resume.hard_skills.map((skill, idx) => (
+                                    <Badge key={idx} variant="secondary" className="bg-blue-100 text-blue-700">
+                                      {skill}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {selectedCandidate.resume.soft_skills && selectedCandidate.resume.soft_skills.length > 0 && (
+                              <div>
+                                <p className="text-xs font-semibold text-[#4B5563] mb-1">Soft Skills</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedCandidate.resume.soft_skills.map((skill, idx) => (
+                                    <Badge key={idx} variant="secondary" className="bg-green-100 text-green-700">
+                                      {skill}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Work Experience */}
+                      {selectedCandidate.resume.experience && selectedCandidate.resume.experience.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2 flex items-center gap-2">
+                            <Briefcase className="w-4 h-4" />
+                            Work Experience
+                          </h5>
+                          <div className="space-y-3">
+                            {selectedCandidate.resume.experience.map((exp, idx) => (
+                              <div key={idx} className="bg-[#F9FAFB] p-3 rounded-lg">
+                                <p className="font-semibold text-[#0F151D]">{exp.job_title}</p>
+                                <p className="text-sm text-[#4B5563] flex items-center gap-1">
+                                  <Building2 className="w-3 h-3" />
+                                  {exp.company_name} • {exp.employment_type}
+                                </p>
+                                <p className="text-xs text-[#4B5563] mt-1">
+                                  {exp.start_date ? new Date(exp.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'} - 
+                                  {exp.current ? ' Present' : (exp.end_date ? ' ' + new Date(exp.end_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : ' N/A')}
+                                </p>
+                                {exp.description && (
+                                  <p className="text-sm text-[#4B5563] mt-2 whitespace-pre-wrap">{exp.description}</p>
+                                )}
+                                {exp.achievements && exp.achievements.length > 0 && (
+                                  <ul className="list-disc list-inside text-sm text-[#4B5563] mt-2 space-y-1">
+                                    {exp.achievements.map((achievement, achIdx) => (
+                                      <li key={achIdx}>{achievement}</li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Languages */}
+                      {selectedCandidate.resume.languages && selectedCandidate.resume.languages.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2 flex items-center gap-2">
+                            <Languages className="w-4 h-4" />
+                            Languages
+                          </h5>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedCandidate.resume.languages.map((lang, idx) => (
+                              <Badge key={idx} variant="outline">
+                                {lang.language} • {lang.proficiency}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Certifications */}
+                      {selectedCandidate.resume.certifications && selectedCandidate.resume.certifications.length > 0 && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2 flex items-center gap-2">
+                            <Award className="w-4 h-4" />
+                            Certifications
+                          </h5>
+                          <div className="space-y-2">
+                            {selectedCandidate.resume.certifications.map((cert, idx) => (
+                              <div key={idx} className="bg-[#F9FAFB] p-3 rounded-lg">
+                                <p className="font-semibold text-[#0F151D]">{cert.name}</p>
+                                {cert.issuing_organization && (
+                                  <p className="text-sm text-[#4B5563]">{cert.issuing_organization}</p>
+                                )}
+                                {cert.issue_date && (
+                                  <p className="text-xs text-[#4B5563]">
+                                    Issued: {new Date(cert.issue_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Job Preferences */}
+                      {selectedCandidate.resume.looking_for && (
+                        <div>
+                          <h5 className="text-sm font-semibold text-[#0F151D] mb-2">Job Preferences</h5>
+                          <div className="space-y-2">
+                            {selectedCandidate.resume.looking_for.job_type && selectedCandidate.resume.looking_for.job_type.length > 0 && (
+                              <div>
+                                <p className="text-xs text-[#4B5563] mb-1">Job Types:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedCandidate.resume.looking_for.job_type.map((type, idx) => (
+                                    <Badge key={idx} variant="secondary">{type}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {selectedCandidate.resume.looking_for.positions && selectedCandidate.resume.looking_for.positions.length > 0 && (
+                              <div>
+                                <p className="text-xs text-[#4B5563] mb-1">Desired Positions:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedCandidate.resume.looking_for.positions.map((position, idx) => (
+                                    <Badge key={idx} variant="secondary">{position}</Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Projects */}
+                  {selectedCandidate.projects && selectedCandidate.projects.length > 0 && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <h4 className="font-semibold text-[#0F151D] flex items-center gap-2">
+                        <Code className="w-5 h-5" />
+                        Portfolio Projects
+                      </h4>
+                      <div className="space-y-3">
+                        {selectedCandidate.projects.map((project, idx) => (
+                          <div key={idx} className="bg-[#F9FAFB] p-4 rounded-lg">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <h5 className="font-semibold text-[#0F151D]">{project.title}</h5>
+                              <div className="flex gap-2">
+                                {project.github_url && (
+                                  <a 
+                                    href={project.github_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-[#4B5563] hover:text-[#0F151D]"
+                                  >
+                                    <Github className="w-4 h-4" />
+                                  </a>
+                                )}
+                                {project.live_url && (
+                                  <a 
+                                    href={project.live_url} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-[#4B5563] hover:text-[#0F151D]"
+                                  >
+                                    <Globe className="w-4 h-4" />
+                                  </a>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-sm text-[#4B5563] mb-2">{project.description}</p>
+                            {project.tags && project.tags.length > 0 && (
+                              <div className="flex flex-wrap gap-2">
+                                {project.tags.map((tag, tagIdx) => (
+                                  <Badge key={tagIdx} variant="outline" className="text-xs">
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Attachments */}
+                  {selectedCandidate.application_id?.attachments && selectedCandidate.application_id.attachments.length > 0 && (
+                    <div className="space-y-4 pt-4 border-t">
+                      <h4 className="font-semibold text-[#0F151D] flex items-center gap-2">
+                        <Paperclip className="w-5 h-5" />
+                        Application Attachments
+                      </h4>
+                      <div className="space-y-2">
+                        {selectedCandidate.application_id.attachments.map((attachment, idx) => (
+                          <div key={idx} className="bg-[#F9FAFB] p-3 rounded-lg flex items-center justify-between">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              <FileText className="w-5 h-5 text-[#4B5563] flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-[#0F151D] truncate">{attachment.originalName}</p>
+                                <p className="text-xs text-[#4B5563]">
+                                  {(attachment.fileSize / 1024).toFixed(2)} KB • {new Date(attachment.uploadedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                            <a
+                              href={attachment.url}
+                              download={attachment.originalName}
+                              className="flex items-center gap-1 text-sm text-[#FF7000] hover:text-[#FF7000]/90 flex-shrink-0"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Notes */}
                   {selectedCandidate.employer_notes && (

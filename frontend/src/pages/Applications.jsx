@@ -8,7 +8,12 @@ import {
   MoreVertical,
   Calendar,
   FileText,
-  Plus
+  Plus,
+  Download,
+  Upload,
+  X,
+  File,
+  Paperclip
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { applicationsAPI } from '../services/api';
@@ -45,6 +50,8 @@ const Applications = () => {
   const [notes, setNotes] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [stagedAttachments, setStagedAttachments] = useState([]);
 
   const groupedApps = statuses.reduce((acc, status) => {
     acc[status.id] = applicationsList.filter(app => (app.status === status.id));
@@ -96,6 +103,7 @@ const Applications = () => {
   useEffect(() => {
     if (!selectedApp) return;
     setNotes(prev => ({ ...prev, [selectedApp.id]: selectedApp.notes || '' }));
+    setStagedAttachments([]);
   }, [selectedApp]);
 
 
@@ -126,6 +134,122 @@ const Applications = () => {
     } else {
       toast('Job details unavailable');
     }
+  };
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedApp) return;
+
+    // Check file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024;
+    if (file.size > maxSize) {
+      toast.error('File size must be less than 10MB');
+      return;
+    }
+
+    setUploadingFile(true);
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        
+        const attachment = {
+          filename: `${Date.now()}_${file.name}`,
+          originalName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          uploadedAt: new Date().toISOString(),
+          url: base64String
+        };
+
+        // Stage the attachment instead of saving immediately
+        setStagedAttachments(prev => [...prev, attachment]);
+        toast.success('File added. Click Save to upload.');
+      };
+
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Failed to add file');
+    } finally {
+      setUploadingFile(false);
+      event.target.value = '';
+    }
+  };
+
+  const handleSaveAttachments = async () => {
+    if (!selectedApp || stagedAttachments.length === 0) return;
+
+    try {
+      const currentAttachments = selectedApp.attachments || [];
+      const updatedAttachments = [...currentAttachments, ...stagedAttachments];
+
+      await applicationsAPI.updateApplication(selectedApp.id, { 
+        attachments: updatedAttachments 
+      });
+
+      toast.success('Attachments saved successfully');
+      loadApplications();
+      
+      // Update selected app and clear staged
+      const updatedApp = { ...selectedApp, attachments: updatedAttachments };
+      setSelectedApp(updatedApp);
+      setStagedAttachments([]);
+    } catch (err) {
+      console.error('Save error:', err);
+      toast.error('Failed to save attachments');
+    }
+  };
+
+  const handleRemoveStagedAttachment = (index) => {
+    setStagedAttachments(prev => prev.filter((_, i) => i !== index));
+    toast.success('File removed');
+  };
+
+  const handleDeleteAttachment = async (attachmentIndex) => {
+    if (!selectedApp) return;
+
+    try {
+      const currentAttachments = selectedApp.attachments || [];
+      const updatedAttachments = currentAttachments.filter((_, index) => index !== attachmentIndex);
+
+      await applicationsAPI.updateApplication(selectedApp.id, { 
+        attachments: updatedAttachments 
+      });
+
+      toast.success('Attachment deleted');
+      loadApplications();
+      
+      // Update selected app
+      const updatedApp = { ...selectedApp, attachments: updatedAttachments };
+      setSelectedApp(updatedApp);
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Failed to delete attachment');
+    }
+  };
+
+  const handleDownloadAttachment = (attachment) => {
+    try {
+      const link = document.createElement('a');
+      link.href = attachment.url;
+      link.download = attachment.originalName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error('Download error:', err);
+      toast.error('Failed to download file');
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   };
 
   return (
@@ -232,6 +356,38 @@ const Applications = () => {
                                 +{job.skills.length - 3}
                               </Badge>
                             )}
+                          </div>
+                        )}
+
+                        {/* Interview Details */}
+                        {app.interview_link && app.interview_date && (
+                          <div className="bg-indigo-50 border border-indigo-200 rounded-md p-2.5 mb-3">
+                            <div className="flex items-start gap-2">
+                              <Calendar className="w-4 h-4 text-indigo-600 mt-0.5 flex-shrink-0" />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold text-[#0F151D] mb-1">Interview Scheduled</p>
+                                <p className="text-xs text-[#4B5563] mb-1.5">
+                                  {new Date(app.interview_date).toLocaleString('en-US', {
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </p>
+                                <a
+                                  href={app.interview_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="inline-flex items-center gap-1 text-xs text-[#FF7000] hover:underline font-medium"
+                                >
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                  </svg>
+                                  Join Meeting
+                                </a>
+                              </div>
+                            </div>
                           </div>
                         )}
 
@@ -350,14 +506,121 @@ const Applications = () => {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-[#0F151D] mb-3">Attachments</h3>
-                  <div className="p-6 text-center border-2 border-gray-300 border-dashed rounded-lg">
-                    <FileText className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                    <p className="text-sm text-[#4B5563] mb-2">No attachments yet</p>
-                    <Button size="sm" variant="outline">
-                      <Plus className="w-4 h-4 mr-1" />
-                      Add Attachment
-                    </Button>
+                  <h3 className="font-semibold text-[#0F151D] mb-3 flex items-center gap-2">
+                    <Paperclip className="w-5 h-5" />
+                    Attachments
+                  </h3>
+                  
+                  {/* Display existing attachments */}
+                  {selectedApp.attachments && selectedApp.attachments.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      <p className="text-xs font-semibold text-[#6B7280] mb-2">Saved Attachments</p>
+                      {selectedApp.attachments.map((attachment, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <File className="w-5 h-5 text-[#FF7000] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#0F151D] truncate">
+                                {attachment.originalName}
+                              </p>
+                              <p className="text-xs text-[#6B7280]">
+                                {formatFileSize(attachment.fileSize)} • {new Date(attachment.uploadedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDownloadAttachment(attachment)}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleDeleteAttachment(index)}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Display staged attachments (not yet saved) */}
+                  {stagedAttachments.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      <p className="text-xs font-semibold text-[#6B7280] mb-2">Ready to Save</p>
+                      {stagedAttachments.map((attachment, index) => (
+                        <div 
+                          key={index} 
+                          className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"
+                        >
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <File className="w-5 h-5 text-[#FF7000] flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-[#0F151D] truncate">
+                                {attachment.originalName}
+                              </p>
+                              <p className="text-xs text-[#6B7280]">
+                                {formatFileSize(attachment.fileSize)} • Not saved yet
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleRemoveStagedAttachment(index)}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white mt-2"
+                        onClick={handleSaveAttachments}
+                      >
+                        Save {stagedAttachments.length} Attachment{stagedAttachments.length > 1 ? 's' : ''}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Upload new attachment */}
+                  <div className="p-6 text-center border-2 border-gray-300 border-dashed rounded-lg hover:border-[#FF7000] transition-colors">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      disabled={uploadingFile}
+                      accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                      <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm text-[#4B5563] mb-2">
+                        {uploadingFile ? 'Processing...' : 'Click to upload or drag and drop'}
+                      </p>
+                      <p className="text-xs text-[#6B7280] mb-3">
+                        PDF, DOC, DOCX, TXT, JPG, PNG (max 10MB)
+                      </p>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        disabled={uploadingFile}
+                        type="button"
+                      >
+                        <Plus className="w-4 h-4 mr-1" />
+                        {uploadingFile ? 'Processing...' : 'Add Attachment'}
+                      </Button>
+                    </label>
                   </div>
                 </div>
 

@@ -10,6 +10,8 @@ const {
   updateCandidateRating,
   updateCandidateTags,
   scheduleInterview,
+  updateInterviewLink,
+  deleteCandidate,
   getCandidateStats
 } = require('../controllers/candidateController');
 const { body, param, query } = require('express-validator');
@@ -136,17 +138,46 @@ router.put(
 
 /**
  * @route   PUT /api/candidates/:id/interview
- * @desc    Schedule interview
+ * @desc    Schedule interview for candidate
  * @access  Private (Employer)
  */
 router.put(
   '/:id/interview',
   [
-    param('id').isString().withMessage('Candidate ID is required'),
+    param('id').isString().notEmpty().withMessage('Candidate ID is required'),
     body('interview_date').isISO8601().withMessage('Valid interview date is required'),
     validate
   ],
   scheduleInterview
+);
+
+/**
+ * @route   PUT /api/candidates/:id/interview-link
+ * @desc    Update interview link for candidate
+ * @access  Private (Employer)
+ */
+router.put(
+  '/:id/interview-link',
+  [
+    param('id').isString().notEmpty().withMessage('Candidate ID is required'),
+    body('interview_link').isString().notEmpty().withMessage('Interview link is required'),
+    validate
+  ],
+  updateInterviewLink
+);
+
+/**
+ * @route   DELETE /api/candidates/:id
+ * @desc    Delete candidate
+ * @access  Private (Employer)
+ */
+router.delete(
+  '/:id',
+  [
+    param('id').isString().notEmpty().withMessage('Candidate ID is required'),
+    validate
+  ],
+  deleteCandidate
 );
 
 module.exports = router;

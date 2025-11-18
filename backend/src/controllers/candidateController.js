@@ -1,4 +1,4 @@
-const { Candidate, Application, User, Job, Resume } = require('../models');
+const { Candidate, Application, User, Job, Resume, Project } = require('../models');
 /**
  * Get all candidates for employer
  * @route GET /api/candidates
@@ -82,7 +82,7 @@ const getCandidateById = async (req, res, next) => {
     const candidate = await Candidate.findOne({ _id: id, employer_id: employerId })
       .populate('user_id', 'name email avatar bio profile_strength graduation')
       .populate('job_id', 'title description type location salary_range company_name')
-      .populate('application_id', 'applied_date status notes timeline');
+      .populate('application_id', 'applied_date status notes timeline attachments');
 
     if (!candidate) {
       return res.status(404).json({
@@ -102,6 +102,15 @@ const getCandidateById = async (req, res, next) => {
     } catch (err) {
       console.error(`Error fetching resume for user ${candidate.user_id._id}:`, err);
       candidateObj.resume = null;
+    }
+
+    // Fetch projects for this candidate
+    try {
+      const projects = await Project.find({ user_id: candidate.user_id._id });
+      candidateObj.projects = projects;
+    } catch (err) {
+      console.error(`Error fetching projects for user ${candidate.user_id._id}:`, err);
+      candidateObj.projects = [];
     }
 
     // Mark as viewed if not already
@@ -359,6 +368,41 @@ const updateCandidateStatus = async (req, res, next) => {
     candidate.last_activity = new Date();
     await candidate.save();
 
+    // Sync Application status with Candidate status
+    // Mapping: Candidate status -> Application status
+    const statusMapping = {
+      'new': null, // Don't update application status
+      'reviewing': 'screening',
+      'shortlisted': 'screening',
+      'interview_scheduled': 'interview',
+      'interviewed': 'interview',
+      'offer_extended': 'offer',
+      'hired': 'offer',
+      'rejected': 'rejected'
+    };
+
+    const applicationStatus = statusMapping[status];
+    console.log(`[Status Sync] Candidate status changed to: ${status}`);
+    console.log(`[Status Sync] Application ID: ${candidate.application_id}`);
+    console.log(`[Status Sync] Mapped application status: ${applicationStatus}`);
+    
+    if (applicationStatus) {
+      try {
+        const application = await Application.findById(candidate.application_id);
+        console.log(`[Status Sync] Application found:`, application ? 'Yes' : 'No');
+        if (application) {
+          console.log(`[Status Sync] Old application status: ${application.status}`);
+          application.status = applicationStatus;
+          application.last_update = new Date();
+          await application.save();
+          console.log(`[Status Sync] New application status: ${application.status}`);
+        }
+      } catch (err) {
+        console.error('[Status Sync] Error updating application status:', err);
+        // Don't fail the request if application update fails
+      }
+    }
+
     return res.status(200).json({
       success: true,
       data: candidate,
@@ -554,6 +598,91 @@ const scheduleInterview = async (req, res, next) => {
 };
 
 /**
+ * Update interview link
+ * @route PUT /api/candidates/:id/interview-link
+ * @access Private (Employer only)
+ */
+const updateInterviewLink = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { interview_link, interview_date } = req.body;
+    const employerId = req.user.userId;
+
+    if (!interview_link) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: 'MISSING_LINK',
+          message: 'Interview link is required'
+        }
+      });
+    }
+
+    const candidate = await Candidate.findOne({ _id: id, employer_id: employerId });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Candidate not found'
+        }
+      });
+    }
+
+    candidate.interview_link = interview_link;
+    if (interview_date) {
+      candidate.interview_date = new Date(interview_date);
+    }
+    candidate.last_activity = new Date();
+    await candidate.save();
+
+    return res.status(200).json({
+      success: true,
+      data: candidate,
+      message: 'Interview details updated successfully'
+    });
+  } catch (error) {
+    console.error('Error updating interview details:', error);
+    next(error);
+  }
+};
+
+/**
+ * Delete candidate
+ * @route DELETE /api/candidates/:id
+ * @access Private (Employer only)
+ */
+const deleteCandidate = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const employerId = req.user.userId;
+
+    const candidate = await Candidate.findOne({ _id: id, employer_id: employerId });
+
+    if (!candidate) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: 'NOT_FOUND',
+          message: 'Candidate not found'
+        }
+      });
+    }
+
+    await Candidate.deleteOne({ _id: id });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Candidate deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting candidate:', error);
+    next(error);
+  }
+};
+
+/**
  * Get candidate statistics
  * @route GET /api/candidates/stats
  * @access Private (Employer only)
@@ -604,5 +733,7 @@ module.exports = {
   updateCandidateRating,
   updateCandidateTags,
   scheduleInterview,
+  updateInterviewLink,
+  deleteCandidate,
   getCandidateStats
 };

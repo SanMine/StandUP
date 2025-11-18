@@ -56,6 +56,10 @@ const candidateSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  interview_link: {
+    type: String,
+    default: null
+  },
   salary_expectation: {
     type: String,
     default: null

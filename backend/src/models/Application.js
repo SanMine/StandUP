@@ -35,6 +35,14 @@ const applicationSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  attachments: [{
+    filename: { type: String, required: true },
+    originalName: { type: String, required: true },
+    fileSize: { type: Number },
+    mimeType: { type: String },
+    uploadedAt: { type: Date, default: Date.now },
+    url: { type: String }
+  }],
   timeline: {
     type: mongoose.Schema.Types.Mixed,
     default: []

@@ -11,6 +11,12 @@ const getUserApplications = async (req, res, next) => {
     const applicationsWithDetails = await Promise.all(
       applications.map(async (app) => {
         const job = await Job.findById(app.job_id).lean();
+        
+        // Get candidate data for interview information
+        const candidate = await Candidate.findOne({ 
+          application_id: app._id 
+        }).select('interview_link interview_date').lean();
+        
         if (job) {
           const skills = await JobSkill.find({ job_id: job._id }).lean();
           return {
@@ -20,10 +26,18 @@ const getUserApplications = async (req, res, next) => {
               ...job,
               id: job._id,
               skills
-            }
+            },
+            interview_link: candidate?.interview_link,
+            interview_date: candidate?.interview_date
           };
         }
-        return { ...app, id: app._id, job: null };
+        return { 
+          ...app, 
+          id: app._id, 
+          job: null,
+          interview_link: candidate?.interview_link,
+          interview_date: candidate?.interview_date
+        };
       })
     );
 
@@ -142,7 +156,10 @@ const applyForJob = async (req, res, next) => {
 const updateApplication = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, notes } = req.body;
+    const { status, notes, attachments } = req.body;
+
+    console.log(`[Update Application] ID: ${id}`);
+    console.log(`[Update Application] Attachments:`, attachments ? `${attachments.length} files` : 'none');
 
     const application = await Application.findById(id);
 
@@ -187,6 +204,7 @@ const updateApplication = async (req, res, next) => {
 
     if (status !== undefined) application.status = status;
     if (notes !== undefined) application.notes = notes;
+    if (attachments !== undefined) application.attachments = attachments;
     application.last_update = new Date();
     application.timeline = timeline;
 
