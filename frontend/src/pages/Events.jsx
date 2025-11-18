@@ -174,16 +174,16 @@ const Events = () => {
             <p className="text-[#4B5563]">Create and manage events for students</p>
           </div>
           <Button
-            className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+            className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
             onClick={handleCreateEvent}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Create Event
           </Button>
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <Card className="border-none shadow-md">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -207,8 +207,8 @@ const Events = () => {
                     {events.filter(e => e.status === 'active').length}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Calendar className="h-6 w-6 text-green-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
+                  <Calendar className="w-6 h-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -223,8 +223,8 @@ const Events = () => {
                     {events.reduce((sum, e) => sum + (e.enrollmentCount || 0), 0)}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Users className="h-6 w-6 text-blue-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
+                  <Users className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -266,25 +266,25 @@ const Events = () => {
                             </Badge>
                           </div>
 
-                          <div className="grid md:grid-cols-2 gap-3 mb-3">
+                          <div className="grid gap-3 mb-3 md:grid-cols-2">
                             <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                              <Calendar className="h-4 w-4" />
+                              <Calendar className="w-4 h-4" />
                               <span>{new Date(event.date).toLocaleDateString()}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="w-4 h-4" />
                               <span>{event.time}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                              <MapPin className="h-4 w-4" />
+                              <MapPin className="w-4 h-4" />
                               <span>{event.location}</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                              <Users className="h-4 w-4" />
+                              <Users className="w-4 h-4" />
                               <span>{event.enrollmentCount || 0} enrolled</span>
                             </div>
                             <div className="flex items-center gap-2 text-sm text-[#4B5563]">
-                              <Building className="h-4 w-4" />
+                              <Building className="w-4 h-4" />
                               <span>{event.company}</span>
                             </div>
                           </div>
@@ -308,14 +308,14 @@ const Events = () => {
                             size="sm"
                             onClick={() => handleEditEvent(event)}
                           >
-                            <Edit className="h-4 w-4" />
+                            <Edit className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => handleDeleteEvent(event._id || event.id)}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       </div>
@@ -338,7 +338,7 @@ const Events = () => {
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="title">Event Title *</Label>
                 <Input
@@ -370,7 +370,7 @@ const Events = () => {
               </div>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="date">Date *</Label>
                 <Input
@@ -407,7 +407,7 @@ const Events = () => {
               />
             </div>
 
-            <div className="grid md:grid-cols-2 gap-4">
+            <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="presenter">Presenter Name *</Label>
                 <Input
@@ -500,7 +500,7 @@ const Events = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                className="flex-1 hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
               >
                 {isLoading ? 'Saving...' : selectedEvent ? 'Update Event' : 'Create Event'}
               </Button>

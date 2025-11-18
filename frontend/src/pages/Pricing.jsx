@@ -412,7 +412,7 @@ const Pricing = () => {
             Our team is here to help you choose the right plan and get started.
           </p>
           <div className="flex justify-center gap-4">
-            <Button className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white px-8" onClick={goToFAQ}>
+            <Button className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white px-8" onClick={goToFAQ}>
               Contact Sales
             </Button>
             <Button variant="outline" className="border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white px-8" onClick={goToFAQ}>

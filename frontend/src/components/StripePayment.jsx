@@ -53,7 +53,7 @@ function _InnerStripeForm({ orderOrPlanId, amount }) {
         <form onSubmit={handleSubmit} className="space-y-4">
             {err && <div className="text-sm text-red-600">{err}</div>}
             <PaymentElement />
-            <Button type="submit" disabled={submitting || !stripe || !elements} className="w-full min-h-[44px]  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/85 transition duration-200">
+            <Button type="submit" disabled={submitting || !stripe || !elements} className="w-full min-h-[44px] hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/85 transition duration-200">
                 {submitting ? 'Processing...' : `Pay $${Number(amount).toFixed(2)}`}
             </Button>
         </form>

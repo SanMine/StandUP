@@ -338,7 +338,7 @@ const Dashboard = () => {
                     </p>
                     <Button
                       onClick={() => navigate('/pricing')}
-                      className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                      className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                     >
                       <Crown className="w-4 h-4 mr-2" />
                       Upgrade to Premium
@@ -552,7 +552,7 @@ const Dashboard = () => {
                     {suggestedMentor?.bio || ''}
                   </p>
                   <Button
-                    className="w-full  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                    className="w-full hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                     onClick={() => navigate('/mentors')}
                   >
                     Book Session

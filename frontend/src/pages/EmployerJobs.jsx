@@ -155,7 +155,7 @@ const EmployerJobs = () => {
           </div>
           <Button
             onClick={handleCreateJob}
-            className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+            className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Post New Job
@@ -163,7 +163,7 @@ const EmployerJobs = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card className="border-none shadow-md">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -171,8 +171,8 @@ const EmployerJobs = () => {
                   <p className="text-sm text-[#4B5563] mb-1">Total Jobs</p>
                   <p className="text-2xl font-bold text-[#0F151D]">{jobs.length}</p>
                 </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                  <Briefcase className="h-6 w-6 text-blue-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
+                  <Briefcase className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </CardContent>
@@ -187,8 +187,8 @@ const EmployerJobs = () => {
                     {jobs.filter(j => j.status === 'active').length}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Eye className="h-6 w-6 text-green-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
+                  <Eye className="w-6 h-6 text-green-600" />
                 </div>
               </div>
             </CardContent>
@@ -203,8 +203,8 @@ const EmployerJobs = () => {
                     {jobs.filter(j => j.status === 'draft').length}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                  <Edit className="h-6 w-6 text-gray-600" />
+                <div className="flex items-center justify-center w-12 h-12 bg-gray-100 rounded-lg">
+                  <Edit className="w-6 h-6 text-gray-600" />
                 </div>
               </div>
             </CardContent>
@@ -214,8 +214,8 @@ const EmployerJobs = () => {
         {/* Filters */}
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#4B5563]" />
                 <Input
                   placeholder="Search by title, location, or description..."
@@ -242,7 +242,7 @@ const EmployerJobs = () => {
 
         {/* Jobs List */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <p className="text-[#4B5563]">Loading jobs...</p>
           </div>
         ) : filteredJobs.length === 0 ? (
@@ -260,7 +260,7 @@ const EmployerJobs = () => {
               {!searchTerm && statusFilter === 'all' && (
                 <Button
                   onClick={handleCreateJob}
-                  className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                  className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Post Your First Job
@@ -271,7 +271,7 @@ const EmployerJobs = () => {
         ) : (
           <div className="space-y-4">
             {filteredJobs.map((job) => (
-              <Card key={job._id || job.id} className="border-none shadow-md hover:shadow-lg transition-all">
+              <Card key={job._id || job.id} className="transition-all border-none shadow-md hover:shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
@@ -283,7 +283,7 @@ const EmployerJobs = () => {
                           <div className="flex flex-wrap gap-3 text-sm text-[#4B5563] mb-3">
                             {job.location && (
                               <span className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4" />
+                                <MapPin className="w-4 h-4" />
                                 {job.location}
                               </span>
                             )}
@@ -292,13 +292,13 @@ const EmployerJobs = () => {
                             )}
                             {job.salary_range && (
                               <span className="flex items-center gap-1">
-                                <DollarSign className="h-4 w-4" />
+                                <DollarSign className="w-4 h-4" />
                                 {job.salary_range}
                               </span>
                             )}
                             {job.posted_date && (
                               <span className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
+                                <Calendar className="w-4 h-4" />
                                 Posted {new Date(job.posted_date).toLocaleDateString()}
                               </span>
                             )}
@@ -318,9 +318,9 @@ const EmployerJobs = () => {
                         <Button
                           size="sm"
                           onClick={() => navigate(`/candidates?job_id=${job._id || job.id}`)}
-                          className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                          className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                         >
-                          <Users className="h-3 w-3 mr-1" />
+                          <Users className="w-3 h-3 mr-1" />
                           View Candidates
                         </Button>
                         <Button
@@ -328,7 +328,7 @@ const EmployerJobs = () => {
                           variant="outline"
                           onClick={() => handleEditJob(job)}
                         >
-                          <Edit className="h-3 w-3 mr-1" />
+                          <Edit className="w-3 h-3 mr-1" />
                           Edit
                         </Button>
                         <Button
@@ -337,7 +337,7 @@ const EmployerJobs = () => {
                           onClick={() => handleDeleteJob(job._id || job.id)}
                           className="text-red-600 hover:text-red-700"
                         >
-                          <Trash2 className="h-3 w-3 mr-1" />
+                          <Trash2 className="w-3 h-3 mr-1" />
                           Delete
                         </Button>
                       </div>

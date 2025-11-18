@@ -214,7 +214,7 @@ const EmployerDashboard = () => {
             <p className="text-[#4B5563]">Here's your hiring overview</p>
           </div>
           <Button
-            className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+            className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
             onClick={handleCreateJob}
             data-testid="post-new-role-btn"
           >
@@ -273,7 +273,7 @@ const EmployerDashboard = () => {
                     <p className="text-[#4B5563] mb-4">No jobs posted yet</p>
                     <Button
                       onClick={handleCreateJob}
-                      className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                      className=" hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       Post Your First Job
@@ -398,7 +398,7 @@ const EmployerDashboard = () => {
                         Upgrade to Premium to access AI-powered candidate matching
                       </p>
                       <Button
-                        className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                        className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] hover: text-white/90 text-white"
                         onClick={() => navigate('/pricing')}
                       >
                         <Star className="w-4 h-4 mr-2" />
@@ -457,7 +457,7 @@ const EmployerDashboard = () => {
                           <div className="flex gap-2">
                             <Button
                               size="sm"
-                              className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white h-8 text-xs"
+                              className="flex-1 hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white h-8 text-xs"
                               onClick={() => handleViewCandidate(candidate)}
                               disabled={currentUser?.plan !== 'premium'}
                             >

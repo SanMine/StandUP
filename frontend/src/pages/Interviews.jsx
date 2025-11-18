@@ -74,14 +74,14 @@ const Interviews = () => {
             <TabsTrigger value="schedule">Scheduled</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="mock" className="space-y-6 mt-6">
+          <TabsContent value="mock" className="mt-6 space-y-6">
             {!selectedQuestion ? (
               <>
                 {/* Mock Interview Intro */}
                 <Card className="border-none shadow-md bg-gradient-to-br from-[#E8F0FF] to-[#FFE4CC]">
                   <CardContent className="p-8">
                     <div className="flex items-start gap-4">
-                      <div className="h-16 w-16 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                      <div className="flex items-center justify-center flex-shrink-0 w-16 h-16 bg-white rounded-full">
                         <Video className="h-8 w-8 text-[#FF7000]" />
                       </div>
                       <div className="flex-1">
@@ -93,15 +93,15 @@ const Interviews = () => {
                         </p>
                         <div className="flex flex-wrap gap-4">
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <CheckCircle2 className="w-5 h-5 text-green-600" />
                             <span className="text-sm text-[#4B5563]">Real-time feedback</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <CheckCircle2 className="w-5 h-5 text-green-600" />
                             <span className="text-sm text-[#4B5563]">Role-specific questions</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="h-5 w-5 text-green-600" />
+                            <CheckCircle2 className="w-5 h-5 text-green-600" />
                             <span className="text-sm text-[#4B5563]">Performance analytics</span>
                           </div>
                         </div>
@@ -117,7 +117,7 @@ const Interviews = () => {
                   </h2>
                   <div className="grid gap-4">
                     {mockInterviewQuestions.map((question) => (
-                      <Card key={question.id} className="border-none shadow-md hover:shadow-lg transition-all">
+                      <Card key={question.id} className="transition-all border-none shadow-md hover:shadow-lg">
                         <CardContent className="p-6">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
@@ -133,17 +133,17 @@ const Interviews = () => {
                                   {question.difficulty}
                                 </Badge>
                                 <span className="text-xs text-[#4B5563] flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
+                                  <Clock className="w-3 h-3" />
                                   {question.duration}
                                 </span>
                               </div>
                               <p className="text-[#0F151D] font-medium">{question.question}</p>
                             </div>
                             <Button
-                              className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                              className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                               onClick={() => startMockInterview(question)}
                             >
-                              <Play className="h-4 w-4 mr-2" />
+                              <Play className="w-4 h-4 mr-2" />
                               Practice
                             </Button>
                           </div>
@@ -164,32 +164,32 @@ const Interviews = () => {
                   ← Back to Questions
                 </Button>
 
-                <div className="grid lg:grid-cols-3 gap-6">
+                <div className="grid gap-6 lg:grid-cols-3">
                   {/* Video Recording Area */}
                   <div className="lg:col-span-2">
                     <Card className="border-none shadow-md">
                       <CardContent className="p-0">
-                        <div className="bg-gray-900 aspect-video rounded-t-lg flex items-center justify-center relative">
+                        <div className="relative flex items-center justify-center bg-gray-900 rounded-t-lg aspect-video">
                           {isRecording ? (
                             <div className="text-center">
-                              <div className="h-20 w-20 bg-red-600 rounded-full animate-pulse flex items-center justify-center mx-auto mb-4">
-                                <Camera className="h-10 w-10 text-white" />
+                              <div className="flex items-center justify-center w-20 h-20 mx-auto mb-4 bg-red-600 rounded-full animate-pulse">
+                                <Camera className="w-10 h-10 text-white" />
                               </div>
-                              <p className="text-white font-medium">Recording...</p>
-                              <p className="text-gray-400 text-sm mt-1">00:45 / 05:00</p>
+                              <p className="font-medium text-white">Recording...</p>
+                              <p className="mt-1 text-sm text-gray-400">00:45 / 05:00</p>
                             </div>
                           ) : (
                             <div className="text-center">
-                              <Video className="h-20 w-20 text-gray-600 mx-auto mb-4" />
+                              <Video className="w-20 h-20 mx-auto mb-4 text-gray-600" />
                               <p className="text-gray-400">Camera preview will appear here</p>
                             </div>
                           )}
-                          <div className="absolute top-4 right-4 flex gap-2">
-                            <div className="h-10 w-10 bg-black/50 rounded-full flex items-center justify-center">
-                              <Mic className="h-5 w-5 text-white" />
+                          <div className="absolute flex gap-2 top-4 right-4">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-black/50">
+                              <Mic className="w-5 h-5 text-white" />
                             </div>
-                            <div className="h-10 w-10 bg-black/50 rounded-full flex items-center justify-center">
-                              <Volume2 className="h-5 w-5 text-white" />
+                            <div className="flex items-center justify-center w-10 h-10 rounded-full bg-black/50">
+                              <Volume2 className="w-5 h-5 text-white" />
                             </div>
                           </div>
                         </div>
@@ -206,7 +206,7 @@ const Interviews = () => {
                           </div>
                           <div className="flex gap-3">
                             <Button
-                              className={isRecording ? 'bg-red-600 hover:bg-red-700 text-white flex-1' : ' bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white flex-1'}
+                              className={isRecording ? 'bg-red-600 hover:bg-red-700 text-white flex-1' : 'hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white flex-1'}
                               onClick={() => setIsRecording(!isRecording)}
                             >
                               {isRecording ? 'Stop Recording' : 'Start Recording'}
@@ -256,7 +256,7 @@ const Interviews = () => {
                                 <span className="text-sm text-[#4B5563]">{metric.label}</span>
                                 <span className={`text-sm font-semibold ${metric.color}`}>{metric.score}%</span>
                               </div>
-                              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div className="h-2 overflow-hidden bg-gray-200 rounded-full">
                                 <div
                                   className="h-full bg-gradient-to-r from-[#FF7000] to-[#FF9040] transition-all duration-500"
                                   style={{ width: `${metric.score}%` }}
@@ -273,11 +273,11 @@ const Interviews = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="schedule" className="space-y-6 mt-6">
+          <TabsContent value="schedule" className="mt-6 space-y-6">
             {upcomingInterviews.length > 0 ? (
               <div className="grid gap-4">
                 {upcomingInterviews.map((interview) => (
-                  <Card key={interview.id} className="border-none shadow-md hover:shadow-lg transition-all">
+                  <Card key={interview.id} className="transition-all border-none shadow-md hover:shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-start gap-4">
                         <div className="h-16 w-16 bg-[#E8F0FF] rounded-lg flex flex-col items-center justify-center flex-shrink-0">
@@ -300,18 +300,18 @@ const Interviews = () => {
                           </div>
                           <div className="flex flex-wrap gap-4 text-sm text-[#4B5563] mb-4">
                             <span className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
+                              <Clock className="w-4 h-4" />
                               {interview.time}
                             </span>
                             <span>Interviewer: {interview.interviewer}</span>
                           </div>
                           <div className="flex gap-3">
-                            <Button className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
-                              <Video className="h-4 w-4 mr-2" />
+                            <Button className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
+                              <Video className="w-4 h-4 mr-2" />
                               Join Interview
                             </Button>
                             <Button variant="outline">
-                              <Calendar className="h-4 w-4 mr-2" />
+                              <Calendar className="w-4 h-4 mr-2" />
                               Add to Calendar
                             </Button>
                           </div>
@@ -324,11 +324,11 @@ const Interviews = () => {
             ) : (
               <Card className="border-none shadow-md">
                 <CardContent className="p-12 text-center">
-                  <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-400" />
                   <h3 className="text-lg font-semibold text-[#0F151D] mb-2">No Upcoming Interviews</h3>
                   <p className="text-[#4B5563] mb-6">You don't have any scheduled interviews yet</p>
                   <Button
-                    className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
+                    className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                     onClick={() => setActiveTab('mock')}
                   >
                     Practice with Mock Interviews
