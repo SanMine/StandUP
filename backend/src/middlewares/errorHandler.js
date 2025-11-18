@@ -38,7 +38,7 @@ const errorHandler = (err, req, res, next) => {
       success: false,
       error: {
         code: 'REFERENCE_ERROR',
-        message: 'Referenced resource does not exist'
+        message: 'Referenced resource does not exist syp'
       }
     });
   }
