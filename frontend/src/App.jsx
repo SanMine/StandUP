@@ -20,7 +20,7 @@ import Portfolio from "./pages/Portfolio";
 import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import StripePaymentSuccessPage from "./pages/StripePaymentSuccessPage";
-import Candidates from "./pages/Candidates";
+import Candidates from "./pages/CandidatesPage";
 import EmployerJobs from "./pages/EmployerJobs";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "./pages/ErrorBoundary";
