@@ -3,8 +3,11 @@ import { Button } from '@/components/ui/button'
 import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { motion } from 'framer-motion';
 import { GiSparkles } from "react-icons/gi";
+import { useNavigate } from 'react-router-dom';
 
 export default function Hero() {
+    const navigate = useNavigate();
+
     return (
         <section className="px-6 pt-32 pb-20">
             <div className="mx-auto max-w-7xl">
