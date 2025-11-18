@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
-import { 
+import {
   Users,
   Search,
   Filter,
@@ -84,7 +84,7 @@ const Candidates = () => {
         sort: sortBy,
         order: 'desc'
       };
-      
+
       if (statusFilter !== 'all') {
         params.status = statusFilter;
       }
@@ -136,7 +136,7 @@ const Candidates = () => {
 
   const handleSaveNotes = async () => {
     if (!selectedCandidate) return;
-    
+
     try {
       await candidateAPI.updateNotes(selectedCandidate._id, notes);
       toast.success('Notes saved successfully');
@@ -180,7 +180,7 @@ const Candidates = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" >
             Candidates
           </h1>
           <p className="text-[#4B5563]">Manage and review your applicants</p>
@@ -188,7 +188,7 @@ const Candidates = () => {
 
         {/* Stats Cards */}
         {stats && (
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <Card className="border-none shadow-md">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -196,8 +196,8 @@ const Candidates = () => {
                     <p className="text-sm text-[#4B5563] mb-1">Total Candidates</p>
                     <p className="text-2xl font-bold text-[#0F151D]">{stats.total || 0}</p>
                   </div>
-                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <Users className="h-6 w-6 text-blue-600" />
+                  <div className="flex items-center justify-center w-12 h-12 bg-blue-100 rounded-lg">
+                    <Users className="w-6 h-6 text-blue-600" />
                   </div>
                 </div>
               </CardContent>
@@ -210,8 +210,8 @@ const Candidates = () => {
                     <p className="text-sm text-[#4B5563] mb-1">Shortlisted</p>
                     <p className="text-2xl font-bold text-[#0F151D]">{stats.byStatus?.shortlisted || 0}</p>
                   </div>
-                  <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <Star className="h-6 w-6 text-purple-600" />
+                  <div className="flex items-center justify-center w-12 h-12 bg-purple-100 rounded-lg">
+                    <Star className="w-6 h-6 text-purple-600" />
                   </div>
                 </div>
               </CardContent>
@@ -226,8 +226,8 @@ const Candidates = () => {
                       {(stats.byStatus?.interview_scheduled || 0) + (stats.byStatus?.interviewed || 0)}
                     </p>
                   </div>
-                  <div className="h-12 w-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-                    <Calendar className="h-6 w-6 text-indigo-600" />
+                  <div className="flex items-center justify-center w-12 h-12 bg-indigo-100 rounded-lg">
+                    <Calendar className="w-6 h-6 text-indigo-600" />
                   </div>
                 </div>
               </CardContent>
@@ -240,8 +240,8 @@ const Candidates = () => {
                     <p className="text-sm text-[#4B5563] mb-1">Avg Match Score</p>
                     <p className="text-2xl font-bold text-[#0F151D]">{Math.round(stats.avgMatchScore || 0)}%</p>
                   </div>
-                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <TrendingUp className="h-6 w-6 text-green-600" />
+                  <div className="flex items-center justify-center w-12 h-12 bg-green-100 rounded-lg">
+                    <TrendingUp className="w-6 h-6 text-green-600" />
                   </div>
                 </div>
               </CardContent>
@@ -252,8 +252,8 @@ const Candidates = () => {
         {/* Filters and Search */}
         <Card className="border-none shadow-md">
           <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#4B5563]" />
                 <Input
                   placeholder="Search by name, email, or job title..."
@@ -265,7 +265,7 @@ const Candidates = () => {
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-full md:w-[200px]">
-                  <Filter className="h-4 w-4 mr-2" />
+                  <Filter className="w-4 h-4 mr-2" />
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
                 <SelectContent>
@@ -297,7 +297,7 @@ const Candidates = () => {
 
         {/* Candidates List */}
         {loading ? (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <p className="text-[#4B5563]">Loading candidates...</p>
           </div>
         ) : filteredCandidates.length === 0 ? (
@@ -306,8 +306,8 @@ const Candidates = () => {
               <Users className="h-12 w-12 text-[#4B5563] mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-[#0F151D] mb-2">No candidates found</h3>
               <p className="text-[#4B5563]">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your filters' 
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Try adjusting your filters'
                   : 'Candidates who apply to your jobs will appear here'}
               </p>
             </CardContent>
@@ -316,12 +316,12 @@ const Candidates = () => {
           <div className="space-y-4">
             {filteredCandidates.map((candidate) => {
               const StatusIcon = statusConfig[candidate.status]?.icon || Clock;
-              
+
               return (
-                <Card key={candidate._id} className="border-none shadow-md hover:shadow-lg transition-all">
+                <Card key={candidate._id} className="transition-all border-none shadow-md hover:shadow-lg">
                   <CardContent className="p-6">
                     <div className="flex items-start gap-4">
-                      <Avatar className="h-16 w-16 flex-shrink-0">
+                      <Avatar className="flex-shrink-0 w-16 h-16">
                         <AvatarImage src={candidate.user_id?.avatar} />
                         <AvatarFallback className="bg-[#E8F0FF] text-[#284688] text-lg">
                           {candidate.user_id?.name?.charAt(0) || 'C'}
@@ -335,32 +335,32 @@ const Candidates = () => {
                               {candidate.user_id?.name || 'Unknown'}
                             </h3>
                             <p className="text-[#4B5563] mb-2">Applied for: {candidate.job_id?.title || 'N/A'}</p>
-                            
+
                             <div className="flex flex-wrap gap-3 text-sm text-[#4B5563]">
                               {candidate.user_id?.email && (
                                 <span className="flex items-center gap-1">
-                                  <Mail className="h-4 w-4" />
+                                  <Mail className="w-4 h-4" />
                                   {candidate.user_id.email}
                                 </span>
                               )}
                               {candidate.job_id?.location && (
                                 <span className="flex items-center gap-1">
-                                  <MapPin className="h-4 w-4" />
+                                  <MapPin className="w-4 h-4" />
                                   {candidate.job_id.location}
                                 </span>
                               )}
                             </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                          <div className="flex flex-col items-end flex-shrink-0 gap-2">
                             <Badge className={statusConfig[candidate.status]?.color || 'bg-gray-100 text-gray-700'}>
-                              <StatusIcon className="h-3 w-3 mr-1" />
+                              <StatusIcon className="w-3 h-3 mr-1" />
                               {statusConfig[candidate.status]?.label || candidate.status}
                             </Badge>
-                            
+
                             {candidate.match_score > 0 && (
                               <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4 text-green-600" />
+                                <TrendingUp className="w-4 h-4 text-green-600" />
                                 <span className="text-sm font-semibold text-green-600">
                                   {candidate.match_score}% Match
                                 </span>
@@ -375,7 +375,7 @@ const Candidates = () => {
                             onClick={() => openCandidateDetails(candidate)}
                             className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                           >
-                            <Eye className="h-3 w-3 mr-1" />
+                            <Eye className="w-3 h-3 mr-1" />
                             View Profile
                           </Button>
 
@@ -400,7 +400,7 @@ const Candidates = () => {
                             variant="outline"
                             onClick={() => openNotesDialog(candidate)}
                           >
-                            <MessageSquare className="h-3 w-3 mr-1" />
+                            <MessageSquare className="w-3 h-3 mr-1" />
                             Notes
                           </Button>
 
@@ -412,11 +412,10 @@ const Candidates = () => {
                                 className="focus:outline-none"
                               >
                                 <Star
-                                  className={`h-4 w-4 ${
-                                    star <= (candidate.rating || 0)
-                                      ? 'fill-[#FF7000] text-[#FF7000]'
-                                      : 'text-gray-300'
-                                  }`}
+                                  className={`h-4 w-4 ${star <= (candidate.rating || 0)
+                                    ? 'fill-[#FF7000] text-[#FF7000]'
+                                    : 'text-gray-300'
+                                    }`}
                                 />
                               </button>
                             ))}
@@ -443,10 +442,10 @@ const Candidates = () => {
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-6 mt-4">
+                <div className="mt-4 space-y-6">
                   {/* Basic Info */}
                   <div className="flex items-start gap-4">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="w-20 h-20">
                       <AvatarImage src={selectedCandidate.user_id?.avatar} />
                       <AvatarFallback className="bg-[#E8F0FF] text-[#284688] text-2xl">
                         {selectedCandidate.user_id?.name?.charAt(0) || 'C'}
@@ -458,10 +457,10 @@ const Candidates = () => {
                         {selectedCandidate.user_id?.name}
                       </h3>
                       <p className="text-[#4B5563] mb-3">{selectedCandidate.user_id?.email}</p>
-                      
+
                       {selectedCandidate.match_score > 0 && (
                         <div className="flex items-center gap-2 mb-2">
-                          <TrendingUp className="h-5 w-5 text-green-600" />
+                          <TrendingUp className="w-5 h-5 text-green-600" />
                           <span className="text-lg font-semibold text-green-600">
                             {selectedCandidate.match_score}% Match Score
                           </span>
@@ -515,7 +514,7 @@ const Candidates = () => {
                   {selectedCandidate.employer_notes && (
                     <div>
                       <h4 className="font-semibold text-[#0F151D] mb-2">Your Notes</h4>
-                      <div className="bg-yellow-50 p-4 rounded-lg">
+                      <div className="p-4 rounded-lg bg-yellow-50">
                         <p className="text-[#4B5563] whitespace-pre-wrap">{selectedCandidate.employer_notes}</p>
                       </div>
                     </div>
@@ -531,11 +530,11 @@ const Candidates = () => {
                       className="flex-1"
                       variant="outline"
                     >
-                      <MessageSquare className="h-4 w-4 mr-2" />
+                      <MessageSquare className="w-4 h-4 mr-2" />
                       Add/Edit Notes
                     </Button>
                     <Button className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90">
-                      <Mail className="h-4 w-4 mr-2" />
+                      <Mail className="w-4 h-4 mr-2" />
                       Contact Candidate
                     </Button>
                   </div>
@@ -555,7 +554,7 @@ const Candidates = () => {
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 mt-4">
+            <div className="mt-4 space-y-4">
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}

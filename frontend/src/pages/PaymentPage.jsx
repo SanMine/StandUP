@@ -11,8 +11,13 @@ import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from "@pa
 import api from '../services/api';
 import { toast } from 'sonner';
 import StripePayment from '@/components/StripePayment';
+import Logo from './landing/Logo';
+import { FaPaypal } from "react-icons/fa6";
+import Footer from './landing/Footer';
+import { FaStripeS } from "react-icons/fa";
 
-const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+const TAX = 1.24; // fixed tax to add to every plan
 
 const PrintLoadingState = () => {
     const [{ isPending }] = usePayPalScriptReducer();
@@ -80,11 +85,16 @@ const PaymentPage = () => {
         }
     }, [planId, selectedPlan, navigate]);
 
+    // helper: numeric price, total including TAX
+    const priceNum = selectedPlan ? parseFloat(selectedPlan.price) || 0 : 0;
+    const total = +(priceNum + TAX); // numeric
+
     const handleCreatePaypalOrder = async () => {
         try {
+            // send the total (price + tax) to the backend when creating the order
             const response = await api.post('/users/payment/create-paypal-order', {
                 planId: selectedPlan.id,
-                amount: selectedPlan.price
+                amount: total.toFixed(2)
             });
 
             if (response.data.success) {
@@ -131,16 +141,12 @@ const PaymentPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF]">
+        <main className="min-h-screen">
             {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/95 backdrop-blur-sm">
-                <div className="flex items-center justify-between h-16 px-6 mx-auto max-w-7xl">
+            <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white/75 backdrop-blur-sm">
+                <div className="flex items-center justify-between h-16 px-4 mx-auto lg:px-0 max-w-7xl">
                     <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                        <img
-                            src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
-                            alt="Stand Up Logo"
-                            className="w-auto h-10"
-                        />
+                        <Logo />
                     </div>
                     <Button
                         onClick={() => navigate('/pricing')}
@@ -160,7 +166,7 @@ const PaymentPage = () => {
                         <Badge className="bg-[#FFE4CC] text-[#FF7000] hover:bg-[#FFE4CC] px-4 py-1.5 text-sm font-medium mb-4">
                             Secure Checkout
                         </Badge>
-                        <h1 className="text-4xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <h1 className="text-4xl font-bold text-[#0F151D] mb-2" >
                             Complete Your Upgrade
                         </h1>
                         <p className="text-lg text-[#4B5563]">
@@ -171,8 +177,8 @@ const PaymentPage = () => {
                     <div className="grid gap-8 lg:grid-cols-2">
                         {/* Plan Details */}
                         <Card className="shadow-xl border-2 border-[#FF7000]">
-                            <CardHeader className="bg-gradient-to-r from-[#FF7000] to-[#FF9040] text-white">
-                                <CardTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                            <CardHeader className="bg-gradient-to-r rounded-t-md from-[#FF7000] to-[#FF9040] text-white">
+                                <CardTitle className="text-2xl" >
                                     {selectedPlan.name} Plan
                                 </CardTitle>
                                 <CardDescription className="text-white/90">
@@ -213,7 +219,7 @@ const PaymentPage = () => {
                         {/* Payment Form */}
                         <Card className="shadow-xl">
                             <CardHeader className="px-8 pt-8 pb-0">
-                                <CardTitle className="text-2xl" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                                <CardTitle className="text-2xl" >
                                     Payment Details
                                 </CardTitle>
                                 <CardDescription>
@@ -225,15 +231,15 @@ const PaymentPage = () => {
                                     <div className="p-3 border rounded-md">
                                         <div className="flex items-center justify-between mb-2">
                                             <span className="text-[#4B5563]">Subtotal</span>
-                                            <span className="text-[#0F151D] font-medium">${selectedPlan.price}</span>
+                                            <span className="text-[#0F151D] font-medium">${priceNum.toFixed(2)}</span>
                                         </div>
                                         <div className="flex items-center justify-between mb-4">
                                             <span className="text-[#4B5563]">Tax</span>
-                                            <span className="text-[#0F151D] font-medium">$0.00</span>
+                                            <span className="text-[#0F151D] font-medium">${TAX.toFixed(2)}</span>
                                         </div>
                                         <div className="flex items-center justify-between pt-4 text-xl font-bold border-t">
                                             <span className="text-[#0F151D]">Total</span>
-                                            <span className="text-[#FF7000]">${selectedPlan.price}/month</span>
+                                            <span className="text-[#FF7000]">${total.toFixed(2)}/month</span>
                                         </div>
                                     </div>
 
@@ -242,20 +248,26 @@ const PaymentPage = () => {
                                         <label className="block text-sm font-medium text-[#0F151D] mb-2">
                                             Payment Method
                                         </label>
+
                                         <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                                            <SelectTrigger className="w-full h-12 border-2 border-gray-300 focus:border-[#FF7000]">
+                                            {/* Keep trigger visually stable on focus/open */}
+                                            <SelectTrigger
+                                                className="w-full h-12 border-2 border-gray-300 rounded-md focus:ring-0 focus-visible:outline-none focus:border-gray-300"
+                                            >
                                                 <SelectValue placeholder="Select payment method" />
                                             </SelectTrigger>
+
                                             <SelectContent>
                                                 <SelectItem value="paypal">
-                                                    <div className="flex items-center gap-3">
-                                                        <FaCcPaypal className='text-[#0070BA] size-6' />
+                                                    <div className="flex items-center gap-3 py-1.5">
+                                                        <FaCcPaypal className="text-[#0070BA] w-5 h-5" />
                                                         <span>PayPal</span>
                                                     </div>
                                                 </SelectItem>
+
                                                 <SelectItem value="stripe">
-                                                    <div className="flex items-center gap-3">
-                                                        <FaStripe className='text-[#635BFF] size-6' />
+                                                    <div className="flex items-center gap-3 py-1.5">
+                                                        <FaStripe className="text-[#635BFF] w-5 h-5" />
                                                         <span>Stripe (Credit/Debit Card)</span>
                                                     </div>
                                                 </SelectItem>
@@ -269,7 +281,7 @@ const PaymentPage = () => {
                                             <div className="mb-4">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <div className="w-10 h-10 bg-[#0070BA] rounded-full flex items-center justify-center">
-                                                        <span className="font-bold text-white">PP</span>
+                                                        <FaPaypal className='text-white' />
                                                     </div>
                                                     <div>
                                                         <p className="font-semibold text-[#0F151D]">PayPal</p>
@@ -294,7 +306,7 @@ const PaymentPage = () => {
                                         <div className="p-4 border border-gray-200 rounded-lg bg-gray-50">
                                             <div className="flex items-center gap-2 mb-4">
                                                 <div className="w-10 h-10 bg-[#635BFF] rounded-full flex items-center justify-center">
-                                                    <CreditCard className="w-5 h-5 text-white" />
+                                                    <FaStripeS className="w-5 h-5 text-white" />
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-[#0F151D]">Stripe</p>
@@ -302,7 +314,8 @@ const PaymentPage = () => {
                                                 </div>
                                             </div>
 
-                                            <StripePayment planId={selectedPlan.id} amount={selectedPlan.price} />
+                                            {/* send the total (price + tax) to StripePayment */}
+                                            <StripePayment planId={selectedPlan.id} amount={total.toFixed(2)} />
                                         </div>
                                     )}
 
@@ -340,7 +353,8 @@ const PaymentPage = () => {
                     </div>
                 </div>
             </div>
-        </div>
+            <Footer />
+        </main>
     );
 };
 

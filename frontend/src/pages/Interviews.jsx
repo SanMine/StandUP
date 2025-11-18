@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { 
+import {
   Video,
   Play,
   Calendar,
@@ -62,7 +62,7 @@ const Interviews = () => {
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-3xl font-bold text-[#0F151D] mb-2" >
             Interview Preparation
           </h1>
           <p className="text-[#4B5563]">Practice, schedule, and ace your interviews</p>
@@ -85,7 +85,7 @@ const Interviews = () => {
                         <Video className="h-8 w-8 text-[#FF7000]" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                        <h3 className="text-xl font-semibold text-[#0F151D] mb-2" >
                           Practice Makes Perfect
                         </h3>
                         <p className="text-[#4B5563] mb-4">
@@ -112,7 +112,7 @@ const Interviews = () => {
 
                 {/* Question Bank */}
                 <div>
-                  <h2 className="text-xl font-semibold text-[#0F151D] mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <h2 className="text-xl font-semibold text-[#0F151D] mb-4" >
                     Question Bank
                   </h2>
                   <div className="grid gap-4">
@@ -127,8 +127,8 @@ const Interviews = () => {
                                 </Badge>
                                 <Badge variant="outline" className={
                                   question.difficulty === 'Easy' ? 'border-green-500 text-green-700' :
-                                  question.difficulty === 'Medium' ? 'border-yellow-500 text-yellow-700' :
-                                  'border-red-500 text-red-700'
+                                    question.difficulty === 'Medium' ? 'border-yellow-500 text-yellow-700' :
+                                      'border-red-500 text-red-700'
                                 }>
                                   {question.difficulty}
                                 </Badge>
@@ -139,7 +139,7 @@ const Interviews = () => {
                               </div>
                               <p className="text-[#0F151D] font-medium">{question.question}</p>
                             </div>
-                            <Button 
+                            <Button
                               className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                               onClick={() => startMockInterview(question)}
                             >
@@ -156,8 +156,8 @@ const Interviews = () => {
             ) : (
               /* Mock Interview Session */
               <div className="space-y-6">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => setSelectedQuestion(null)}
                   className="text-[#FF7000] hover:text-[#FF7000]/90"
                 >
@@ -205,7 +205,7 @@ const Interviews = () => {
                             </div>
                           </div>
                           <div className="flex gap-3">
-                            <Button 
+                            <Button
                               className={isRecording ? 'bg-red-600 hover:bg-red-700 text-white flex-1' : 'bg-[#FF7000] hover:bg-[#FF7000]/90 text-white flex-1'}
                               onClick={() => setIsRecording(!isRecording)}
                             >
@@ -257,7 +257,7 @@ const Interviews = () => {
                                 <span className={`text-sm font-semibold ${metric.color}`}>{metric.score}%</span>
                               </div>
                               <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                                <div 
+                                <div
                                   className="h-full bg-gradient-to-r from-[#FF7000] to-[#FF9040] transition-all duration-500"
                                   style={{ width: `${metric.score}%` }}
                                 />
@@ -327,7 +327,7 @@ const Interviews = () => {
                   <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-[#0F151D] mb-2">No Upcoming Interviews</h3>
                   <p className="text-[#4B5563] mb-6">You don't have any scheduled interviews yet</p>
-                  <Button 
+                  <Button
                     className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                     onClick={() => setActiveTab('mock')}
                   >

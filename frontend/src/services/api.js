@@ -128,6 +128,11 @@ export const applicationsAPI = {
     return response.data;
   },
 
+  deleteApplication: async (applicationId) => {
+    const response = await api.delete(`/applications/${applicationId}`);
+    return response.data;
+  },
+
   // Saved Jobs
   getSavedJobs: async () => {
     const response = await api.get('/applications/saved/jobs');

@@ -12,7 +12,7 @@ router.get('/my-jobs', isAuthenticated, isEmployer, jobController.getMyJobs);
 router.get('/', isAuthenticated, jobController.getAllJobs);
 
 // Get single job (public)
-router.get('/:id', jobController.getJobById);
+router.get('/:id', isAuthenticated, jobController.getJobById);
 
 // Create job (employer only)
 router.post(

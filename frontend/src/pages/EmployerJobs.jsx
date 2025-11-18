@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
-import { 
+import {
   Briefcase,
   Plus,
   Search,
@@ -33,7 +33,7 @@ import api from '../services/api';
 const EmployerJobs = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [jobs, setJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -115,7 +115,7 @@ const EmployerJobs = () => {
   const handleJobSubmit = async (data) => {
     try {
       setIsSubmitting(true);
-      
+
       if (selectedJob) {
         await api.put(`/jobs/${selectedJob._id || selectedJob.id}`, data);
         toast.success('Job updated successfully');
@@ -125,7 +125,7 @@ const EmployerJobs = () => {
           toast.success('Job created successfully');
         }
       }
-      
+
       setIsModalOpen(false);
       fetchJobs();
     } catch (error) {
@@ -148,12 +148,12 @@ const EmployerJobs = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <h1 className="text-3xl font-bold text-[#0F151D] mb-2" >
               My Job Postings
             </h1>
             <p className="text-[#4B5563]">Manage your job listings</p>
           </div>
-          <Button 
+          <Button
             onClick={handleCreateJob}
             className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
           >
@@ -253,12 +253,12 @@ const EmployerJobs = () => {
                 {searchTerm || statusFilter !== 'all' ? 'No jobs found' : 'No jobs posted yet'}
               </h3>
               <p className="text-[#4B5563] mb-4">
-                {searchTerm || statusFilter !== 'all' 
-                  ? 'Try adjusting your filters' 
+                {searchTerm || statusFilter !== 'all'
+                  ? 'Try adjusting your filters'
                   : 'Create your first job posting to start hiring'}
               </p>
               {!searchTerm && statusFilter === 'all' && (
-                <Button 
+                <Button
                   onClick={handleCreateJob}
                   className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
                 >

@@ -1,4 +1,4 @@
-const { Application, Job, JobSkill, SavedJob } = require('../models');
+const { Application, Job, JobSkill, SavedJob, User, Candidate } = require('../models');
 
 // Get user's applications
 const getUserApplications = async (req, res, next) => {
@@ -39,7 +39,7 @@ const getUserApplications = async (req, res, next) => {
 // Apply for a job
 const applyForJob = async (req, res, next) => {
   try {
-    const { jobId, notes } = req.body;
+    const { jobId, notes, resumeUrl, coverLetter, salaryExpectation, availability } = req.body;
 
     // Check if job exists
     const job = await Job.findById(jobId);
@@ -82,6 +82,38 @@ const applyForJob = async (req, res, next) => {
         event: 'Application Submitted',
         status: 'completed'
       }]
+    });
+
+    // Get user details for match score calculation
+    const user = await User.findById(req.user.userId).lean();
+
+    // Calculate match score (simple example - you can make this more sophisticated)
+    let matchScore = 0;
+    if (user && user.skills && job.required_skills) {
+      const userSkills = user.skills.map(s => s.toLowerCase());
+      const jobSkills = job.required_skills.map(s => s.toLowerCase());
+      const matchingSkills = userSkills.filter(skill => jobSkills.includes(skill));
+      matchScore = Math.round((matchingSkills.length / jobSkills.length) * 100);
+    }
+
+    // Create candidate entry for the employer
+    const candidate = await Candidate.create({
+      application_id: application._id,
+      user_id: req.user.userId,
+      job_id: jobId,
+      employer_id: job.employer_id,
+      status: 'new',
+      match_score: matchScore,
+      employer_notes: '',
+      resume_url: resumeUrl || null,
+      cover_letter: coverLetter || null,
+      salary_expectation: salaryExpectation || null,
+      availability: availability || null,
+      rating: null,
+      viewed: false,
+      viewed_at: null,
+      last_activity: new Date(),
+      tags: []
     });
 
     // Get job with skills
@@ -157,8 +189,14 @@ const updateApplication = async (req, res, next) => {
     if (notes !== undefined) application.notes = notes;
     application.last_update = new Date();
     application.timeline = timeline;
-    
+
     await application.save();
+
+    // Update candidate last_activity
+    await Candidate.findOneAndUpdate(
+      { application_id: application._id },
+      { last_activity: new Date() }
+    );
 
     // Get job with skills
     const job = await Job.findById(application.job_id).lean();
@@ -209,6 +247,9 @@ const deleteApplication = async (req, res, next) => {
         }
       });
     }
+
+    // Delete associated candidate entry
+    await Candidate.findOneAndDelete({ application_id: application._id });
 
     await application.deleteOne();
 
@@ -336,7 +377,6 @@ const unsaveJob = async (req, res, next) => {
     next(error);
   }
 };
-
 module.exports = {
   getUserApplications,
   applyForJob,
@@ -344,5 +384,5 @@ module.exports = {
   deleteApplication,
   getSavedJobs,
   saveJob,
-  unsaveJob
+  unsaveJob,
 };

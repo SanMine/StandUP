@@ -4,6 +4,7 @@ const { isAuthenticated, isEmployer } = require('../middlewares/auth');
 const {
   getCandidates,
   getCandidateById,
+  getTopMatchedCandidates,
   updateCandidateStatus,
   updateCandidateNotes,
   updateCandidateRating,
@@ -25,6 +26,20 @@ router.use(isAuthenticated, isEmployer);
 router.get(
   '/stats',
   getCandidateStats
+);
+
+/**
+ * @route   GET /api/candidates/top-matches
+ * @desc    Get top matched candidates using AI
+ * @access  Private (Employer - Premium only)
+ */
+router.get(
+  '/top-matches',
+  [
+    query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be between 1 and 50'),
+    validate
+  ],
+  getTopMatchedCandidates
 );
 
 /**

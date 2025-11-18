@@ -47,7 +47,7 @@ const applicationSchema = new mongoose.Schema({
 
 applicationSchema.index({ user_id: 1, job_id: 1 }, { unique: true });
 
-applicationSchema.virtual('id').get(function() {
+applicationSchema.virtual('id').get(function () {
   return this._id;
 });
 

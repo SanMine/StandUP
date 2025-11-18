@@ -5,6 +5,7 @@ import api from "../services/api";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import logo from "../assets/standup_logo.svg"
 import {
   Card,
   CardContent,
@@ -299,20 +300,19 @@ const Auth = () => {
     }
   };
 
-  // Role selection step
   if (step === "role") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
+      <div className="flex items-center justify-center min-h-screen p-6">
         <div className="w-full max-w-4xl">
           <div className="mb-12 text-center">
             <img
-              src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+              onClick={() => navigate("/")}
+              src={logo}
               alt="Stand Up Logo"
-              className="w-auto h-12 mx-auto mb-6"
+              className="w-auto h-12 mx-auto mb-6 cursor-pointer"
             />
             <h1
               className="text-3xl font-bold text-[#0F151D] mb-2"
-              style={{ fontFamily: "Poppins, sans-serif" }}
             >
               I am a...
             </h1>
@@ -329,30 +329,29 @@ const Auth = () => {
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             <Card
-              className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-[#FF7000]"
+              className="cursor-pointer border-2 border-[#E5E7EB] bg-white"
               onClick={() => handleRoleSelection("student")}
             >
-              <CardContent className="p-12 text-center">
+              <CardContent className="p-12 text-center ">
                 <div className="h-20 w-20 bg-[#FFE4CC] rounded-full flex items-center justify-center mx-auto mb-6">
                   <GraduationCap className="h-10 w-10 text-[#FF7000]" />
                 </div>
                 <h2
                   className="text-2xl font-bold text-[#0F151D] mb-3"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                   Student
                 </h2>
                 <p className="text-[#4B5563] mb-6">
                   Find internships, build skills, and launch your career
                 </p>
-                <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white w-full">
+                <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 min-h-[44px] transition-colors duration-200 text-white w-full">
                   Continue as Student
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               </CardContent>
             </Card>
             <Card
-              className="cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-2 border-transparent hover:border-[#284688]"
+              className="cursor-pointer border-2 border-[#E5E7EB] bg-white"
               onClick={() => handleRoleSelection("employer")}
             >
               <CardContent className="p-12 text-center">
@@ -361,7 +360,6 @@ const Auth = () => {
                 </div>
                 <h2
                   className="text-2xl font-bold text-[#0F151D] mb-3"
-                  style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                   Employer
                 </h2>
@@ -370,7 +368,7 @@ const Auth = () => {
                 </p>
                 <Button
                   variant="outline"
-                  className="border-2 border-[#284688] text-[#284688] hover:bg-[#284688] hover:text-white w-full"
+                  className="border-2 border-[#284688] text-[#284688] min-h-[44px] transition-colors duration-200f hover:bg-[#284688] hover:text-white w-full"
                 >
                   Continue as Employer
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -395,8 +393,8 @@ const Auth = () => {
                   <div
                     key={num}
                     className={`h-2 rounded-full transition-all ${num === onboardingStep
-                        ? "w-8 bg-[#FF7000]"
-                        : "w-2 bg-gray-300"
+                      ? "w-8 bg-[#FF7000]"
+                      : "w-2 bg-gray-300"
                       }`}
                   />
                 ))}
@@ -407,7 +405,7 @@ const Auth = () => {
             </div>
             <CardTitle
               className="text-2xl"
-              style={{ fontFamily: "Poppins, sans-serif" }}
+
             >
               {selectedRole === "student"
                 ? onboardingStep === 1
@@ -460,8 +458,8 @@ const Auth = () => {
                             variant="outline"
                             onClick={() => handlePrimaryGoalToggle(goal)}
                             className={`justify-start transition-all ${formData.primaryGoals.includes(goal)
-                                ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
-                                : "hover:border-[#FF7000]"
+                              ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
+                              : "hover:border-[#FF7000]"
                               }`}
                           >
                             {goal}
@@ -481,8 +479,8 @@ const Auth = () => {
                             key={skill}
                             onClick={() => handleSkillToggle(skill)}
                             className={`cursor-pointer transition-all ${formData.skills.includes(skill)
-                                ? "bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
-                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              ? "bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                               }`}
                           >
                             {skill}
@@ -551,8 +549,8 @@ const Auth = () => {
                             variant="outline"
                             onClick={() => handleDesiredPositionToggle(role)}
                             className={`w-full justify-start transition-all ${formData.desiredPositions.includes(role)
-                                ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
-                                : "hover:border-[#FF7000]"
+                              ? "border-[#FF7000] bg-[#FFE4CC] text-[#FF7000]"
+                              : "hover:border-[#FF7000]"
                               }`}
                           >
                             {role}
@@ -773,17 +771,18 @@ const Auth = () => {
 
   // Auth step (signin/signup)
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFFDFA] to-[#E8F0FF] flex items-center justify-center p-6">
+    <div className="flex items-center justify-center min-h-screen p-6">
       <Card className="w-full max-w-md shadow-xl" key={authMode}>
         <CardHeader className="text-center">
           <img
-            src="https://customer-assets.emergentagent.com/job_9597193e-4ccf-48a0-a66a-1efa796a5b1d/artifacts/ufitgc6x_stand.png"
+            src={logo}
             alt="Stand Up Logo"
-            className="w-auto h-12 mx-auto mb-4"
+            onClick={() => navigate("/")}
+            className="w-auto h-12 mx-auto mb-4 cursor-pointer"
           />
           <CardTitle
             className="text-2xl"
-            style={{ fontFamily: "Poppins, sans-serif" }}
+
           >
             {authMode === "signin" ? "Welcome Back!" : "Create Account"}
           </CardTitle>
