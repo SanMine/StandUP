@@ -22,7 +22,7 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Progress } from '../components/ui/progress';
 import { useAuth } from '../contexts/AuthContext';
-import { getMatchBgColor, getMatchColor } from '../lib/utils';
+import { getMatchBgColor, getMatchColor, getProfileStrengthColor, getProfileStrengthBgColor, getProfileStrengthTextColor } from '../lib/utils';
 import { jobsAPI, learningAPI, mentorsAPI } from '../services/api';
 
 const normalizeJob = (job) => {
