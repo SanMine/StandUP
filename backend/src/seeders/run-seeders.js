@@ -284,4 +284,11 @@ const seedDatabase = async () => {
   }
 };
 
-seedDatabase();
+// Connect to database first
+const { connectDB } = require('../config/database');
+connectDB().then(() => {
+  seedDatabase();
+}).catch(err => {
+  console.error('Failed to connect to database:', err);
+  process.exit(1);
+});
