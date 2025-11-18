@@ -41,7 +41,7 @@ const AppBar = ({ user }) => {
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="relative transition-colors hover:bg-gray-100">
             <Bell className="w-5 h-5 text-gray-600" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-[#FF7000] rounded-full"></span>
+            <span className="absolute top-1 right-1 h-2 w-2  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white rounded-full"></span>
           </Button>
 
           <Button variant="ghost" size="icon" className="transition-colors hover:bg-gray-100">
@@ -79,7 +79,7 @@ const AppBar = ({ user }) => {
           ) : (
             <Button
               onClick={() => navigate('/auth')}
-              className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white transition-all"
+              className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white transition-all"
             >
               Sign In
             </Button>

@@ -193,7 +193,7 @@ const CandidateDetailsModal = ({ open, onClose, candidate }) => {
                     {/* Action Buttons */}
                     <div className="flex gap-3 pt-4 border-t">
                         <Button
-                            className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                            className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                             onClick={() => window.location.href = `mailto:${candidate.email}`}
                         >
                             <Mail className="w-4 h-4 mr-2" />

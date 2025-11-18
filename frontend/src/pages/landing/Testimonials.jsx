@@ -59,7 +59,7 @@ export default function Testimonials() {
     );
 
     return (
-        <section className="px-6 py-32 bg-gradient-to-b from-white to-orange-50/30">
+        <section id='testimonials' className="px-6 py-32 bg-gradient-to-b from-white to-orange-50/30">
             <div className="max-w-5xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -142,8 +142,8 @@ export default function Testimonials() {
                             ))}
                         </CarouselContent>
 
-                        <CarouselPrevious className="hidden lg:flex lg:items-center lg:justify-center -left-12 border-2 border-[#FFE4CC] bg-white hover:bg-[#FF7000] hover:text-white hover:border-[#FF7000] transition-all shadow-md" />
-                        <CarouselNext className="hidden lg:flex lg:items-center lg:justify-center -right-12 border-2 border-[#FFE4CC] bg-white hover:bg-[#FF7000] hover:text-white hover:border-[#FF7000] transition-all shadow-md" />
+                        <CarouselPrevious className="hidden lg:flex lg:items-center lg:justify-center -left-12 border-2 border-[#FFE4CC] bg-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover:text-white hover:border-[#FF7000] transition-all shadow-md" />
+                        <CarouselNext className="hidden lg:flex lg:items-center lg:justify-center -right-12 border-2 border-[#FFE4CC] bg-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover:text-white hover:border-[#FF7000] transition-all shadow-md" />
                     </Carousel>
                 </motion.div>
             </div>

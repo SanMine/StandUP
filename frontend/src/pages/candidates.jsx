@@ -381,7 +381,7 @@ const Candidates = () => {
                           <Button
                             size="sm"
                             onClick={() => openCandidateDetails(candidate)}
-                            className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                            className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                           >
                             <Eye className="w-3 h-3 mr-1" />
                             View Profile
@@ -548,7 +548,7 @@ const Candidates = () => {
                       <MessageSquare className="w-4 h-4 mr-2" />
                       Add/Edit Notes
                     </Button>
-                    <Button className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90">
+                    <Button className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90">
                       <Mail className="w-4 h-4 mr-2" />
                       Contact Candidate
                     </Button>
@@ -582,7 +582,7 @@ const Candidates = () => {
                 <Button variant="outline" onClick={() => setNotesDialogOpen(false)} className="flex-1">
                   Cancel
                 </Button>
-                <Button onClick={handleSaveNotes} className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90">
+                <Button onClick={handleSaveNotes} className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90">
                   Save Notes
                 </Button>
               </div>

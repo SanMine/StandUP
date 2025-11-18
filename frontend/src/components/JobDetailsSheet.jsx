@@ -307,7 +307,7 @@ const JobDetailsSheet = ({
                                 <div className="relative bg-gradient-to-br from-[#F3F4F6] to-[#E5E7EB] rounded-lg border-2 border-dashed border-gray-300 overflow-hidden min-h-[180px]">
                                     <div className="absolute inset-0 flex items-center justify-center p-4 rounded-lg backdrop-blur-sm bg-white/60">
                                         <div className="max-w-md text-center">
-                                            <div className="inline-flex items-center justify-center w-14 h-14 bg-[#FF7000] rounded-full mb-3">
+                                            <div className="inline-flex items-center justify-center w-14 h-14  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white rounded-full mb-3">
                                                 <LockIcon className="text-white w-7 h-7" />
                                             </div>
                                             <h3 className="text-base font-semibold text-[#0F151D] mb-2">AI Match Analysis Locked</h3>
@@ -341,7 +341,7 @@ const JobDetailsSheet = ({
                                     <ul className="space-y-2">
                                         {job.requirements.map((req, idx) => (
                                             <li key={idx} className="flex items-start gap-2 text-sm text-[#4B5563]">
-                                                <span className="h-1.5 w-1.5 rounded-full bg-[#FF7000] mt-2 flex-shrink-0" />
+                                                <span className="h-1.5 w-1.5 rounded-full  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white mt-2 flex-shrink-0" />
                                                 <span>{req}</span>
                                             </li>
                                         ))}
@@ -364,7 +364,7 @@ const JobDetailsSheet = ({
                             {/* Actions */}
                             <div className="flex gap-3 pt-4 border-t">
                                 <Button
-                                    className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white h-12 text-base"
+                                    className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white h-12 text-base"
                                     onClick={() => handleApply('')}
                                     disabled={applying || job?.applicationStatus === 'applied'}
                                 >

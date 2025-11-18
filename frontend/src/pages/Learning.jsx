@@ -106,7 +106,7 @@ const Learning = () => {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
           {[
             { label: 'Courses Enrolled', value: '3', icon: BookOpen, color: 'text-blue-600', bgColor: 'bg-blue-100' },
             { label: 'Hours Learned', value: '24', icon: Clock, color: 'text-green-600', bgColor: 'bg-green-100' },
@@ -140,17 +140,17 @@ const Learning = () => {
             <h2 className="text-2xl font-semibold text-[#0F151D] mb-4" >
               Continue Learning
             </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {myLearning.map((learning) => {
                 const course = coursesList.find(c => c.id === learning.courseId);
                 if (!course) return null;
                 return (
-                  <Card key={learning.id} className="border-none shadow-md hover:shadow-lg transition-all">
+                  <Card key={learning.id} className="transition-all border-none shadow-md hover:shadow-lg">
                     <CardContent className="p-0">
                       <img
                         src={course.thumbnail}
                         alt={course.title}
-                        className="w-full h-40 object-cover rounded-t-lg"
+                        className="object-cover w-full h-40 rounded-t-lg"
                       />
                       <div className="p-6">
                         <Badge className="bg-[#E8F0FF] text-[#284688] hover:bg-[#E8F0FF] mb-2">
@@ -159,14 +159,14 @@ const Learning = () => {
                         <h3 className="font-semibold text-[#0F151D] mb-2">{course.title}</h3>
                         <p className="text-sm text-[#4B5563] mb-4">{course.provider}</p>
                         <div className="mb-4">
-                          <div className="flex items-center justify-between text-sm mb-1">
+                          <div className="flex items-center justify-between mb-1 text-sm">
                             <span className="text-[#4B5563]">Progress</span>
                             <span className="font-semibold text-[#FF7000]">{learning.progress}%</span>
                           </div>
                           <Progress value={learning.progress} className="h-2" />
                         </div>
-                        <Button className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
-                          <Play className="h-4 w-4 mr-2" />
+                        <Button className="w-fullhover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
+                          <Play className="w-4 h-4 mr-2" />
                           Continue
                         </Button>
                       </div>
@@ -185,17 +185,17 @@ const Learning = () => {
           </h2>
 
           {/* Search & Filters */}
-          <Card className="border-none shadow-md mb-6">
+          <Card className="mb-6 border-none shadow-md">
             <CardContent className="p-6">
               <div className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
                   <Input
                     type="text"
                     placeholder="Search courses by title, provider, or topic..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 h-12 text-base"
+                    className="h-12 pl-10 text-base"
                   />
                 </div>
                 <div>
@@ -208,8 +208,8 @@ const Learning = () => {
                           key={level}
                           onClick={() => setSelectedLevel(level)}
                           className={`cursor-pointer transition-all capitalize ${isSelected
-                              ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            ? ' text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
                           {level}
@@ -223,7 +223,7 @@ const Learning = () => {
           </Card>
 
           {/* Course Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {isLoading ? (
               // show mock skeletons while loading
               mockCourses.slice(0, 6).map((course) => (
@@ -231,21 +231,21 @@ const Learning = () => {
                   <CardContent className="p-0">
                     <div className="w-full h-40 bg-gray-200 rounded-t-lg" />
                     <div className="p-6">
-                      <div className="h-4 bg-gray-200 rounded w-1/3 mb-3" />
-                      <div className="h-3 bg-gray-200 rounded w-1/2 mb-2" />
-                      <div className="h-3 bg-gray-200 rounded w-1/4 mb-2" />
+                      <div className="w-1/3 h-4 mb-3 bg-gray-200 rounded" />
+                      <div className="w-1/2 h-3 mb-2 bg-gray-200 rounded" />
+                      <div className="w-1/4 h-3 mb-2 bg-gray-200 rounded" />
                     </div>
                   </CardContent>
                 </Card>
               ))
             ) : (
               filteredCourses.map((course) => (
-                <Card key={course.id} className="border-none shadow-md hover:shadow-xl transition-all">
+                <Card key={course.id} className="transition-all border-none shadow-md hover:shadow-xl">
                   <CardContent className="p-0">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
-                      className="w-full h-40 object-cover rounded-t-lg"
+                      className="object-cover w-full h-40 rounded-t-lg"
                     />
                     <div className="p-6">
                       <div className="flex items-start justify-between mb-2">
@@ -253,7 +253,7 @@ const Learning = () => {
                           {course.level}
                         </Badge>
                         <div className="flex items-center gap-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
                           <span className="text-sm font-medium">{course.rating || '—'}</span>
                         </div>
                       </div>
@@ -268,17 +268,17 @@ const Learning = () => {
                       </div>
                       <div className="flex items-center justify-between text-sm text-[#4B5563] mb-4">
                         <span className="flex items-center gap-1">
-                          <Clock className="h-4 w-4" />
+                          <Clock className="w-4 h-4" />
                           {course.duration || '—'}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Users className="h-4 w-4" />
+                          <Users className="w-4 h-4" />
                           {(course.students || 0).toLocaleString()}
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="font-semibold text-[#FF7000]">{course.price || 'Free'}</span>
-                        <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
+                        <Button className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
                           Enroll
                         </Button>
                       </div>
@@ -306,22 +306,22 @@ const Learning = () => {
                 { title: 'System Design for Frontend', status: 'pending' },
                 { title: 'Build Portfolio Projects', status: 'pending' }
               ].map((step, index) => (
-                <div key={index} className="flex items-center gap-3 bg-white rounded-lg p-4">
+                <div key={index} className="flex items-center gap-3 p-4 bg-white rounded-lg">
                   <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step.status === 'completed' ? 'bg-green-100' :
-                      step.status === 'in-progress' ? 'bg-[#FFE4CC]' :
-                        'bg-gray-100'
+                    step.status === 'in-progress' ? 'bg-[#FFE4CC]' :
+                      'bg-gray-100'
                     }`}>
                     {step.status === 'completed' ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                      <CheckCircle2 className="w-5 h-5 text-green-600" />
                     ) : step.status === 'in-progress' ? (
-                      <span className="h-2 w-2 rounded-full bg-[#FF7000]" />
+                      <span className="h-2 w-2 rounded-full  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white" />
                     ) : (
-                      <span className="h-2 w-2 rounded-full bg-gray-400" />
+                      <span className="w-2 h-2 bg-gray-400 rounded-full" />
                     )}
                   </div>
                   <span className="flex-1 font-medium text-[#0F151D]">{step.title}</span>
                   {step.status === 'in-progress' && (
-                    <Button size="sm" className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
+                    <Button size="sm" className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
                       Continue
                     </Button>
                   )}

@@ -46,7 +46,7 @@ const jobSchema = z.object({
 
 const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = false }) => {
   const isEditMode = !!initialData;
-  
+
   const {
     register,
     handleSubmit,
@@ -77,7 +77,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
   const [requirementInput, setRequirementInput] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [cultureInput, setCultureInput] = useState('');
-  
+
   const requirements = watch('requirements') || [];
   const skills = watch('skills') || [];
   const culture = watch('culture') || [];
@@ -175,7 +175,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {/* Job Title */}
             <div className="space-y-2">
               <Label htmlFor="title">Job Title *</Label>
@@ -220,7 +220,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {/* Location */}
             <div className="space-y-2">
               <Label htmlFor="location">Location *</Label>
@@ -328,7 +328,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 size="sm"
                 data-testid="add-requirement-btn"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="w-4 h-4" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -341,7 +341,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                     className="ml-2 hover:text-red-500"
                     data-testid={`remove-requirement-${index}`}
                   >
-                    <X className="h-3 w-3" />
+                    <X className="w-3 h-3" />
                   </button>
                 </Badge>
               ))}
@@ -365,7 +365,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 size="sm"
                 data-testid="add-skill-btn"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="w-4 h-4" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -378,7 +378,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                     className="ml-2 hover:text-red-500"
                     data-testid={`remove-skill-${index}`}
                   >
-                    <X className="h-3 w-3" />
+                    <X className="w-3 h-3" />
                   </button>
                 </Badge>
               ))}
@@ -402,7 +402,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                 size="sm"
                 data-testid="add-culture-btn"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="w-4 h-4" />
               </Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -415,7 +415,7 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
                     className="ml-2 hover:text-red-500"
                     data-testid={`remove-culture-${index}`}
                   >
-                    <X className="h-3 w-3" />
+                    <X className="w-3 h-3" />
                   </button>
                 </Badge>
               ))}
@@ -457,13 +457,13 @@ const JobModal = ({ open, onClose, onSubmit, initialData = null, isLoading = fal
             </Button>
             <Button
               type="submit"
-              className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+              className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
               disabled={isLoading}
               data-testid="submit-job-btn"
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {isEditMode ? 'Updating...' : 'Creating...'}
                 </>
               ) : (

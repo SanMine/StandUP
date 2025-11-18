@@ -40,7 +40,7 @@ export default function CTA() {
                     <Button
                         onClick={() => navigate('/auth')}
                         size="lg"
-                        className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-12 py-6 text-lg font-medium rounded-full shadow-xl hover:shadow-2xl transition-all"
+                        className=" hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white px-12 py-6 text-lg font-medium rounded-full shadow-xl hover:shadow-2xl transition-all"
                     >
                         Get Started Free
                         <ArrowRight className="w-5 h-5 ml-2" />

@@ -313,7 +313,7 @@ const Applications = () => {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                               </svg>
                             ) : item.status === 'in-progress' ? (
-                              <span className="h-3 w-3 rounded-full bg-[#FF7000]" />
+                              <span className="h-3 w-3 rounded-full  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white" />
                             ) : (
                               <span className="w-2 h-2 bg-gray-400 rounded-full" />
                             )}
@@ -338,7 +338,7 @@ const Applications = () => {
                   />
                   <div className="flex gap-2 mt-2">
                     <Button
-                      className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                      className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                       onClick={() => handleSaveNotes(selectedApp.id)}
                     >
                       Save Notes
