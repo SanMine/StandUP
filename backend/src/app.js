@@ -31,9 +31,19 @@ const PORT = process.env.PORT || 8000;
 
 app.use(helmet());
 
+// CORS configuration - FIXED: removed trailing slashes and used array format
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000' || "https://stand-up-tau.vercel.app/" || "https://www.careerstandup.com/",
-  credentials: true
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'https://stand-up-tau.vercel.app',
+    'https://www.careerstandup.com',
+    'https://careerstandup.com'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie'],
+  exposedHeaders: ['Set-Cookie']
 }));
 
 // Request logging
@@ -83,39 +93,6 @@ app.use(session({
 
 // Attach user to request
 app.use(attachUser);
-
-// Rate limiting
-// const limiter = rateLimit({
-//   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 minutes
-//   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-//   message: {
-//     success: false,
-//     error: {
-//       code: 'RATE_LIMIT_EXCEEDED',
-//       message: 'Too many requests, please try again later'
-//     }
-//   },
-//   standardHeaders: true,
-//   legacyHeaders: false
-// });
-
-// // Auth rate limiting
-// const authLimiter = rateLimit({
-//   windowMs: 900000, // 15 minutes
-//   max: parseInt(process.env.AUTH_RATE_LIMIT_MAX) || 5,
-//   message: {
-//     success: false,
-//     error: {
-//       code: 'AUTH_RATE_LIMIT_EXCEEDED',
-//       message: 'Too many authentication attempts, please try again later'
-//     }
-//   },
-//   skipSuccessfulRequests: true
-// });
-
-// Apply rate limiters
-// app.use('/api/', limiter);
-// app.use('/api/auth/', authLimiter);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
