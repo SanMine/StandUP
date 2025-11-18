@@ -39,7 +39,7 @@ const getUserApplications = async (req, res, next) => {
 // Apply for a job
 const applyForJob = async (req, res, next) => {
   try {
-    const { jobId, notes, resumeUrl, coverLetter, salaryExpectation, availability } = req.body;
+    const { jobId, notes, resumeUrl, coverLetter, salaryExpectation, availability, matchPercentage } = req.body;
 
     // Check if job exists
     const job = await Job.findById(jobId);
@@ -104,6 +104,7 @@ const applyForJob = async (req, res, next) => {
       employer_id: job.employer_id,
       status: 'new',
       match_score: matchScore,
+      match_percentages: matchPercentage || null,
       employer_notes: '',
       resume_url: resumeUrl || null,
       cover_letter: coverLetter || null,

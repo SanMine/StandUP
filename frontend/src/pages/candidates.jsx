@@ -1,18 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { Button } from '../components/ui/button';
-import { Badge } from '../components/ui/badge';
-import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../components/ui/select';
+  Award,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Eye,
+  Filter,
+  Mail,
+  MapPin,
+  MessageSquare,
+  Search,
+  Star,
+  TrendingUp,
+  Users,
+  XCircle,
+  Lock as LockIcon
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import EmployerLayout from '../components/Layout/EmployerLayout';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { Badge } from '../components/ui/badge';
+import { Button } from '../components/ui/button';
+import { Card, CardContent } from '../components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -20,34 +30,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
 import {
-  Users,
-  Search,
-  Filter,
-  Star,
-  Mail,
-  Phone,
-  MapPin,
-  Briefcase,
-  Calendar,
-  Eye,
-  MessageSquare,
-  TrendingUp,
-  CheckCircle2,
-  Clock,
-  XCircle,
-  Award,
-  GraduationCap
-} from 'lucide-react';
-import { candidateAPI } from '../services/api';
-import { toast } from 'sonner';
-import EmployerLayout from '../components/Layout/EmployerLayout';
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../components/ui/select';
+import { Textarea } from '../components/ui/textarea';
 import { useAuth } from '../contexts/AuthContext';
+import { candidateAPI } from '../services/api';
+import { getMatchColor, getMatchBgColor } from '../lib/utils';
 
 const Candidates = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const currentUser = user;
+  const isPremium = user?.plan === 'premium';
 
   const [candidates, setCandidates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,6 +98,8 @@ const Candidates = () => {
       setLoading(false);
     }
   };
+
+  console.log(candidates)
 
   const fetchStats = async () => {
     try {
@@ -316,6 +318,7 @@ const Candidates = () => {
           <div className="space-y-4">
             {filteredCandidates.map((candidate) => {
               const StatusIcon = statusConfig[candidate.status]?.icon || Clock;
+              const matchScore = candidate.match_percentages ?? candidate.match_score ?? 0;
 
               return (
                 <Card key={candidate._id} className="transition-all border-none shadow-md hover:shadow-lg">
@@ -352,24 +355,29 @@ const Candidates = () => {
                             </div>
                           </div>
 
-                          <div className="flex flex-col items-end flex-shrink-0 gap-2">
+                          <div className="flex items-center flex-shrink-0 gap-3">
                             <Badge className={statusConfig[candidate.status]?.color || 'bg-gray-100 text-gray-700'}>
                               <StatusIcon className="w-3 h-3 mr-1" />
                               {statusConfig[candidate.status]?.label || candidate.status}
                             </Badge>
 
-                            {candidate.match_score > 0 && (
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="w-4 h-4 text-green-600" />
-                                <span className="text-sm font-semibold text-green-600">
-                                  {candidate.match_score}% Match
-                                </span>
+                            {isPremium ? (
+                              matchScore > 0 && (
+                                <div className={`${getMatchBgColor(matchScore)} ${getMatchColor(matchScore)} px-3 py-1 rounded-full text-sm font-semibold flex items-center gap-1`}>
+                                  <TrendingUp className="w-3 h-3" />
+                                  {matchScore}% Match
+                                </div>
+                              )
+                            ) : (
+                              <div className="flex items-center gap-1 px-3 py-1 text-sm font-semibold text-gray-400 bg-gray-100 rounded-full">
+                                <LockIcon className="w-3 h-3" />
+                                Premium
                               </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex items-center gap-3 mt-4">
                           <Button
                             size="sm"
                             onClick={() => openCandidateDetails(candidate)}
@@ -458,18 +466,25 @@ const Candidates = () => {
                       </h3>
                       <p className="text-[#4B5563] mb-3">{selectedCandidate.user_id?.email}</p>
 
-                      {selectedCandidate.match_score > 0 && (
-                        <div className="flex items-center gap-2 mb-2">
-                          <TrendingUp className="w-5 h-5 text-green-600" />
-                          <span className="text-lg font-semibold text-green-600">
-                            {selectedCandidate.match_score}% Match Score
-                          </span>
+                      {isPremium ? (
+                        (selectedCandidate.match_percentages > 0 || selectedCandidate.match_score > 0) && (
+                          <div className={`${getMatchBgColor(selectedCandidate.match_percentages ?? selectedCandidate.match_score)} ${getMatchColor(selectedCandidate.match_percentages ?? selectedCandidate.match_score)} px-4 py-2 rounded-full text-base font-semibold inline-flex items-center gap-2 mb-2`}>
+                            <TrendingUp className="w-4 h-4" />
+                            {selectedCandidate.match_percentages ?? selectedCandidate.match_score}% Match Score
+                          </div>
+                        )
+                      ) : (
+                        <div className="flex items-center gap-2 px-4 py-2 mb-2 text-base font-semibold text-gray-400 bg-gray-100 rounded-full">
+                          <LockIcon className="w-4 h-4" />
+                          Premium
                         </div>
                       )}
 
-                      <Badge className={statusConfig[selectedCandidate.status]?.color}>
-                        {statusConfig[selectedCandidate.status]?.label}
-                      </Badge>
+                      <div>
+                        <Badge className={statusConfig[selectedCandidate.status]?.color}>
+                          {statusConfig[selectedCandidate.status]?.label}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
 

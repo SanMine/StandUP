@@ -119,7 +119,10 @@ const JobDetailsSheet = ({
         setApplying(true);
 
         try {
-            const payload = { jobId: job.id };
+            const payload = {
+                jobId: job.id,
+                matchPercentage: job?.matchPercentage ?? job?.matchScore ?? job?.match_score ?? null
+            };
             if (notes) payload.notes = notes;
 
             const res = await fetch('http://localhost:8000/api/applications', {
