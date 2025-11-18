@@ -16,8 +16,8 @@ const seedDatabase = async () => {
     // Check if data already exists
     const userCount = await User.countDocuments();
     if (userCount > 0) {
-      console.log('⚠️  Database already contains data. Skipping seed.');
-      console.log('   To reseed, truncate tables first or drop and recreate database.');
+      console.log(`⚠️  Database already contains ${userCount} users. Skipping seed.`);
+      console.log('   To reseed, delete existing data first.');
       process.exit(0);
     }
 
