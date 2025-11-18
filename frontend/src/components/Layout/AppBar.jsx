@@ -79,7 +79,7 @@ const AppBar = ({ user }) => {
           ) : (
             <Button
               onClick={() => navigate('/auth')}
-              className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white transition-all"
+              className=" hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white transition-all"
             >
               Sign In
             </Button>
