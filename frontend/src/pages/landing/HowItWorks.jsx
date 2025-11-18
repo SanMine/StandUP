@@ -22,7 +22,7 @@ const howItWorks = [
 
 export default function HowItWorks() {
     return (
-        <section className="py-32 px-6 bg-[#FFFDFA]">
+        <section id='how-it-works' className="py-32 px-6 bg-[#FFFDFA]">
             <div className="mx-auto max-w-7xl">
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

@@ -1,6 +1,4 @@
 const { v4: uuidv4 } = require('uuid');
-
-// Sample employer UUID (you can replace with actual employer IDs from your database)
 const employerId1 = uuidv4();
 const employerId2 = uuidv4();
 const employerId3 = uuidv4();

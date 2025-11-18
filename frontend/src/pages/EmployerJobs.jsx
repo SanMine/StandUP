@@ -155,7 +155,7 @@ const EmployerJobs = () => {
           </div>
           <Button
             onClick={handleCreateJob}
-            className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+            className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
           >
             <Plus className="w-4 h-4 mr-2" />
             Post New Job
@@ -260,7 +260,7 @@ const EmployerJobs = () => {
               {!searchTerm && statusFilter === 'all' && (
                 <Button
                   onClick={handleCreateJob}
-                  className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                  className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Post Your First Job
@@ -318,7 +318,7 @@ const EmployerJobs = () => {
                         <Button
                           size="sm"
                           onClick={() => navigate(`/candidates?job_id=${job._id || job.id}`)}
-                          className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                          className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                         >
                           <Users className="h-3 w-3 mr-1" />
                           View Candidates

@@ -344,7 +344,7 @@ const Auth = () => {
                 <p className="text-[#4B5563] mb-6">
                   Find internships, build skills, and launch your career
                 </p>
-                <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 min-h-[44px] transition-colors duration-200 text-white w-full">
+                <Button className="text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 min-h-[44px] transition-colors duration-200 w-full">
                   Continue as Student
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -393,7 +393,7 @@ const Auth = () => {
                   <div
                     key={num}
                     className={`h-2 rounded-full transition-all ${num === onboardingStep
-                      ? "w-8 bg-[#FF7000]"
+                      ? "w-8  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white"
                       : "w-2 bg-gray-300"
                       }`}
                   />
@@ -479,7 +479,7 @@ const Auth = () => {
                             key={skill}
                             onClick={() => handleSkillToggle(skill)}
                             className={`cursor-pointer transition-all ${formData.skills.includes(skill)
-                              ? "bg-[#FF7000] text-white hover:bg-[#FF7000]/90"
+                              ? "  text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90"
                               : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                               }`}
                           >
@@ -511,7 +511,7 @@ const Auth = () => {
                         <Button
                           type="button"
                           onClick={addCustomSkill}
-                          className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                          className="  hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                         >
                           Add
                         </Button>
@@ -583,7 +583,7 @@ const Auth = () => {
                         <Button
                           type="button"
                           onClick={addCustomPosition}
-                          className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                          className=" text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 "
                         >
                           Add
                         </Button>
@@ -750,7 +750,7 @@ const Auth = () => {
                     handleComplete();
                   }
                 }}
-                className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                className="flex-1 hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? (
@@ -845,7 +845,7 @@ const Auth = () => {
             </div>
             <Button
               type="submit"
-              className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+              className="w-full hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
               disabled={isSubmitting}
             >
               {isSubmitting ? "Loading..." : authMode === "signin" ? "Sign In" : "Sign Up"}

@@ -171,7 +171,7 @@ const EmployerSettings = () => {
                           <AvatarImage src={form.watch('avatar')} alt={form.watch('name')} />
                           <AvatarFallback>{form.watch('name')?.charAt(0) || 'C'}</AvatarFallback>
                         </Avatar>
-                        <Button type="button" size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-[#FF7000] hover:bg-[#FF7000]/90">
+                        <Button type="button" size="icon" className="absolute bottom-0 right-0 h-8 w-8 rounded-full  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90">
                           <Camera className="w-4 h-4" />
                         </Button>
                       </div>
@@ -253,7 +253,7 @@ const EmployerSettings = () => {
                       </FormItem>
                     )} />
 
-                    <Button type="submit" className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white" disabled={isSaving}>
+                    <Button type="submit" className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white" disabled={isSaving}>
                       {isSaving ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</>) : (<><Save className="w-4 h-4 mr-2" />Save Changes</>)}
                     </Button>
                   </form>
@@ -343,7 +343,7 @@ const EmployerSettings = () => {
                       Current Plan
                     </Badge>
                   </div>
-                  <Button className="w-full bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
+                  <Button className="w-full  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
                     Upgrade to Enterprise
                   </Button>
                 </div>

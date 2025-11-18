@@ -37,6 +37,12 @@ const candidateSchema = new mongoose.Schema({
     max: 100,
     default: 0
   },
+  match_percentages: {
+    type: Number,
+    min: 0,
+    max: 100,
+    default: null
+  },
   employer_notes: {
     type: String,
     default: ''
@@ -92,11 +98,11 @@ const candidateSchema = new mongoose.Schema({
   toObject: { virtuals: true }
 });
 
-// Indexes for better query performance
 candidateSchema.index({ employer_id: 1, status: 1 });
 candidateSchema.index({ job_id: 1, status: 1 });
 candidateSchema.index({ application_id: 1 }, { unique: true });
 candidateSchema.index({ match_score: -1 });
+candidateSchema.index({ match_percentages: -1 });
 
 candidateSchema.virtual('id').get(function () {
   return this._id;

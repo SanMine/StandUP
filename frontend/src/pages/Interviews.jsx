@@ -140,7 +140,7 @@ const Interviews = () => {
                               <p className="text-[#0F151D] font-medium">{question.question}</p>
                             </div>
                             <Button
-                              className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                              className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                               onClick={() => startMockInterview(question)}
                             >
                               <Play className="h-4 w-4 mr-2" />
@@ -206,7 +206,7 @@ const Interviews = () => {
                           </div>
                           <div className="flex gap-3">
                             <Button
-                              className={isRecording ? 'bg-red-600 hover:bg-red-700 text-white flex-1' : 'bg-[#FF7000] hover:bg-[#FF7000]/90 text-white flex-1'}
+                              className={isRecording ? 'bg-red-600 hover:bg-red-700 text-white flex-1' : ' bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white flex-1'}
                               onClick={() => setIsRecording(!isRecording)}
                             >
                               {isRecording ? 'Stop Recording' : 'Start Recording'}
@@ -306,7 +306,7 @@ const Interviews = () => {
                             <span>Interviewer: {interview.interviewer}</span>
                           </div>
                           <div className="flex gap-3">
-                            <Button className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white">
+                            <Button className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white">
                               <Video className="h-4 w-4 mr-2" />
                               Join Interview
                             </Button>
@@ -328,7 +328,7 @@ const Interviews = () => {
                   <h3 className="text-lg font-semibold text-[#0F151D] mb-2">No Upcoming Interviews</h3>
                   <p className="text-[#4B5563] mb-6">You don't have any scheduled interviews yet</p>
                   <Button
-                    className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                    className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                     onClick={() => setActiveTab('mock')}
                   >
                     Practice with Mock Interviews
