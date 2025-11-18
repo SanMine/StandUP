@@ -32,3 +32,22 @@ export function getMatchBgColor(score) {
   if (score >= 60) return 'bg-yellow-100';
   return 'bg-gray-100';
 }
+
+// Profile Strength color utilities
+export function getProfileStrengthColor(score) {
+  if (score >= 80) return 'bg-green-600';
+  if (score >= 41) return 'bg-yellow-500';
+  return 'bg-red-600';
+}
+
+export function getProfileStrengthBgColor(score) {
+  if (score >= 80) return 'bg-green-100';
+  if (score >= 41) return 'bg-yellow-100';
+  return 'bg-red-100';
+}
+
+export function getProfileStrengthTextColor(score) {
+  if (score >= 80) return 'text-green-600';
+  if (score >= 41) return 'text-yellow-600';
+  return 'text-red-600';
+}
