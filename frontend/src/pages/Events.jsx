@@ -174,7 +174,7 @@ const Events = () => {
             <p className="text-[#4B5563]">Create and manage events for students</p>
           </div>
           <Button
-            className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+            className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
             onClick={handleCreateEvent}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -500,7 +500,7 @@ const Events = () => {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="flex-1 bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                className="flex-1  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
               >
                 {isLoading ? 'Saving...' : selectedEvent ? 'Update Event' : 'Create Event'}
               </Button>

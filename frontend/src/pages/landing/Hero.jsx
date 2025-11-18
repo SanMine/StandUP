@@ -49,7 +49,7 @@ export default function Hero() {
                             <Button
                                 onClick={() => navigate('/auth?role=student')}
                                 size="lg"
-                                className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white px-8 py-6 font-medium rounded-full text-[17px] shadow-lg hover:shadow-xl transition-all"
+                                className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white px-8 py-6 font-medium rounded-full text-[17px] shadow-lg hover:shadow-xl transition-all"
                             >
                                 I'm a Student
                                 <ArrowRight className="w-5 h-5 ml-2" />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
-import { 
+import {
   Briefcase,
   Users,
   Clock,
@@ -70,7 +70,7 @@ const EmployerDashboardDemo = () => {
 
   const handleJobSubmit = (data) => {
     setIsLoading(true);
-    
+
     setTimeout(() => {
       if (selectedJob) {
         // Update existing job
@@ -85,7 +85,7 @@ const EmployerDashboardDemo = () => {
         setJobs([newJob, ...jobs]);
         toast.success('Job created successfully');
       }
-      
+
       setIsModalOpen(false);
       setSelectedJob(null);
       setIsLoading(false);
@@ -101,7 +101,7 @@ const EmployerDashboardDemo = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F9FA] to-[#E8F0FF] p-8">
-      <div className="max-w-7xl mx-auto space-y-8" data-testid="employer-dashboard-demo">
+      <div className="mx-auto space-y-8 max-w-7xl" data-testid="employer-dashboard-demo">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -110,22 +110,22 @@ const EmployerDashboardDemo = () => {
             </h1>
             <p className="text-[#4B5563]">Manage your job postings and candidates</p>
           </div>
-          <Button 
-            className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white shadow-lg"
+          <Button
+            className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white shadow-lg"
             onClick={handleCreateJob}
             data-testid="post-new-role-btn"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="w-4 h-4 mr-2" />
             Post New Role
           </Button>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           {kpis.map((kpi, index) => {
             const Icon = kpi.icon;
             return (
-              <Card key={index} className="border-none shadow-lg hover:shadow-xl transition-all bg-white">
+              <Card key={index} className="transition-all bg-white border-none shadow-lg hover:shadow-xl">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -145,7 +145,7 @@ const EmployerDashboardDemo = () => {
         </div>
 
         {/* Jobs List */}
-        <Card className="border-none shadow-lg bg-white">
+        <Card className="bg-white border-none shadow-lg">
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">Posted Jobs</CardTitle>
@@ -153,19 +153,19 @@ const EmployerDashboardDemo = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             {jobs.length === 0 ? (
-              <div className="text-center py-12">
+              <div className="py-12 text-center">
                 <p className="text-[#4B5563] mb-4 text-lg">No jobs posted yet</p>
-                <Button 
+                <Button
                   onClick={handleCreateJob}
-                  className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                  className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="w-4 h-4 mr-2" />
                   Post Your First Job
                 </Button>
               </div>
             ) : (
               jobs.map((job) => (
-                <div 
+                <div
                   key={job._id}
                   className="border-2 border-gray-200 rounded-xl p-5 hover:border-[#FF7000] hover:shadow-md transition-all bg-[#FFFDFA]"
                   data-testid="job-card"
@@ -183,25 +183,25 @@ const EmployerDashboardDemo = () => {
                         <span>{job.location}</span>
                       </div>
                     </div>
-                    <Badge 
+                    <Badge
                       className={
-                        job.status === 'active' 
-                          ? 'bg-green-100 text-green-700 hover:bg-green-100 text-sm px-3 py-1' 
+                        job.status === 'active'
+                          ? 'bg-green-100 text-green-700 hover:bg-green-100 text-sm px-3 py-1'
                           : job.status === 'draft'
-                          ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-sm px-3 py-1'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-100 text-sm px-3 py-1'
+                            ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-100 text-sm px-3 py-1'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-100 text-sm px-3 py-1'
                       }
                     >
                       {job.status}
                     </Badge>
                   </div>
-                  
+
                   <p className="text-sm text-[#4B5563] mb-4 line-clamp-2">{job.description}</p>
-                  
+
                   {job.salary && (
                     <p className="text-sm font-medium text-[#0F151D] mb-3">💰 {job.salary}</p>
                   )}
-                  
+
                   <div className="flex flex-wrap gap-2 mb-4">
                     {job.skills?.slice(0, 4).map((skill, idx) => (
                       <Badge key={idx} variant="outline" className="bg-[#E8F0FF] text-[#284688] border-[#284688]/20">
@@ -209,27 +209,27 @@ const EmployerDashboardDemo = () => {
                       </Badge>
                     ))}
                   </div>
-                  
+
                   <div className="flex gap-2 pt-3 border-t">
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       onClick={() => handleEditJob(job)}
                       data-testid="edit-job-btn"
-                      className="hover:bg-[#FF7000] hover:text-white transition-colors"
+                      className="hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white hover:text-white transition-colors"
                     >
-                      <Edit className="h-3 w-3 mr-1" />
+                      <Edit className="w-3 h-3 mr-1" />
                       Edit
                     </Button>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       onClick={() => handleDeleteJob(job._id)}
                       disabled={isLoading}
                       data-testid="delete-job-btn"
                     >
-                      <Trash2 className="h-3 w-3 mr-1" />
+                      <Trash2 className="w-3 h-3 mr-1" />
                       Delete
                     </Button>
                   </div>

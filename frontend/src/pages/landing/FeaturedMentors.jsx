@@ -39,7 +39,7 @@ const featuredMentors = [
 
 export default function FeaturedMentors() {
     return (
-        <section className="px-6 py-32">
+        <section id='mentors' className="px-6 py-32">
             <div className="mx-auto max-w-7xl">
                 <motion.div
                     initial={{ opacity: 0, y: 15 }}
@@ -75,7 +75,7 @@ export default function FeaturedMentors() {
                                     <div className="flex flex-col items-center text-center">
                                         <Avatar className="h-28 w-28 mb-4 border-4 border-[#FFE8D3] shadow-sm">
                                             <AvatarImage src={mentor.avatar} alt={mentor.name} loading="lazy" />
-                                            <AvatarFallback className="bg-[#FF7000] text-white text-3xl">
+                                            <AvatarFallback className=" bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white text-3xl">
                                                 {mentor.name.charAt(0)}
                                             </AvatarFallback>
                                         </Avatar>

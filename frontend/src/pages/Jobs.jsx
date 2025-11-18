@@ -174,7 +174,7 @@ const Jobs = () => {
           <Card className="border-2 border-[#FF7000] bg-gradient-to-r from-[#FFF7ED] to-[#FFEDD5]">
             <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-3 bg-[#FF7000] rounded-lg">
+                <div className="p-3  bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white rounded-lg">
                   <Sparkles className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex-1">
@@ -186,7 +186,7 @@ const Jobs = () => {
                   </p>
                   <Button
                     onClick={() => navigate('/pricing')}
-                    className="bg-[#FF7000] hover:bg-[#FF7000]/90 text-white"
+                    className=" hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90 text-white"
                   >
                     <Crown className="w-4 h-4 mr-2" />
                     Upgrade Now
@@ -219,7 +219,7 @@ const Jobs = () => {
                 <Filter className="w-5 h-5 mr-2" />
                 Filters
                 {activeFilterCount > 0 && (
-                  <Badge className="ml-2 bg-[#FF7000] text-white hover:bg-[#FF7000]">
+                  <Badge className="ml-2 hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white">
                     {activeFilterCount}
                   </Badge>
                 )}
@@ -239,7 +239,7 @@ const Jobs = () => {
                           key={option}
                           onClick={() => toggleFilter(category, option)}
                           className={`cursor-pointer transition-all ${isSelected
-                            ? 'bg-[#FF7000] text-white hover:bg-[#FF7000]/90'
+                            ? ' text-white hover: bg-gradient-to-r from-[#FF7A2D] to-[#FF9547] text-white/90'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >

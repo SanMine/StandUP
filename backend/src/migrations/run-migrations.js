@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const User = require('../models/User');
+const Candidate = require('../models/Candidate');
 
-const addPaymentFieldsToUsers = async () => {
+const addMatchPercentagesToCandidates = async () => {
   try {
-    console.log('Starting payment fields migration...');
+    console.log('Starting match_percentages field migration...');
 
     const mongoURI = process.env.MONGODB_URI || process.env.MONGO_URI || process.env.DATABASE_URL;
     if (!mongoURI) {
@@ -16,30 +16,30 @@ const addPaymentFieldsToUsers = async () => {
     await mongoose.connect(mongoURI);
     console.log('Connected to MongoDB');
 
-    const result = await User.updateMany(
-      {
-        $or: [
-          { pending_payment: { $exists: false } },
-          { payment_history: { $exists: false } }
-        ]
-      },
-      {
-        $set: {
-          pending_payment: null,
-          payment_history: []
-        }
-      }
+    const totalCandidates = await Candidate.countDocuments();
+    console.log(`Found ${totalCandidates} candidates in database`);
+
+    const result = await Candidate.updateMany(
+      { match_percentages: { $exists: false } },
+      { $set: { match_percentages: null } }
     );
 
-    console.log(`Updated ${result.modifiedCount} users with payment fields`);
+    console.log(`Updated ${result.modifiedCount} candidates with match_percentages field`);
+
+    const candidatesWithField = await Candidate.countDocuments({
+      match_percentages: { $exists: true }
+    });
+    console.log(`Total candidates with match_percentages field: ${candidatesWithField}`);
+
     console.log('Migration completed successfully!');
 
     await mongoose.connection.close();
     process.exit(0);
   } catch (error) {
     console.error('Migration failed:', error);
+    await mongoose.connection.close();
     process.exit(1);
   }
 };
 
-addPaymentFieldsToUsers();
+addMatchPercentagesToCandidates();

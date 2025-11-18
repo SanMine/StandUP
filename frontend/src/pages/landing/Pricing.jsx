@@ -49,7 +49,7 @@ const studentPlans = [
 
 export default function Pricing() {
     return (
-        <section className="px-6 py-20">
+        <section id='pricing' className="px-6 py-20">
             <div className="max-w-4xl mx-auto">
                 <motion.div
                     initial={{ opacity: 0, y: 12 }}
