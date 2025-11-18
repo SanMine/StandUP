@@ -86,6 +86,7 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [jobsLoading, setJobsLoading] = useState(true);
   const [jobsError, setJobsError] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const isPremium = authUser?.plan === 'premium';
 
