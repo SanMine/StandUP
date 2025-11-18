@@ -25,6 +25,7 @@ import EmployerJobs from "./pages/EmployerJobs";
 import NotFound from "./pages/NotFound";
 import ErrorBoundary from "./pages/ErrorBoundary";
 
+
 function App() {
   return (
     <div className="App">
