@@ -1,4 +1,4 @@
-const { Resume } = require('../models');
+const { Resume, UserSkill } = require('../models');
 const { User } = require('../models');
 const { generateText } = require('ai');
 const { createGroq } = require('@ai-sdk/groq');
@@ -254,6 +254,10 @@ const calculateATSScore = async (req, res, next) => {
       });
     }
 
+    // Fetch user skills from user_skills table
+    const userSkills = await UserSkill.find({ user_id: req.user.userId });
+    const hardSkills = userSkills.map(skill => skill.skill_name);
+
     // Try AI-powered analysis first
     try {
       const resumeAnalysisPrompt = `
@@ -273,7 +277,7 @@ ${resume.education?.map(edu => `- ${edu.degree || 'Degree'} in ${edu.major || 'N
 Work Experience: ${resume.experience?.length || 0} entries
 ${resume.experience?.map(exp => `- ${exp.job_title || 'Position'} at ${exp.company_name || 'Company'} (${exp.start_date ? new Date(exp.start_date).getFullYear() : ''}-${exp.current ? 'Present' : exp.end_date ? new Date(exp.end_date).getFullYear() : ''})`).join('\n') || 'None'}
 
-Technical Skills: ${resume.hard_skills?.join(', ') || 'None'}
+Technical Skills: ${hardSkills.join(', ') || 'None'}
 Soft Skills: ${resume.soft_skills?.join(', ') || 'None'}
 
 Languages: ${resume.languages?.map(l => `${l.language} (${l.proficiency})`).join(', ') || 'None'}
@@ -330,6 +334,10 @@ IMPORTANT:
       // Validate and ensure score is within range
       const atsScore = Math.max(0, Math.min(100, parseInt(aiAnalysis.score)));
 
+      // Save ATS score to database
+      resume.ats_score = atsScore;
+      await resume.save();
+
       res.status(200).json({
         success: true,
         data: {
@@ -364,7 +372,7 @@ IMPORTANT:
       }
       
       // Skills (15 points)
-      const totalSkills = (resume.hard_skills?.length || 0) + (resume.soft_skills?.length || 0);
+      const totalSkills = (hardSkills?.length || 0) + (resume.soft_skills?.length || 0);
       if (totalSkills > 0) {
         score += Math.min(totalSkills * 3, 15);
       }
@@ -378,6 +386,10 @@ IMPORTANT:
       if (resume.looking_for?.positions && resume.looking_for.positions.length > 0) score += 5;
       
       const finalScore = Math.min(score, 100);
+
+      // Save ATS score to database (fallback calculation)
+      resume.ats_score = finalScore;
+      await resume.save();
 
       res.status(200).json({
         success: true,

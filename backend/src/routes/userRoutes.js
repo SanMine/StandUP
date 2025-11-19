@@ -16,7 +16,9 @@ router.put(
   [
     body('name').optional().notEmpty().withMessage('Name cannot be empty'),
     body('email').optional().isEmail().withMessage('Valid email is required'),
-    body('graduation').optional().isISO8601().withMessage('Valid date is required')
+    body('graduation').optional({ checkFalsy: true }).isISO8601().withMessage('Valid date is required'),
+    body('avatar').optional({ checkFalsy: true }),
+    body('website').optional({ checkFalsy: true })
   ],
   validate,
   userController.updateProfile

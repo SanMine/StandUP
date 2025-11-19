@@ -23,7 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Progress } from '../components/ui/progress';
 import { useAuth } from '../contexts/AuthContext';
 import { getMatchBgColor, getMatchColor } from '../lib/utils';
-import { jobsAPI, learningAPI, mentorsAPI } from '../services/api';
+import { jobsAPI, learningAPI, mentorsAPI, userAPI } from '../services/api';
 
 const normalizeJob = (job) => {
   const companyName =
@@ -74,6 +74,32 @@ const Dashboard = () => {
   const [matchedJobs, setMatchedJobs] = useState([]);
   const [selectedJobId, setSelectedJobId] = useState(null);
 
+  // Function to get profile strength color based on percentage
+  const getProfileStrengthColor = (strength) => {
+    if (strength >= 80) {
+      return {
+        text: 'text-green-600',
+        bg: 'bg-green-100',
+        indicator: 'bg-green-500',
+        progressBg: 'bg-green-100'
+      };
+    } else if (strength >= 41) {
+      return {
+        text: 'text-orange-600',
+        bg: 'bg-orange-100',
+        indicator: 'bg-orange-500',
+        progressBg: 'bg-orange-100'
+      };
+    } else {
+      return {
+        text: 'text-red-600',
+        bg: 'bg-red-100',
+        indicator: 'bg-red-500',
+        progressBg: 'bg-red-100'
+      };
+    }
+  };
+
   const [suggestedMentor, setSuggestedMentor] = useState(null);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [kpisState, setKpisState] = useState({
@@ -94,21 +120,23 @@ const Dashboard = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Dashboard stats
-        const statsRes = await fetch('/api/users/dashboard', {
-          credentials: 'include',
-        });
-        if (statsRes.ok) {
-          const data = await statsRes.json();
-          if (data.success && data.stats) {
-            const s = data.stats;
-            setKpisState({
-              profileStrength: s.profileStrength ?? 0,
-              applications: s.applications ?? 0,
-              interviews: s.interviews ?? 0,
-              nextTask: s.nextTask ?? '—',
-            });
-          }
+        // Dashboard stats using API
+        const statsData = await userAPI.getDashboardStats();
+        console.log('Dashboard stats response:', statsData);
+        
+        if (statsData.success && statsData.stats) {
+          const s = statsData.stats;
+          console.log('Dashboard stats loaded:', s);
+          console.log('Profile strength value:', s.profileStrength);
+          setKpisState({
+            profileStrength: s.profileStrength ?? 0,
+            applications: s.applications ?? 0,
+            interviews: s.interviews ?? 0,
+            nextTask: s.nextTask ?? '—',
+          });
+        } else {
+          console.error('Dashboard stats failed:', statsData);
+          toast.error('Failed to load dashboard statistics');
         }
 
         // Mentors & events
@@ -195,13 +223,17 @@ const Dashboard = () => {
     };
   }, [authUser]);
 
+  const profileColors = getProfileStrengthColor(kpisState.profileStrength);
+  
   const kpis = [
     {
       label: 'Profile Strength',
       value: `${kpisState.profileStrength}%`,
       icon: Target,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100',
+      color: profileColors.text,
+      bgColor: profileColors.bg,
+      indicatorColor: profileColors.indicator,
+      progressBg: profileColors.progressBg,
     },
     {
       label: 'Applications',
@@ -280,7 +312,8 @@ const Dashboard = () => {
                   {kpi.label === 'Profile Strength' && (
                     <Progress
                       value={kpisState.profileStrength}
-                      className="h-2 mt-4"
+                      className={`h-2 mt-4 ${kpi.progressBg}`}
+                      indicatorClassName={kpi.indicatorColor}
                     />
                   )}
                 </CardContent>

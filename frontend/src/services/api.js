@@ -73,6 +73,11 @@ export const userAPI = {
   updateSkills: async (skills) => {
     const response = await api.post('/users/skills', { skills });
     return response.data;
+  },
+
+  getDashboardStats: async () => {
+    const response = await api.get('/users/dashboard');
+    return response.data;
   }
 };
 

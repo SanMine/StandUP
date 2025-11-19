@@ -55,7 +55,7 @@ import {
   SheetTitle,
 } from '../components/ui/sheet';
 import { useAuth } from '../contexts/AuthContext';
-import { resumeAPI, portfolioAPI } from '../services/api';
+import { resumeAPI, portfolioAPI, userAPI } from '../services/api';
 import { toast } from 'sonner';
 
 const Portfolio = () => {
@@ -67,6 +67,7 @@ const Portfolio = () => {
   const [atsAnalysis, setAtsAnalysis] = useState(null);
   const [isCalculatingATS, setIsCalculatingATS] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [userSkills, setUserSkills] = useState([]);
   const [editEducationMode, setEditEducationMode] = useState(false);
   const [editEducationId, setEditEducationId] = useState(null);
   const [editExperienceMode, setEditExperienceMode] = useState(false);
@@ -173,6 +174,7 @@ const Portfolio = () => {
   useEffect(() => {
     fetchResume();
     fetchProjects();
+    fetchUserSkills();
   }, []);
 
   const fetchResume = async () => {
@@ -181,6 +183,10 @@ const Portfolio = () => {
       const response = await resumeAPI.getResume();
       if (response.success && response.data) {
         setResume(response.data);
+        // Load saved ATS score if it exists and is greater than 0
+        if (response.data.ats_score && response.data.ats_score > 0) {
+          setAtsScore(response.data.ats_score);
+        }
       }
     } catch (error) {
       console.error('Error fetching resume:', error);
@@ -190,17 +196,33 @@ const Portfolio = () => {
     }
   };
 
+  const fetchUserSkills = async () => {
+    try {
+      const response = await userAPI.getProfile();
+      if (response.success && response.profile.skills) {
+        // Extract skill names from the skills array
+        const skillNames = response.profile.skills.map(skill => skill.skill_name);
+        setUserSkills(skillNames);
+      }
+    } catch (error) {
+      console.error('Error fetching user skills:', error);
+    }
+  };
+
   const fetchATSScore = async () => {
     try {
       setIsCalculatingATS(true);
       const response = await resumeAPI.calculateATSScore();
       if (response.success) {
-        setAtsScore(response.data.score);
+        // Ensure score is stored as integer
+        const scoreValue = parseInt(response.data.score);
+        setAtsScore(scoreValue);
         setAtsAnalysis({
           strengths: response.data.strengths || [],
           improvements: response.data.improvements || [],
           summary: response.data.summary || ''
         });
+        toast.success('ATS score updated successfully');
       }
     } catch (error) {
       console.error('Error calculating ATS score:', error);
@@ -239,10 +261,12 @@ const Portfolio = () => {
   const handleSaveResume = async () => {
     try {
       setIsSaving(true);
-      const response = await resumeAPI.updateResume(resume);
+      // Exclude hard_skills from resume save since we're managing it via user_skills
+      const { hard_skills, ...resumeData } = resume;
+      const response = await resumeAPI.updateResume(resumeData);
       if (response.success) {
         toast.success('Resume updated successfully');
-        fetchATSScore();
+        // Note: User can manually re-analyze ATS score by clicking the score badge
       }
     } catch (error) {
       console.error('Error saving resume:', error);
@@ -471,30 +495,59 @@ const Portfolio = () => {
   };
 
   // Skills handlers
-  const handleAddSkill = (type) => {
+  const handleAddSkill = async (type) => {
     const skill = type === 'hard' ? newHardSkill : newSoftSkill;
     if (!skill.trim()) return;
 
     const field = type === 'hard' ? 'hard_skills' : 'soft_skills';
-    if (!resume[field].includes(skill.trim())) {
-      setResume(prev => ({
-        ...prev,
-        [field]: [...prev[field], skill.trim()]
-      }));
-      if (type === 'hard') {
-        setNewHardSkill('');
-      } else {
+    
+    if (type === 'hard') {
+      // For hard skills, sync with user_skills database
+      if (!userSkills.includes(skill.trim())) {
+        try {
+          const updatedSkills = [...userSkills, skill.trim()];
+          await userAPI.updateProfile({ skills: updatedSkills });
+          setUserSkills(updatedSkills);
+          setNewHardSkill('');
+          toast.success('Skill added successfully');
+        } catch (error) {
+          console.error('Error adding skill:', error);
+          toast.error('Failed to add skill');
+        }
+      }
+    } else {
+      // For soft skills, just update the resume state
+      if (!resume[field].includes(skill.trim())) {
+        setResume(prev => ({
+          ...prev,
+          [field]: [...prev[field], skill.trim()]
+        }));
         setNewSoftSkill('');
       }
     }
   };
 
-  const handleRemoveSkill = (skill, type) => {
+  const handleRemoveSkill = async (skill, type) => {
     const field = type === 'hard' ? 'hard_skills' : 'soft_skills';
-    setResume(prev => ({
-      ...prev,
-      [field]: prev[field].filter(s => s !== skill)
-    }));
+    
+    if (type === 'hard') {
+      // For hard skills, sync with user_skills database
+      try {
+        const updatedSkills = userSkills.filter(s => s !== skill);
+        await userAPI.updateProfile({ skills: updatedSkills });
+        setUserSkills(updatedSkills);
+        toast.success('Skill removed successfully');
+      } catch (error) {
+        console.error('Error removing skill:', error);
+        toast.error('Failed to remove skill');
+      }
+    } else {
+      // For soft skills, just update the resume state
+      setResume(prev => ({
+        ...prev,
+        [field]: prev[field].filter(s => s !== skill)
+      }));
+    }
   };
 
   // Language handlers
@@ -773,7 +826,7 @@ const Portfolio = () => {
                     </div>
                     <div className={`text-2xl font-bold ${getATSScoreColor(atsScore).text}`}>{atsScore}%</div>
                     <div className="absolute hidden group-hover:block bottom-full mb-2 left-1/2 -translate-x-1/2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg whitespace-nowrap">
-                      Click to refresh score
+                      Click to re-analyze
                     </div>
                   </div>
                 )}
@@ -1757,7 +1810,7 @@ const Portfolio = () => {
               </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {resume.hard_skills && resume.hard_skills.map((skill, index) => (
+                  {userSkills && userSkills.map((skill, index) => (
                     <Badge key={index} className="text-sm py-2 px-4 bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 transition-all">
                       {skill}
                       <button
@@ -2331,16 +2384,16 @@ const Portfolio = () => {
               )}
 
               {/* Skills Section */}
-              {((resume.hard_skills && resume.hard_skills.length > 0) || (resume.soft_skills && resume.soft_skills.length > 0)) && (
+              {((userSkills && userSkills.length > 0) || (resume.soft_skills && resume.soft_skills.length > 0)) && (
                 <div className="mb-6">
                   <h2 className="text-lg font-bold text-slate-800 mb-3 pb-1 border-b border-slate-300" style={{ fontFamily: 'Arial, sans-serif' }}>
                     SKILLS
                   </h2>
                   <div className="space-y-2" style={{ fontFamily: 'Arial, sans-serif' }}>
-                    {resume.hard_skills && resume.hard_skills.length > 0 && (
+                    {userSkills && userSkills.length > 0 && (
                       <div>
                         <span className="font-semibold text-slate-700 text-sm">Technical Skills: </span>
-                        <span className="text-slate-600 text-sm">{resume.hard_skills.join(' • ')}</span>
+                        <span className="text-slate-600 text-sm">{userSkills.join(' • ')}</span>
                       </div>
                     )}
                     {resume.soft_skills && resume.soft_skills.length > 0 && (

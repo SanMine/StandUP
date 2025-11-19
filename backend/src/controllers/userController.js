@@ -1,4 +1,4 @@
-const { User, UserSkill, Project, Application, SavedJob, CareerRoadmap } = require('../models');
+const { User, UserSkill, Project, Application, SavedJob, CareerRoadmap, Resume } = require('../models');
 
 // Get user profile
 const getProfile = async (req, res, next) => {
@@ -19,15 +19,29 @@ const getProfile = async (req, res, next) => {
     const skills = await UserSkill.find({ user_id: user._id });
     const projects = await Project.find({ user_id: user._id });
     const roadmap = await CareerRoadmap.find({ user_id: user._id }).sort({ order: 1 });
+    const resume = await Resume.findOne({ user_id: user._id });
 
-    // Calculate profile strength
+    // Calculate profile strength with ATS score included
+    // Total: 100% = Basic Info (45%) + Skills (15%) + Projects (20%) + ATS Score (20%)
     let profileStrength = 0;
-    if (user.name) profileStrength += 10;
-    if (user.email) profileStrength += 10;
-    if (user.bio) profileStrength += 15;
-    if (user.avatar) profileStrength += 10;
-    if (user.graduation) profileStrength += 10;
-    if (skills && skills.length > 0) profileStrength += 20;
+    
+    // Basic profile information: 45 points
+    if (user.name) profileStrength += 8;
+    if (user.email) profileStrength += 8;
+    if (user.bio) profileStrength += 12;
+    if (user.avatar) profileStrength += 9;
+    if (user.graduation) profileStrength += 8;
+    
+    // Skills: 15 points
+    if (skills && skills.length > 0) profileStrength += 15;
+    
+    // Projects: 20 points
+    if (projects && projects.length > 0) profileStrength += 20;
+    
+    // ATS Score: 20 points (convert 0-100 ATS score to 0-20 points)
+    if (resume && resume.ats_score > 0) {
+      profileStrength += Math.round((resume.ats_score / 100) * 20);
+    }
     if (projects && projects.length > 0) profileStrength += 25;
 
     // Update profile strength
@@ -53,6 +67,7 @@ const updateProfile = async (req, res, next) => {
   session.startTransaction();
 
   try {
+    console.log('Update profile request received:', req.body);
     const user = await User.findById(req.user.userId).session(session);
 
     if (!user) {
@@ -125,8 +140,10 @@ const updateProfile = async (req, res, next) => {
 // Get dashboard stats
 const getDashboardStats = async (req, res, next) => {
   try {
+    console.log('getDashboardStats called for user:', req.user.userId);
     const userId = req.user.userId;
     const userRole = req.user.role;
+    console.log('User role:', userRole);
 
     if (userRole === 'student') {
       // Student dashboard stats
@@ -139,6 +156,42 @@ const getDashboardStats = async (req, res, next) => {
 
       const user = await User.findById(userId);
       const roadmap = await CareerRoadmap.find({ user_id: userId });
+
+      // Recalculate profile strength to ensure it's up-to-date
+      const skills = await UserSkill.find({ user_id: userId });
+      const projects = await Project.find({ user_id: userId });
+      const resume = await Resume.findOne({ user_id: userId });
+      
+      // Calculate profile strength with ATS score included
+      // Total: 100% = Basic Info (45%) + Skills (15%) + Projects (20%) + ATS Score (20%)
+      let profileStrength = 0;
+      
+      // Basic profile information: 45 points
+      if (user.name) profileStrength += 8;
+      if (user.email) profileStrength += 8;
+      if (user.bio) profileStrength += 12;
+      if (user.avatar) profileStrength += 9;
+      if (user.graduation) profileStrength += 8;
+      
+      // Skills: 15 points
+      if (skills && skills.length > 0) profileStrength += 15;
+      
+      // Projects: 20 points
+      if (projects && projects.length > 0) profileStrength += 20;
+      
+      // ATS Score: 20 points (convert 0-100 ATS score to 0-20 points)
+      if (resume && resume.ats_score > 0) {
+        const atsPoints = Math.round((resume.ats_score / 100) * 20);
+        profileStrength += atsPoints;
+        console.log(`ATS Score: ${resume.ats_score}/100 = ${atsPoints} points added to profile strength`);
+      } else {
+        console.log('No ATS score available (resume not analyzed yet)');
+      }
+      
+      user.profile_strength = Math.min(profileStrength, 100);
+      await user.save();
+
+      console.log('Profile strength calculated:', user.profile_strength);
 
       res.status(200).json({
         success: true,

@@ -22,7 +22,7 @@ const profileSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
   bio: z.string().optional(),
-  avatar: z.string().url().optional().or(z.literal('')),
+  avatar: z.string().optional(),
   graduation: z.string().optional(),
   skills: z.array(z.string()).optional(),
   primary_goals: z.array(z.string()).optional(),
@@ -30,7 +30,7 @@ const profileSchema = z.object({
   company_name: z.string().optional(),
   company_size: z.string().optional(),
   industry: z.string().optional(),
-  website: z.string().url().optional().or(z.literal(''))
+  website: z.string().optional()
 });
 
 const Settings = () => {
@@ -123,26 +123,30 @@ const Settings = () => {
   const onSubmit = async (data) => {
     try {
       setIsSaving(true);
-
-      console.log(data);
+      console.log('Form submitted with data:', data);
 
       // Include skills and desired positions directly in the profile payload
+      // Filter out empty strings and undefined values
       const profileData = {
         name: data.name,
         email: data.email,
-        bio: data.bio,
-        avatar: data.avatar,
-        graduation: data.graduation,
-        company_name: data.company_name,
-        company_size: data.company_size,
-        industry: data.industry,
-        website: data.website,
+        ...(data.bio && { bio: data.bio }),
+        ...(data.avatar && { avatar: data.avatar }),
+        ...(data.graduation && { graduation: data.graduation }),
+        ...(data.company_name && { company_name: data.company_name }),
+        ...(data.company_size && { company_size: data.company_size }),
+        ...(data.industry && { industry: data.industry }),
+        ...(data.website && { website: data.website }),
         skills: tempSkills,
-        primary_goals: data.primary_goals,
+        ...(data.primary_goals && data.primary_goals.length > 0 && { primary_goals: data.primary_goals }),
         desired_positions: tempPositions
       };
 
+      console.log('Sending profile data:', profileData);
+
       const response = await userAPI.updateProfile(profileData);
+
+      console.log('Update profile response:', response);
 
       if (response.success) {
         if (fetchMe) await fetchMe();
@@ -150,13 +154,20 @@ const Settings = () => {
           title: 'Success',
           description: 'Profile updated successfully'
         });
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: response.error?.message || 'Failed to update profile'
+        });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
+      console.error('Error response:', error.response);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.response?.data?.error?.message || 'Failed to update profile'
+        description: error.response?.data?.error?.message || error.message || 'Failed to update profile'
       });
     } finally {
       setIsSaving(false);
@@ -236,7 +247,14 @@ const Settings = () => {
 
               <CardContent className="space-y-6">
                 <Form key={form.watch('email')} {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  <form 
+                    onSubmit={(e) => {
+                      console.log('Form submit event triggered');
+                      console.log('Form errors:', form.formState.errors);
+                      form.handleSubmit(onSubmit)(e);
+                    }} 
+                    className="space-y-6"
+                  >
                     {/* Avatar */}
                     <div className="flex items-center gap-6">
                       <div className="relative">
@@ -270,7 +288,7 @@ const Settings = () => {
                       <FormField control={form.control} name="email" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email *</FormLabel>
-                          <FormControl><Input {...field} type="email" /></FormControl>
+                          <FormControl><Input {...field} type="email" disabled className="bg-gray-100" /></FormControl>
                           <FormDescription>Email cannot be changed</FormDescription>
                           <FormMessage />
                         </FormItem>
