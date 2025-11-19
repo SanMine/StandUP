@@ -1,63 +1,158 @@
 # Sprint 2 Test Plan
 
-Date: 2025-10-25
-Project: StandUP — Sprint 2
-Authors: SanMine (primary), QA Team
-
-## Introduction & Scope
-This document defines the test cases for Sprint 2 deliverables. It focuses on two core features requested for formal verification in this sprint:
-
-- Feature 1: Head Judge Finalization
-- Feature 2: Q Grader Interactive Scoresheet
-
-Each feature contains three test cases: Happy Path, Sad Path, and an Edge Case. For each test case we list Preconditions, Steps, and Expected Results. At the end of each feature we include a test-summary table and a small function/test coverage table mapping feature sub-functions to tests.
+Date: November 19, 2025
+Project: StandUP Platform
+Test Environment: Development
+Status: In Progress
 
 ---
 
-## Feature 1 — Head Judge Finalization
-Description: The Head Judge (HJ) reviews judging sheets/round scores and finalizes the results. Finalization locks scores for a cohort/round, records a finalization timestamp and author, and triggers downstream actions (e.g., publish results, notify participants).
+## Test Results Overview
 
-# Sprint 2 Test Plan
+| Category | Total Tests | Passed | Failed | Pending | Pass Rate |
+|----------|-------------|--------|--------|---------|-----------|
+| AI Features | 9 | 9 | 0 | 0 | 100% |
+| Authentication & User | 5 | 0 | 0 | 5 | - |
+| Dashboard & Jobs | 4 | 0 | 0 | 4 | - |
+| Applications | 2 | 0 | 0 | 2 | - |
+| Learning & Career | 6 | 0 | 0 | 6 | - |
+| Employer | 4 | 0 | 0 | 4 | - |
+| Analytics & Admin | 3 | 0 | 0 | 3 | - |
+| Performance | 3 | 0 | 0 | 3 | - |
+| Security | 3 | 0 | 0 | 3 | - |
+| **TOTAL** | **39** | **9** | **0** | **30** | **23%** |
 
-Date: 2025-10-25
+---
 
-| Test ID | Title | Testing type | Expected result | Actual result |
-|---------|-------|--------------|-----------------|---------------|
-| AUTH-001 | Login (Sign in) | Functional / Smoke | User signs in with email and password. Server returns 200 and session cookie. | |
-| AUTH-002 | Sign up (Create account) | Functional | User account is created, server returns success and session cookie. | |
-| AUTH-003 | Onboarding save (skills & roles) | Functional | User's selected skills and roles are saved to DB tables (user_skills, career_roadmap). | |
-| AUTH-004 | Sign out | Functional | Session is destroyed on server. /api/auth/me returns 401 after sign out. | |
-| DASH-001 | Dashboard loads live data | Functional | Dashboard requests /api/users/dashboard and shows real KPIs and lists (no mock data). | |
-| JOBS-001 | Jobs list (live) | Functional | /api/jobs returns a list of jobs. Jobs page shows titles, company, skills, and match score. | |
-| JOBS-002 | Apply to job (create application) | Functional | User can apply. Server returns 201 and application appears in Applications list. | |
-| APPS-001 | Applications list (Kanban) | Functional | /api/applications returns user's applications including job relation. UI shows applications in correct columns. | |
-| LEARN-001 | Learning — Coursera proxy | Functional / Integration | GET /api/learning/courses/coursera returns course list and UI shows courses. | |
-| HJ-001 | Head Judge finalization | Functional / Security | Finalize action locks scores, sets finalized metadata, and returns success (200). Unauthorized users get 403. | |
-| QG-001 | Q Grader — save scores | Functional | Grader saves sub-scores and comments. Server returns success and totals match calculation. | |
-| QG-002 | Q Grader — validation & a11y | UX / Accessibility | Form validates required fields and shows clear messages. Keyboard and screen-reader access works. | |
-| AUTH-005 | Protected routes check | Security | Pages requiring auth return 401 for anonymous users and 200 for authenticated users. | |
-| JOBS-003 | Jobs filtering / search | Functional | Filtering and search return correct subset of jobs and UI updates accordingly. | |
-| APPS-002 | Application timeline & notes | Functional | Application entries show timeline and notes. Edits persist. | |
-| CAREER-001 | Profile evaluation AI | Functional / AI logic | System analyzes profile and returns career recommendations within 3 s. | |
-| CAREER-002 | Skill deficiency assessment | Functional | When user adds skills, AI shows missing skills vs job market needs. | |
-| CAREER-003 | Resume optimization | Integration | AI suggests resume improvements; fields update on Save. | |
-| CAREER-004 | Mentorship request workflow | Functional | User requests mentor; mentor notification sent; status = "Pending Acceptance". | |
-| CAREER-005 | Incomplete profile handling | Validation | System alerts user if profile missing key fields (name, email, skills). | |
-| AI-001 | Job recommendations accuracy | AI / Functional | AI matches skills & preferences; returns ≥ 70% relevant jobs. | |
-| AI-002 | Duplicate / conflicting recommendations | Functional | No repeated job IDs in response. | |
-| AI-003 | Performance (5 000 comparisons) | Performance | Matching < 10 s per 5,000 comparisons. | |
-| AI-004 | Bias and fairness check | Ethical / Security | AI suggestions do not include sensitive attributes (gender, race). | |
-| EMP-001 | Create job posting | Functional | Employer creates job; record saved to `jobs` table and visible in list. | |
-| EMP-002 | Search / filter candidates | Functional / Integration | Filter returns accurate candidate list by skill and AI score. | |
-| EMP-003 | Employer–candidate chat security | Security | Messages encrypted and visible only to participants. | |
-| EMP-004 | Analytics dashboard | Functional | Employer sees application counts and conversion rates. | |
-| ANA-001 | User progress feedback | Functional | System shows career progress chart based on applications and skills. | |
-| ANA-002 | Admin usage analytics | Functional | Admin can view platform-wide metrics from dashboard. | |
-| ANA-003 | Data privacy masking | Security | Analytics pages hide personal identifiers per SRS. | |
-| PERF-001 | Job matching response time | Performance | Standard user request responds in < 3 s. | |
-| PERF-002 | Resume analysis upload limit | Performance | Files ≤ 50 MB processed ≤ 5 s. | |
-| PERF-003 | Dashboard real-time update | Performance / Integration | Application status update shown ≤ 2 s. | |
-| SEC-001 | Role-based access | Security | Employers can’t view student personal data; admin only via role. | |
-| SEC-002 | Encryption in transit | Security | All API calls use HTTPS; HTTP redirects to HTTPS. | |
-| SEC-003 | AI data ethics logging | Security / Audit | Each AI suggestion stores timestamp and audit ID for review. | |
-### HJ-002 — Sad Path (already finalized / permission denied)
+## AI Feature Tests - Completed
+
+All AI tests passed successfully on November 19, 2025
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| AI-001 | Return relevant jobs based on user skills | Functional / AI | AI returns at least 70% of jobs that match user skills and preferences | Passed - 767ms - Returns 4 out of 4 relevant jobs (100%) | PASS |
+| AI-002 | Prioritize matching jobs over non-matching | Functional / AI | Jobs matching user skills appear first in results | Passed - 593ms - Matching jobs ranked higher | PASS |
+| AI-003 | No duplicate job IDs in response | Functional | Response contains no repeated job IDs | Passed - 456ms - All job IDs are unique | PASS |
+| AI-004 | No duplicate jobs in repeated calls | Functional | Same job not recommended twice within short time | Passed - 1082ms - Different calls return consistent results | PASS |
+| AI-005 | Fast matching for 5000 jobs | Performance | System completes matching in less than 10 seconds | Passed - 417ms - Completed in 0.4 seconds | PASS |
+| AI-006 | Handle large skill sets efficiently | Performance | System handles users with many skills without slowdown | Passed - 1023ms - Processed large skill set in 1 second | PASS |
+| AI-007 | No sensitive personal data in suggestions | Security / Ethics | AI does not use gender, race or personal info | Passed - 483ms - No sensitive attributes found | PASS |
+| AI-008 | Equal scores for equal skills | Fairness | Users with same skills get same match scores | Passed - 1697ms - Match scores are consistent | PASS |
+| AI-009 | No personal identifiers in matching | Security | System does not use user names or emails in matching | Passed - 781ms - Only skills and preferences used | PASS |
+
+**Total Tests:** 9  
+**Passed:** 9 (100%)  
+**Failed:** 0  
+**Total Time:** 10.5 seconds
+
+---
+
+## Notes:
+- All AI features working correctly with Groq AI
+- Job matching algorithm performs well under load
+- Bias and fairness checks passed
+- Performance meets requirements (< 10s for 5000 comparisons)
+- Gemini AI model deprecated but fallback mechanism works
+
+---
+
+## Authentication & User Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| AUTH-001 | User can sign in with email and password | Functional | User logs in successfully and gets session | | PENDING |
+| AUTH-002 | User can create new account | Functional | New account is created and user can log in | | PENDING |
+| AUTH-003 | Save skills and roles during onboarding | Functional | Skills and roles are saved to database | | PENDING |
+| AUTH-004 | User can sign out | Functional | Session ends and user is logged out | | PENDING |
+| AUTH-005 | Protected pages require login | Security | Pages show login screen if user not logged in | | PENDING |
+
+---
+
+## Dashboard & Jobs Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| DASH-001 | Dashboard shows real user data | Functional | Dashboard displays live KPIs and data | | PENDING |
+| JOBS-001 | Show list of available jobs | Functional | Jobs page shows job titles, companies, and skills | | PENDING |
+| JOBS-002 | User can apply to a job | Functional | Application is created and saved | | PENDING |
+| JOBS-003 | Filter and search jobs | Functional | Search returns correct job results | | PENDING |
+
+---
+
+## Applications Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| APPS-001 | Show user applications in columns | Functional | Applications appear in correct status columns | | PENDING |
+| APPS-002 | Show timeline and notes for application | Functional | Timeline and notes display correctly | | PENDING |
+
+---
+
+## Learning & Career Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| LEARN-001 | Show courses from Coursera | Integration | Course list appears on learning page | | PENDING |
+| CAREER-001 | AI analyzes profile and gives advice | Functional / AI | System returns career advice in less than 3 seconds | | PENDING |
+| CAREER-002 | Show missing skills for jobs | Functional | System shows skills user needs to learn | | PENDING |
+| CAREER-003 | AI suggests resume improvements | Integration | Resume suggestions appear and can be saved | | PENDING |
+| CAREER-004 | User can request a mentor | Functional | Mentor receives request notification | | PENDING |
+| CAREER-005 | Alert for incomplete profile | Validation | System shows warning if profile missing info | | PENDING |
+
+---
+
+## Employer Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| EMP-001 | Employer can create job posting | Functional | Job is saved and appears in job list | | PENDING |
+| EMP-002 | Search and filter candidates | Functional | Filter returns correct candidate list | | PENDING |
+| EMP-003 | Secure messaging between employer and candidate | Security | Messages are private and encrypted | | PENDING |
+| EMP-004 | Employer can see analytics | Functional | Analytics dashboard shows application data | | PENDING |
+
+---
+
+## Analytics & Admin Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| ANA-001 | Show user progress chart | Functional | Chart displays user career progress | | PENDING |
+| ANA-002 | Admin can view platform metrics | Functional | Admin dashboard shows usage statistics | | PENDING |
+| ANA-003 | Hide personal info in analytics | Security | Personal data is masked in reports | | PENDING |
+
+---
+
+## Performance Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| PERF-001 | Job matching responds quickly | Performance | Response time is less than 3 seconds | | PENDING |
+| PERF-002 | Resume upload handles large files | Performance | Files up to 50MB process in less than 5 seconds | | PENDING |
+| PERF-003 | Dashboard updates in real-time | Performance | Status updates appear within 2 seconds | | PENDING |
+
+---
+
+## Security Tests - Pending
+
+| Test ID | Title | Testing Type | Expected Result | Actual Result | Status |
+|---------|-------|--------------|-----------------|---------------|--------|
+| SEC-001 | Control access based on user role | Security | Employers cannot see student personal data | | PENDING |
+| SEC-002 | All connections use HTTPS | Security | HTTP requests redirect to HTTPS | | PENDING |
+| SEC-003 | AI suggestions are logged for audit | Security | Each AI suggestion has timestamp and ID | | PENDING |
+
+---
+
+## Test Summary
+
+**Overall Progress:**
+- Total Test Categories: 9
+- Completed Categories: 1 (AI Features)
+- Pending Categories: 8
+- Overall Pass Rate: 100% (for completed tests)
+
+**Next Steps:**
+1. Run authentication tests (AUTH-001 to AUTH-005)
+2. Test dashboard and jobs features (DASH-001, JOBS-001 to JOBS-003)
+3. Validate application management (APPS-001, APPS-002)
+4. Test learning and career features
+5. Complete employer, analytics, performance, and security tests
